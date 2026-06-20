@@ -21,23 +21,29 @@ class CardService
 
     public function list(): JsonResponse
     {
-        $users = User::with(['roles', 'businessCard'])
-            ->paginate(10);
+        $users = User::with(['roles', 'businessCard'])->get();
 
-        $users->getCollection()->transform(function (User $user) {
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'roles' => $user->roles->pluck('name'),
-                'business_card' => $user->businessCard
-                    ? new AdminBusinessCardResource($user->businessCard)
-                    : null,
-            ];
-        });
+        $generated = [];
+        $notGenerated = [];
 
-        return $this->successResponse($users, 'Business cards retrieved successfully.');
+        foreach ($users as $user) {
+            if ($user->businessCard) {
+                $generated[] = array_merge(
+                    $this->formatUserSummary($user),
+                    [
+                        'uid' => $user->businessCard->uid,
+                        'card_url' => $user->businessCard->card_url,
+                    ]
+                );
+            } else {
+                $notGenerated[] = $this->formatUserSummary($user);
+            }
+        }
+
+        return $this->successResponse([
+            'generated' => $generated,
+            'not_generated' => $notGenerated,
+        ], 'Business card status retrieved successfully.');
     }
 
     public function find(int $userId): JsonResponse
@@ -79,7 +85,11 @@ class CardService
             ]);
 
             return $this->successResponse(
-                new AdminBusinessCardResource($businessCard->load('user.roles')),
+                [
+                    'user_id' => $user->id,
+                    'uid' => $businessCard->uid,
+                    'card_url' => $businessCard->card_url,
+                ],
                 'Business card generated successfully.',
                 201
             );
@@ -152,5 +162,19 @@ class CardService
         }
 
         return $uid;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatUserSummary(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'roles' => $user->roles->pluck('name'),
+        ];
     }
 }
