@@ -13,14 +13,20 @@ class EnsureRoleAbility
     /**
      * Check if the authenticated user's role is allowed for this ability.
      */
-    public function handle(Request $request, Closure $next, string $ability): Response
+    public function handle(Request $request, Closure $next, string ...$abilities): Response
     {
         $user = $request->user();
 
-        if (! $user || ! RoleAbility::allows($user, $ability)) {
+        if (! $user) {
             throw new AuthorizationException('Forbidden');
         }
 
-        return $next($request);
+        foreach ($abilities as $ability) {
+            if (RoleAbility::allows($user, $ability)) {
+                return $next($request);
+            }
+        }
+
+        throw new AuthorizationException('Forbidden');
     }
 }

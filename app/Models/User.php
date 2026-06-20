@@ -6,6 +6,7 @@ use App\Notifications\Auth\VerifyEmailNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -68,5 +69,25 @@ class User extends Authenticatable implements MustVerifyEmail
     public function businessCard(): HasOne
     {
         return $this->hasOne(BusinessCard::class);
+    }
+
+    public function customerSocials(): HasMany
+    {
+        return $this->hasMany(CustomerSocial::class, 'customer_id');
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'customer_id');
+    }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class, 'customer_id');
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
     }
 }

@@ -1,0 +1,68 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Contact;
+use App\Traits\ApiResponseTrait;
+use Illuminate\Http\JsonResponse;
+
+class ContactService
+{
+    use ApiResponseTrait;
+
+    public function list(): JsonResponse
+    {
+        $contacts = Contact::latest()->paginate(10);
+
+        return $this->successResponse($contacts, 'Contacts retrieved successfully.');
+    }
+
+    public function find(int $id): JsonResponse
+    {
+        $contact = Contact::find($id);
+
+        if (! $contact) {
+            return $this->notFoundResponse('Contact not found.');
+        }
+
+        return $this->successResponse($contact, 'Contact retrieved successfully.');
+    }
+
+    public function create(array $data): JsonResponse
+    {
+        $contact = Contact::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'message' => $data['message'],
+            'ip_address' => request()->ip(),
+        ]);
+
+        return $this->successResponse($contact, 'Contact submitted successfully.', 201);
+    }
+
+    public function markRead(int $id): JsonResponse
+    {
+        $contact = Contact::find($id);
+
+        if (! $contact) {
+            return $this->notFoundResponse('Contact not found.');
+        }
+
+        $contact->update(['is_read' => true]);
+
+        return $this->successResponse($contact->fresh(), 'Contact marked as read.');
+    }
+
+    public function delete(int $id): JsonResponse
+    {
+        $contact = Contact::find($id);
+
+        if (! $contact) {
+            return $this->notFoundResponse('Contact not found.');
+        }
+
+        $contact->delete();
+
+        return $this->successResponse(null, 'Contact deleted successfully.');
+    }
+}
