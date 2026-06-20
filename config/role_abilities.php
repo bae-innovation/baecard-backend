@@ -9,7 +9,7 @@ return [
     'users.create' => ['SuperAdmin', 'Admin'],
     'users.update' => ['SuperAdmin', 'Admin'],
     'users.delete' => ['SuperAdmin'],
-    'users.assign_role' => ['SuperAdmin'],
+    'users.assign_role' => ['SuperAdmin', 'Admin'],
     'roles.manage' => ['SuperAdmin'],
     'dashboard.card.view' => ['SuperAdmin', 'Admin', 'Marketing'],
     'dashboard.card.generate' => ['SuperAdmin', 'Admin'],

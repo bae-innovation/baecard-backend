@@ -21,7 +21,8 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password_confirmation' => ['required', 'string'],
             'phone' => ['nullable', 'string', 'max:20'],
             'role' => [
                 'nullable',
@@ -43,6 +44,8 @@ class StoreUserRequest extends FormRequest
             'email.unique' => 'This email is already registered.',
             'password.required' => 'The password field is required.',
             'password.min' => 'The password must be at least 8 characters.',
+            'password.confirmed' => 'The password confirmation does not match.',
+            'password_confirmation.required' => 'The password confirmation field is required.',
             'role.exists' => 'The selected role does not exist.',
         ];
     }

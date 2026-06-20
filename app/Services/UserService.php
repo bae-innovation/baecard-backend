@@ -34,6 +34,18 @@ class UserService
     public function create(array $data): JsonResponse
     {
         return DB::transaction(function () use ($data) {
+            $authUser = request()->user();
+            $requestedRole = $data['role'] ?? null;
+
+            if (
+                $requestedRole === UserRole::SuperAdmin->value
+                && $authUser
+                && $authUser->hasRole('Admin')
+                && ! $authUser->hasRole('SuperAdmin')
+            ) {
+                return $this->errorResponse('You cannot assign the SuperAdmin role.', null, 403);
+            }
+
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -41,7 +53,7 @@ class UserService
                 'phone' => $data['phone'] ?? null,
             ]);
 
-            $roleName = $this->resolveRoleForCreate($data['role'] ?? null);
+            $roleName = $this->resolveRoleForCreate($requestedRole);
             $user->assignRole($roleName);
 
             return $this->successResponse(
@@ -89,6 +101,16 @@ class UserService
     public function assignRole(int $id, string $roleName): JsonResponse
     {
         return DB::transaction(function () use ($id, $roleName) {
+            $actor = request()->user();
+
+            if (! $actor || ! RoleAbility::allows($actor, 'users.assign_role')) {
+                return $this->forbiddenResponse('You are not allowed to assign roles.');
+            }
+
+            if ($actor->hasRole('Admin') && ! $actor->hasRole('SuperAdmin') && $roleName === 'SuperAdmin') {
+                return $this->errorResponse('You cannot assign the SuperAdmin role.', null, 403);
+            }
+
             $user = User::find($id);
 
             if (! $user) {

@@ -69,6 +69,7 @@ describe('User Management - As SuperAdmin', function () {
             'name' => 'New User',
             'email' => 'newuser@example.com',
             'password' => 'password123',
+            'password_confirmation' => 'password123',
             'phone' => '1234567890',
             'role' => 'User',
         ]);
@@ -208,6 +209,7 @@ describe('User Management - Role-based access', function () {
             'name' => 'Blocked User',
             'email' => 'blocked@example.com',
             'password' => 'password123',
+            'password_confirmation' => 'password123',
             'role' => 'User',
         ])->assertStatus(403);
     });
@@ -223,6 +225,7 @@ describe('User Management - Role-based access', function () {
             'name' => 'Admin Created',
             'email' => 'admincreated@example.com',
             'password' => 'password123',
+            'password_confirmation' => 'password123',
             'role' => 'User',
         ])->assertStatus(201);
 
