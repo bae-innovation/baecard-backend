@@ -1,0 +1,247 @@
+# Implementation Plan: API-first Auth, Role & Permission System
+
+## Project Analysis
+The project is a fresh **Laravel 12** installation with MySQL configured. Key findings:
+- No `routes/api.php` exists yet
+- Missing required packages: `laravel/sanctum`, `spatie/laravel-permission`
+- Basic `User` model needs modifications
+- `bootstrap/app.php` needs Sanctum middleware configuration
+- All directory structures for controllers, requests, resources, services, traits need to be created
+
+## Complete Implementation Plan (44 steps)
+
+### Step 1: Package Installation
+| # | Command | Description |
+|---|---------|-------------|
+| 1.1 | `composer require laravel/sanctum` | Install Sanctum for API tokens |
+| 1.2 | `composer require spatie/laravel-permission` | Install Spatie permission package |
+| 1.3 | `php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"` | Publish Sanctum migration |
+| 1.4 | `php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"` | Publish Spatie migration & config |
+
+### Step 2: Bootstrap Configuration (`bootstrap/app.php`)
+- Add `api()` routing
+- Add Sanctum middleware alias (`auth:sanctum`)
+- Add `verified` middleware alias
+- Add role/permission middleware from Spatie (`role`, `permission`, `permission:permission`)
+
+### Step 3: Create `routes/api.php` (doesn't exist yet)
+- Define all API route groups:
+  - Public auth routes (register, login, forgot-password)
+  - Protected auth routes (logout, me, email verification)
+  - User management routes (CRUD)
+  - Role management routes (CRUD)
+  - Permission management routes (CRUD)
+
+### Step 4: Migration Modifications
+- **Modify `create_users_table`**: Add `phone` field, ensure `MustVerifyEmail` contract
+- Add new migration for `password_reset_tokens` (if not exists)
+
+### Step 5: User Model (`app/Models/User.php`)
+- Implement `MustVerifyEmail` contract
+- Add `HasApiTokens` trait from Sanctum
+- Add `HasRoles` trait from Spatie
+- Add `HasProfilePhoto` relationship
+- Define `casts`, `fillable` with new fields
+
+### Step 6: Create `ApiResponseTrait` (`app/Traits/ApiResponseTrait.php`)
+```php
+trait ApiResponseTrait {
+    successResponse($data, $message, $code)
+    errorResponse($message, $errors, $code)
+}
+```
+
+### Step 7: Create Form Requests (`app/Http/Requests/`)
+| File | Description |
+|------|-------------|
+| `Auth/RegisterRequest.php` | name, email, password, password_confirmation, phone |
+| `Auth/LoginRequest.php` | email, password |
+| `Auth/ForgotPasswordRequest.php` | email |
+| `Auth/ResetPasswordRequest.php` | email, token, password |
+| `User/StoreUserRequest.php` | name, email, password, phone, role |
+| `User/UpdateUserRequest.php` | name, email, phone, role |
+| `Role/StoreRoleRequest.php` | name, permissions (array) |
+| `Role/UpdateRoleRequest.php` | name, permissions (array) |
+| `Permission/StorePermissionRequest.php` | name |
+| `Permission/UpdatePermissionRequest.php` | name |
+
+### Step 8: Create Resources (`app/Http/Resources/`)
+| File | Description |
+|------|-------------|
+| `UserResource.php` | Transform user with roles |
+| `UserCollection.php` | Paginated collection |
+| `RoleResource.php` | Transform role with permissions |
+| `RoleCollection.php` | Paginated collection |
+| `PermissionResource.php` | Transform permission |
+| `PermissionCollection.php` | Paginated collection |
+
+### Step 9: Create Services (`app/Services/`)
+| File | Description |
+|------|-------------|
+| `AuthService.php` | register(), login(), logout(), me() |
+| `UserService.php` | list(), find(), create(), update(), delete() - uses transactions |
+| `RoleService.php` | list(), find(), create(), update(), delete(), assignPermissions() |
+| `PermissionService.php` | list(), find(), create(), update(), delete() |
+
+### Step 10: Create Controllers (`app/Http/Controllers/Api/`)
+| File | Description |
+|------|-------------|
+| `Auth/AuthController.php` | register, login, logout, me |
+| `Auth/EmailVerificationController.php` | sendVerification, verify |
+| `Auth/ForgotPasswordController.php` | forgotPassword, resetPassword |
+| `User/UserController.php` | index, show, store, update, destroy |
+| `Role/RoleController.php` | index, show, store, update, destroy |
+| `Permission/PermissionController.php` | index, show, store, update, destroy |
+
+### Step 11: Create Seeders (`database/seeders/`)
+| Seeder | Description |
+|--------|-------------|
+| `PermissionSeeder.php` | Create all 12 permissions |
+| `RoleSeeder.php` | Create SuperAdmin, Admin, Marketing, User roles |
+| `SuperAdminSeeder.php` | Create superadmin@example.com, assign SuperAdmin role + all permissions |
+| `RolePermissionSeeder.php` | Assign permissions to roles |
+| `DatabaseSeeder.php` | Call all seeders in order |
+
+### Step 12: Create Tests (`tests/Feature/`)
+| File | Description |
+|------|-------------|
+| `Auth/AuthTest.php` | Register, Login, Logout, Me |
+| `Auth/EmailVerificationTest.php` | Send & verify email |
+| `Auth/PasswordResetTest.php` | Forgot & reset password |
+| `User/UserManagementTest.php` | Full CRUD tests |
+| `Role/RoleManagementTest.php` | Full CRUD tests |
+| `Permission/PermissionManagementTest.php` | Full CRUD tests |
+
+### Step 13: Create Permission/SuperAdmin Middleware Checks
+- Implement proper middleware checks in controllers
+- Use `$this->authorize()` with Policies (optional)
+
+### Step 14: Security & Polish
+- Hash passwords in services
+- Validate all inputs via Form Requests
+- Use DB::transaction for writes
+- Protect routes with `auth:sanctum`, `verified`
+- Add `role:SuperAdmin` middleware to role/permission management
+
+### Step 15: Run Migrations & Seeders
+- `php artisan migrate`
+- `php artisan db:seed --class=PermissionSeeder`
+- `php artisan db:seed --class=RoleSeeder`
+- `php artisan db:seed --class=SuperAdminSeeder`
+- `php artisan db:seed --class=DatabaseSeeder`
+
+### Step 16: Run Tests
+- `php artisan test`
+
+---
+
+## File Structure (to be created)
+```
+backend/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/Api/
+│   │   │   ├── Auth/
+│   │   │   │   ├── AuthController.php
+│   │   │   │   ├── EmailVerificationController.php
+│   │   │   │   └── ForgotPasswordController.php
+│   │   │   ├── User/UserController.php
+│   │   │   ├── Role/RoleController.php
+│   │   │   └── Permission/PermissionController.php
+│   │   ├── Requests/
+│   │   │   ├── Auth/
+│   │   │   │   ├── RegisterRequest.php
+│   │   │   │   ├── LoginRequest.php
+│   │   │   │   ├── ForgotPasswordRequest.php
+│   │   │   │   └── ResetPasswordRequest.php
+│   │   │   ├── User/
+│   │   │   │   ├── StoreUserRequest.php
+│   │   │   │   └── UpdateUserRequest.php
+│   │   │   ├── Role/
+│   │   │   │   ├── StoreRoleRequest.php
+│   │   │   │   └── UpdateRoleRequest.php
+│   │   │   ├── Permission/
+│   │   │   │   ├── StorePermissionRequest.php
+│   │   │   │   └── UpdatePermissionRequest.php
+│   │   └── Resources/
+│   │       ├── UserResource.php
+│   │       ├── UserCollection.php
+│   │       ├── RoleResource.php
+│   │       ├── RoleCollection.php
+│   │       ├── PermissionResource.php
+│   │       └── PermissionCollection.php
+│   ├── Services/
+│   │   ├── AuthService.php
+│   │   ├── UserService.php
+│   │   ├── RoleService.php
+│   │   └── PermissionService.php
+│   ├── Traits/
+│   │   └── ApiResponseTrait.php
+│   └── Models/
+│       └── User.php (modified)
+├── routes/
+│   └── api.php (new)
+├── database/
+│   └── seeders/
+│       ├── DatabaseSeeder.php (modified)
+│       ├── PermissionSeeder.php
+│       ├── RoleSeeder.php
+│       ├── RolePermissionSeeder.php
+│       └── SuperAdminSeeder.php
+├── bootstrap/
+│   └── app.php (modified)
+└── tests/
+    └── Feature/
+        ├── Auth/
+        │   ├── AuthTest.php
+        │   ├── EmailVerificationTest.php
+        │   └── PasswordResetTest.php
+        ├── User/UserManagementTest.php
+        ├── Role/RoleManagementTest.php
+        └── Permission/PermissionManagementTest.php
+```
+
+## Route Structure (in `routes/api.php`)
+```php
+// Public routes
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
+
+// Authenticated routes (auth:sanctum)
+POST /api/auth/logout
+GET  /api/auth/me
+
+// Email verification (auth:sanctum)
+POST /api/email/verification-notification
+GET  /api/email/verify/{id}/{hash}
+
+// User management (auth:sanctum, verified)
+GET    /api/users
+GET    /api/users/{id}
+POST   /api/users
+PUT    /api/users/{id}
+DELETE /api/users/{id}
+
+// Role management (auth:sanctum, role:SuperAdmin)
+GET    /api/roles
+GET    /api/roles/{id}
+POST   /api/roles
+PUT    /api/roles/{id}
+DELETE /api/roles/{id}
+
+// Permission management (auth:sanctum, role:SuperAdmin)
+GET    /api/permissions
+GET    /api/permissions/{id}
+POST   /api/permissions
+PUT    /api/permissions/{id}
+DELETE /api/permissions/{id}
+```
+
+## Please review this plan and let me know:
+1. Does this cover all your requirements?
+2. Would you like any modifications before I proceed to ACT MODE?
+3. Should I toggle to ACT MODE to start implementing?
+
+Once you approve, I'll implement everything step-by-step, generating production-ready code for each file.
