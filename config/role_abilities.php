@@ -11,4 +11,7 @@ return [
     'users.delete' => ['SuperAdmin'],
     'users.assign_role' => ['SuperAdmin'],
     'roles.manage' => ['SuperAdmin'],
+    'dashboard.card.view' => ['SuperAdmin', 'Admin', 'Marketing'],
+    'dashboard.card.generate' => ['SuperAdmin', 'Admin'],
+    'dashboard.card.regenerate' => ['SuperAdmin'],
 ];
