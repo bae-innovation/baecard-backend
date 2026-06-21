@@ -1,0 +1,1 @@
+import{o as a,s as e,n as o}from"./types-BUag25p2.js";const m=a({id:o(),name:e(),guard_name:e().optional(),created_at:e().optional(),updated_at:e().optional()}),t=a({name:e().min(1,"Role name is required").max(255,"Role name must be 255 characters or less")}),s=t;export{t as c,m as r,s as u};
