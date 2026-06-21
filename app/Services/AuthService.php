@@ -9,11 +9,13 @@ use App\Traits\ApiResponseTrait;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
@@ -49,7 +51,29 @@ class AuthService
     }
 
     /**
-     * Login a user.
+     * Authenticate a user via the web session guard.
+     *
+     * @throws ValidationException
+     */
+    public function loginWeb(array $credentials, bool $remember = false): void
+    {
+        if (! Auth::attempt($credentials, $remember)) {
+            throw ValidationException::withMessages([
+                'email' => 'Invalid email or password.',
+            ]);
+        }
+    }
+
+    /**
+     * Log out the current web session.
+     */
+    public function logoutWeb(): void
+    {
+        Auth::logout();
+    }
+
+    /**
+     * Login a user via Sanctum token (JSON API).
      */
     public function login(array $data): JsonResponse
     {

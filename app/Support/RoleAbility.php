@@ -24,4 +24,22 @@ class RoleAbility
     {
         return config('role_abilities')[$ability] ?? [];
     }
+
+    /**
+     * @return list<array{id: int, name: string}>
+     */
+    public static function permissionsForUser(User $user): array
+    {
+        $roleNames = $user->roles->pluck('name')->all();
+        $permissions = [];
+        $id = 1;
+
+        foreach (config('role_abilities') as $ability => $allowedRoles) {
+            if ($user->hasAnyRole($allowedRoles)) {
+                $permissions[] = ['id' => $id++, 'name' => $ability];
+            }
+        }
+
+        return $permissions;
+    }
 }

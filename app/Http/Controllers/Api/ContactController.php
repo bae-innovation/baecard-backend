@@ -2,15 +2,31 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\RespondsWithInertia;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Contact\StoreContactRequest;
+use App\Models\Contact;
 use App\Services\ContactService;
+use App\Support\InertiaData;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ContactController extends Controller
 {
+    use RespondsWithInertia;
+
     public function __construct(
         protected ContactService $contactService
     ) {}
+
+    public function indexPage(Request $request)
+    {
+        return Inertia::render('Contacts/Index', [
+            'contacts' => InertiaData::paginate(
+                Contact::latest()->paginate($request->integer('per_page', 10))
+            ),
+        ]);
+    }
 
     public function index()
     {
@@ -24,16 +40,31 @@ class ContactController extends Controller
 
     public function store(StoreContactRequest $request)
     {
-        return $this->contactService->create($request->validated());
+        return $this->webOrJson(
+            $request,
+            $this->contactService->create($request->validated()),
+            'contacts.index',
+            'Contact submitted.',
+        );
     }
 
-    public function markRead(int $id)
+    public function markRead(Request $request, Contact $contact)
     {
-        return $this->contactService->markRead($id);
+        return $this->webOrJson(
+            $request,
+            $this->contactService->markRead($contact->id),
+            'contacts.index',
+            'Contact marked as read.',
+        );
     }
 
-    public function destroy(int $id)
+    public function destroy(Request $request, Contact $contact)
     {
-        return $this->contactService->delete($id);
+        return $this->webOrJson(
+            $request,
+            $this->contactService->delete($contact->id),
+            'contacts.index',
+            'Contact deleted.',
+        );
     }
 }

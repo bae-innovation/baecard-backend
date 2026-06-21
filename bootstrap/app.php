@@ -13,13 +13,12 @@ use Illuminate\Validation\ValidationException;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(prepend: [
-            \App\Http\Middleware\ParseJsonBody::class,
+        $middleware->web(append: [
+            \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
 
         $middleware->alias([
@@ -28,14 +27,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->redirectGuestsTo(function (Request $request) {
-            if ($request->is('api/*') || $request->expectsJson()) {
+            if ($request->expectsJson()) {
                 return null;
             }
 
-            return '/';
+            return route('login');
         });
-
-        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(function (Request $request, \Throwable $e) {

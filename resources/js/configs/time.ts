@@ -1,0 +1,45 @@
+/**
+ * Time Constants
+ * Time units, cache durations, and date offsets
+ */
+
+// Time Units (in milliseconds)
+export const TIME_UNITS = {
+  MILLISECONDS_PER_SECOND: 1000,
+  SECONDS_PER_MINUTE: 60,
+  MINUTES_PER_HOUR: 60,
+  HOURS_PER_DAY: 24,
+} as const;
+
+// Helper calculations
+export const MILLISECONDS_PER_MINUTE =
+  TIME_UNITS.MILLISECONDS_PER_SECOND * TIME_UNITS.SECONDS_PER_MINUTE;
+export const MILLISECONDS_PER_HOUR =
+  MILLISECONDS_PER_MINUTE * TIME_UNITS.MINUTES_PER_HOUR;
+export const MILLISECONDS_PER_DAY =
+  MILLISECONDS_PER_HOUR * TIME_UNITS.HOURS_PER_DAY;
+
+// Cache Durations (in milliseconds)
+export const CACHE_DURATION = {
+  TEN_SECONDS: TIME_UNITS.MILLISECONDS_PER_SECOND * 10,
+  TWO_MINUTES: MILLISECONDS_PER_MINUTE * 2,
+  FIVE_MINUTES: MILLISECONDS_PER_MINUTE * 5,
+  TEN_MINUTES: MILLISECONDS_PER_MINUTE * 10,
+  FIFTEEN_MINUTES: MILLISECONDS_PER_MINUTE * 15,
+  THIRTY_MINUTES: MILLISECONDS_PER_MINUTE * 30,
+} as const;
+
+// Default Date Offsets (in days)
+export const DATE_OFFSET = {
+  DEFAULT_EXPIRY_DAYS: 30,
+  DEFAULT_MOU_EXPIRY_DAYS: 365,
+} as const;
+
+// Cookie Max Age (in seconds)
+export const COOKIE_MAX_AGE = {
+  SIDEBAR:
+    TIME_UNITS.SECONDS_PER_MINUTE *
+    TIME_UNITS.MINUTES_PER_HOUR *
+    TIME_UNITS.HOURS_PER_DAY *
+    7, // 7 days
+} as const;

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Services\AuthService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -17,7 +19,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Register a new user.
+     * Register a new user (JSON API).
      */
     public function register(RegisterRequest $request)
     {
@@ -25,23 +27,50 @@ class AuthController extends Controller
     }
 
     /**
-     * Login a user.
+     * Login via web session (Inertia).
      */
     public function login(LoginRequest $request)
+    {
+        $this->authService->loginWeb(
+            $request->only('email', 'password'),
+            $request->boolean('remember'),
+        );
+
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('dashboard'));
+    }
+
+    /**
+     * Login via Sanctum token (JSON API).
+     */
+    public function apiLogin(LoginRequest $request)
     {
         return $this->authService->login($request->validated());
     }
 
     /**
-     * Logout the authenticated user.
+     * Logout the authenticated user (web session).
      */
-    public function logout()
+    public function logout(Request $request)
+    {
+        $this->authService->logoutWeb();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login');
+    }
+
+    /**
+     * Logout via Sanctum token (JSON API).
+     */
+    public function apiLogout()
     {
         return $this->authService->logout(request()->user());
     }
 
     /**
-     * Get the authenticated user.
+     * Get the authenticated user (JSON API).
      */
     public function me()
     {

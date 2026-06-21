@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\User;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -17,9 +18,11 @@ class UpdateUserRequest extends FormRequest
      */
     public function rules(): array
     {
+        $userId = $this->resolveUserId();
+
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'email' => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->route('id'))],
+            'email' => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId, 'id')],
             'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
         ];
     }
@@ -35,5 +38,20 @@ class UpdateUserRequest extends FormRequest
             'email.email' => 'Please enter a valid email address.',
             'email.unique' => 'This email is already registered.',
         ];
+    }
+
+    private function resolveUserId(): int
+    {
+        $user = $this->route('user') ?? $this->route('id');
+
+        if ($user instanceof User) {
+            return (int) $user->getKey();
+        }
+
+        if ($user !== null && $user !== '') {
+            return (int) $user;
+        }
+
+        return (int) $this->segment(2);
     }
 }

@@ -19,7 +19,10 @@ class CardService
 
     private const UID_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
-    public function list(): JsonResponse
+    /**
+     * @return array{generated: list<array<string, mixed>>, not_generated: list<array<string, mixed>>}
+     */
+    public function getListData(): array
     {
         $users = User::with(['roles', 'businessCard'])->get();
 
@@ -40,10 +43,18 @@ class CardService
             }
         }
 
-        return $this->successResponse([
+        return [
             'generated' => $generated,
             'not_generated' => $notGenerated,
-        ], 'Business card status retrieved successfully.');
+        ];
+    }
+
+    public function list(): JsonResponse
+    {
+        return $this->successResponse(
+            $this->getListData(),
+            'Business card status retrieved successfully.'
+        );
     }
 
     public function find(int $userId): JsonResponse

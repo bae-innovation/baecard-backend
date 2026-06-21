@@ -4,6 +4,7 @@ namespace App\Http\Requests\Role;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
 
 class UpdateRoleRequest extends FormRequest
 {
@@ -22,8 +23,10 @@ class UpdateRoleRequest extends FormRequest
      */
     public function rules(): array
     {
+        $roleId = $this->resolveRoleId();
+
         return [
-            'name' => ['required', 'string', 'max:255', Rule::unique('roles', 'name')->ignore($this->route('id'))],
+            'name' => ['required', 'string', 'max:255', Rule::unique('roles', 'name')->ignore($roleId, 'id')],
         ];
     }
 
@@ -38,5 +41,20 @@ class UpdateRoleRequest extends FormRequest
             'name.required' => 'The role name field is required.',
             'name.unique' => 'This role name already exists.',
         ];
+    }
+
+    private function resolveRoleId(): int
+    {
+        $role = $this->route('role') ?? $this->route('id');
+
+        if ($role instanceof Role) {
+            return (int) $role->getKey();
+        }
+
+        if ($role !== null && $role !== '') {
+            return (int) $role;
+        }
+
+        return (int) $this->segment(3);
     }
 }
