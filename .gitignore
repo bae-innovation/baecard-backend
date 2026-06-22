@@ -14,7 +14,6 @@
 /auth.json
 /node_modules
 /public/hot
-/public/storage
 !/public/images/upload/.gitkeep
 /storage/*.key
 /storage/pail

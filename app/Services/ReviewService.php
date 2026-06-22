@@ -12,7 +12,7 @@ class ReviewService
 
     public function list(): JsonResponse
     {
-        $reviews = Review::with(['product:id,name', 'user:id,name'])
+        $reviews = Review::with(['user:id,name'])
             ->where('is_visible', true)
             ->latest()
             ->paginate(10);
@@ -22,7 +22,7 @@ class ReviewService
 
     public function listAdmin(): JsonResponse
     {
-        $reviews = Review::with(['product:id,name', 'user:id,name'])
+        $reviews = Review::with(['user:id,name'])
             ->latest()
             ->paginate(10);
 
@@ -31,7 +31,7 @@ class ReviewService
 
     public function find(int $id, bool $publicOnly = true): JsonResponse
     {
-        $query = Review::with(['product:id,name', 'user:id,name']);
+        $query = Review::with(['user:id,name']);
 
         if ($publicOnly) {
             $query->where('is_visible', true);
@@ -51,7 +51,6 @@ class ReviewService
         $user = request()->user();
 
         $review = Review::create([
-            'product_id' => $data['product_id'] ?? null,
             'user_id' => $user?->id,
             'name' => $data['name'],
             'email' => $data['email'],
@@ -61,7 +60,7 @@ class ReviewService
         ]);
 
         return $this->successResponse(
-            $review->load(['product:id,name', 'user:id,name']),
+            $review->load(['user:id,name']),
             'Review submitted successfully.',
             201
         );
@@ -78,7 +77,7 @@ class ReviewService
         $review->update($data);
 
         return $this->successResponse(
-            $review->fresh()->load(['product:id,name', 'user:id,name']),
+            $review->fresh()->load(['user:id,name']),
             'Review updated successfully.'
         );
     }

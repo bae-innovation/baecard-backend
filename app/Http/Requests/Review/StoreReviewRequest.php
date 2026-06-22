@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Review;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreReviewRequest extends FormRequest
 {
@@ -12,10 +11,16 @@ class StoreReviewRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('title') && $this->input('title') === '') {
+            $this->merge(['title' => null]);
+        }
+    }
+
     public function rules(): array
     {
         return [
-            'product_id' => ['nullable', 'integer', 'exists:products,id'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],

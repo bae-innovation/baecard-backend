@@ -51,6 +51,40 @@ class AuthService
     }
 
     /**
+     * Register a new user for the web session (Inertia).
+     */
+    public function registerWeb(array $data): User
+    {
+        return DB::transaction(function () use ($data) {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $data['password'],
+                'phone' => $data['phone'] ?? null,
+            ]);
+
+            UserRole::ensureExists(UserRole::User);
+            $user->assignRole(UserRole::User->value);
+
+            event(new Registered($user));
+
+            return $user;
+        });
+    }
+
+    /**
+     * Resolve post-auth redirect for card scan claim flow.
+     */
+    public function resolveWebRedirect(?string $redirect): string
+    {
+        if ($redirect && str_starts_with($redirect, '/scan/')) {
+            return $redirect;
+        }
+
+        return route('dashboard');
+    }
+
+    /**
      * Authenticate a user via the web session guard.
      *
      * @throws ValidationException

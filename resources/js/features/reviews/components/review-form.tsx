@@ -73,7 +73,6 @@ export function ReviewForm({
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewFormSchema),
     defaultValues: {
-      product_id: '',
       name: '',
       email: '',
       rating: 5,
@@ -86,7 +85,6 @@ export function ReviewForm({
   React.useEffect(() => {
     if (mode === 'edit' && review) {
       form.reset({
-        product_id: review.product_id ?? '',
         name: review.name,
         email: review.email,
         rating: review.rating,
@@ -122,19 +120,6 @@ export function ReviewForm({
             <FormLabel>Email *</FormLabel>
             <FormControl>
               <Input type="email" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="product_id"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Product ID</FormLabel>
-            <FormControl>
-              <Input type="number" placeholder="Optional" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>

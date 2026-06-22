@@ -2,12 +2,15 @@ import type { NavItem } from '@/components/shared/sidebar/nav-main';
 import {
   Calendar,
   CreditCard,
+  Globe,
   MessageSquare,
   Package,
+  QrCode,
   Settings,
   Shield,
   ShieldCheck,
   ShoppingCart,
+  Sparkles,
   Star,
   Store,
   User,
@@ -105,6 +108,11 @@ const TEMPLATE_NAV: NavItem[] = [
         url: '/cards',
         icon: CreditCard,
       },
+      {
+        title: 'Codes',
+        url: '/cards/codes',
+        icon: QrCode,
+      },
     ],
   },
   {
@@ -149,9 +157,14 @@ const TEMPLATE_NAV: NavItem[] = [
     icon: Settings,
     items: [
       {
-        title: 'Settings',
-        url: '/settings',
-        icon: Settings,
+        title: 'General',
+        url: '/settings/general',
+        icon: Globe,
+      },
+      {
+        title: 'Appearance',
+        url: '/settings/appearance',
+        icon: Sparkles,
       },
     ],
   },

@@ -52,11 +52,6 @@ export function ReviewDetailDialog({
               <Badge variant={review.is_visible ? 'default' : 'secondary'}>
                 {review.is_visible ? 'Visible' : 'Hidden'}
               </Badge>
-              {review.product ? (
-                <Badge variant="outline">Product: {review.product.name}</Badge>
-              ) : (
-                <Badge variant="outline">Standalone review</Badge>
-              )}
             </div>
             <div className="rounded-lg border p-4">
               <p className="whitespace-pre-wrap">{review.body}</p>

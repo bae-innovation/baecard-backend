@@ -71,6 +71,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(BusinessCard::class);
     }
 
+    public function cardCode(): HasOne
+    {
+        return $this->hasOne(CardCode::class);
+    }
+
     public function customerSocials(): HasMany
     {
         return $this->hasMany(CustomerSocial::class, 'customer_id');

@@ -34,7 +34,9 @@ class InertiaData
         if ($response->getStatusCode() >= 400) {
             $data = json_decode($response->getContent(), true);
 
-            return back()->with('error', $data['message'] ?? 'An error occurred.');
+            return back()->withErrors([
+                'form' => $data['message'] ?? 'An error occurred.',
+            ]);
         }
 
         return redirect()

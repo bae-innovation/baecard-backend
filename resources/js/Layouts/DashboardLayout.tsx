@@ -1,6 +1,8 @@
 import { Link, usePage } from '@inertiajs/react';
 import * as React from 'react';
 
+import { AppHead } from '@/components/shared/app-head';
+import { AppSettingsSync } from '@/components/shared/app-settings-sync';
 import { AppSidebar } from '@/components/shared/sidebar/app-sidebar';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
 import {
@@ -64,7 +66,10 @@ function DashboardBreadcrumb() {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     return (
-        <SidebarProvider>
+        <>
+            <AppHead />
+            <AppSettingsSync />
+            <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
                 <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
@@ -80,5 +85,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
             </SidebarInset>
         </SidebarProvider>
+        </>
     );
 }

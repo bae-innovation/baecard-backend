@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-table';
 import { Eye, EyeOff, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import * as React from 'react';
+import { toast } from 'sonner';
 
 import {
   DataTableFooter,
@@ -24,9 +25,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DeleteReviewDialog } from '@/features/reviews/components/delete-review-dialog';
 import { ReviewDetailDialog } from '@/features/reviews/components/review-detail-dialog';
-import type { Review } from '@/features/reviews/schemas/review.schema';
+import { ReviewFormDialog } from '@/features/reviews/components/review-form-dialog';
+import {
+  serializeReviewFormPayload,
+  type Review,
+  type ReviewFormValues,
+} from '@/features/reviews/schemas/review.schema';
 import { useAuth } from '@/hooks/useAuth';
 import { useInertiaPagination } from '@/hooks/useInertiaPagination';
+import { messageFromLaravelResponseBody } from '@/lib/laravel-validation-message';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 import type { LaravelPaginator } from '@/types/inertia';
 
@@ -58,9 +65,25 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [detailOpen, setDetailOpen] = React.useState(false);
   const [selected, setSelected] = React.useState<Review | null>(null);
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<'create' | 'edit'>('create');
+  const [selectedForEdit, setSelectedForEdit] = React.useState<Review | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [selectedForDelete, setSelectedForDelete] = React.useState<Review | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
+
+  const openCreate = React.useCallback(() => {
+    setFormMode('create');
+    setSelectedForEdit(null);
+    setFormOpen(true);
+  }, []);
+
+  const openEdit = React.useCallback((review: Review) => {
+    setFormMode('edit');
+    setSelectedForEdit(review);
+    setFormOpen(true);
+  }, []);
 
   const openDelete = React.useCallback((review: Review) => {
     setSelectedForDelete(review);
@@ -78,10 +101,6 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
             <p className="text-sm text-muted-foreground">{row.original.email}</p>
           </div>
         ),
-      }),
-      columnHelper.accessor('product', {
-        header: 'Product',
-        cell: ({ row }) => row.original.product?.name ?? '—',
       }),
       columnHelper.accessor('title', {
         header: 'Title',
@@ -121,7 +140,7 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
               <>
                 <TableDropdownAction
                   icon={Pencil}
-                  onClick={() => router.visit(`/reviews/${row.original.id}/edit`)}
+                  onClick={() => openEdit(row.original)}
                 >
                   Edit
                 </TableDropdownAction>
@@ -151,7 +170,7 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
         ),
       }),
     ],
-    [canManage, openDelete],
+    [canManage, openDelete, openEdit],
   );
 
   const table = useReactTable({
@@ -172,10 +191,12 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <PageTitle title="Reviews" description="Customer reviews" icon={Star} />
-        <Button type="button" onClick={() => router.visit('/reviews/create')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Review
-        </Button>
+        {canManage ? (
+          <Button type="button" onClick={openCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Review
+          </Button>
+        ) : null}
       </div>
       <DataTableLayout
         table={table}
@@ -209,25 +230,84 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
         review={selected}
       />
       {canManage ? (
-        <DeleteReviewDialog
-          open={deleteOpen}
-          onOpenChange={setDeleteOpen}
-          review={selectedForDelete}
-          isDeleting={isDeleting}
-          onConfirm={async () => {
-            if (!selectedForDelete) return;
-            setIsDeleting(true);
-            router.delete(`/reviews/${selectedForDelete.id}`, {
-              onSuccess: () => {
-                showMutationSuccess('Review deleted');
-                setDeleteOpen(false);
-                setSelectedForDelete(null);
-              },
-              onError: () => showMutationError(null, 'Failed to delete review'),
-              onFinish: () => setIsDeleting(false),
-            });
-          }}
-        />
+        <>
+          <ReviewFormDialog
+            open={formOpen}
+            onOpenChange={setFormOpen}
+            mode={formMode}
+            review={selectedForEdit}
+            isSubmitting={isSubmitting}
+            onSubmit={async (values: ReviewFormValues) => {
+              setIsSubmitting(true);
+
+              if (formMode === 'create') {
+                router.post('/reviews', serializeReviewFormPayload(values, 'create'), {
+                  preserveScroll: true,
+                  only: ['reviews'],
+                  onSuccess: () => {
+                    showMutationSuccess('Review created');
+                    setFormOpen(false);
+                  },
+                  onError: (errors) => {
+                    const message =
+                      messageFromLaravelResponseBody({ errors }) ??
+                      'Failed to create review';
+                    toast.error(message);
+                  },
+                  onFinish: () => setIsSubmitting(false),
+                });
+                return;
+              }
+
+              if (!selectedForEdit) {
+                setIsSubmitting(false);
+                return;
+              }
+
+              router.patch(
+                `/reviews/${selectedForEdit.id}`,
+                serializeReviewFormPayload(values, 'edit'),
+                {
+                  preserveScroll: true,
+                  only: ['reviews'],
+                  onSuccess: () => {
+                    showMutationSuccess('Review updated');
+                    setFormOpen(false);
+                    setSelectedForEdit(null);
+                  },
+                  onError: (errors) => {
+                    const message =
+                      messageFromLaravelResponseBody({ errors }) ??
+                      'Failed to update review';
+                    toast.error(message);
+                  },
+                  onFinish: () => setIsSubmitting(false),
+                },
+              );
+            }}
+          />
+          <DeleteReviewDialog
+            open={deleteOpen}
+            onOpenChange={setDeleteOpen}
+            review={selectedForDelete}
+            isDeleting={isDeleting}
+            onConfirm={async () => {
+              if (!selectedForDelete) return;
+              setIsDeleting(true);
+              router.delete(`/reviews/${selectedForDelete.id}`, {
+                preserveScroll: true,
+                only: ['reviews'],
+                onSuccess: () => {
+                  showMutationSuccess('Review deleted');
+                  setDeleteOpen(false);
+                  setSelectedForDelete(null);
+                },
+                onError: () => showMutationError(null, 'Failed to delete review'),
+                onFinish: () => setIsDeleting(false),
+              });
+            }}
+          />
+        </>
       ) : null}
     </div>
   );

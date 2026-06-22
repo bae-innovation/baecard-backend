@@ -30,7 +30,10 @@ export type Permission = {
     name: string;
 };
 
+import type { AppSettings } from '@/types/app-settings';
+
 export type SharedPageProps = {
+    app: AppSettings;
     auth: {
         user: AuthUser | null;
         permissions: Permission[];

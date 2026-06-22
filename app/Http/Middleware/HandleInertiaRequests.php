@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\SettingService;
 use App\Support\RoleAbility;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -40,6 +41,7 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
+            'app' => app(SettingService::class)->getAppSettings(),
             'auth' => [
                 'user' => $user
                     ? $user->load('roles:id,name')

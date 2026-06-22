@@ -50,11 +50,6 @@ class UserController extends Controller
         ]);
     }
 
-    public function settingsPage()
-    {
-        return Inertia::render('Settings/Index');
-    }
-
     public function accessControlIndexPage(Request $request)
     {
         return Inertia::render('AccessControl/Users', [

@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 export const reviewSchema = z.object({
   id: z.number(),
-  product_id: z.coerce.number().nullable().optional(),
   user_id: z.coerce.number().nullable().optional(),
   name: z.string(),
   email: z.string().email(),
@@ -12,10 +11,6 @@ export const reviewSchema = z.object({
   is_visible: z.boolean(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
-  product: z
-    .object({ id: z.number(), name: z.string() })
-    .nullable()
-    .optional(),
   user: z
     .object({ id: z.number(), name: z.string() })
     .nullable()
@@ -25,7 +20,6 @@ export const reviewSchema = z.object({
 export type Review = z.infer<typeof reviewSchema>;
 
 export const reviewFormSchema = z.object({
-  product_id: z.coerce.number().optional().or(z.literal('')),
   name: z.string().min(1, 'Name is required').max(255),
   email: z.string().email('Valid email is required'),
   rating: z.coerce.number().int().min(1).max(5),
@@ -35,3 +29,25 @@ export const reviewFormSchema = z.object({
 });
 
 export type ReviewFormValues = z.infer<typeof reviewFormSchema>;
+
+export function serializeReviewFormPayload(
+  values: ReviewFormValues,
+  mode: 'create' | 'edit',
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    name: values.name,
+    email: values.email,
+    rating: Number(values.rating),
+    body: values.body,
+  };
+
+  if (values.title) {
+    payload.title = values.title;
+  }
+
+  if (mode === 'edit' && values.is_visible !== undefined) {
+    payload.is_visible = values.is_visible;
+  }
+
+  return payload;
+}

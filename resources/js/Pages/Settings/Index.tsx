@@ -1,24 +1,18 @@
 import type { ReactNode } from 'react';
 
-import { PageTitle } from '@/components/shared/page-title';
-import { Settings } from 'lucide-react';
+import type { SettingsPageGroup } from '@/features/settings/api/settings.api';
+import { SettingsPage } from '@/features/settings/components/settings-page';
+import type { AppSettings } from '@/features/settings/schemas/settings.schema';
 
 import DashboardLayout from '@/Layouts/DashboardLayout';
 
-export default function Index() {
-  return (
-    <div className="space-y-6 py-4">
-      <PageTitle
-        title="Settings"
-        description="Configure application preferences."
-        icon={Settings}
-        color="purple"
-      />
-      <p className="text-sm text-muted-foreground">
-        Application settings will be available here soon.
-      </p>
-    </div>
-  );
+type SettingsIndexProps = {
+  group: SettingsPageGroup;
+  data?: AppSettings | null;
+};
+
+export default function Index({ group, data }: SettingsIndexProps) {
+  return <SettingsPage group={group} data={data} />;
 }
 
 Index.layout = (page: ReactNode) => <DashboardLayout>{page}</DashboardLayout>;

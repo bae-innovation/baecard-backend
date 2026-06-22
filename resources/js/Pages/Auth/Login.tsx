@@ -34,6 +34,18 @@ export default function Login({ redirect }: LoginPageProps) {
       icon={KeyRound}
       footer={
         <p>
+          {redirect ? (
+            <>
+              Need an account?{' '}
+              <Link
+                href={`/register?redirect=${encodeURIComponent(redirect)}`}
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Register here
+              </Link>
+              {' · '}
+            </>
+          ) : null}
           Forgot your password?{' '}
           <Link
             href="/forgot-password"

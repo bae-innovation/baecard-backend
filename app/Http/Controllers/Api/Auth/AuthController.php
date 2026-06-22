@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Services\AuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class AuthController extends Controller
 {
@@ -27,6 +28,33 @@ class AuthController extends Controller
     }
 
     /**
+     * Show registration page (Inertia).
+     */
+    public function registerPage(Request $request)
+    {
+        return Inertia::render('Auth/Register', [
+            'redirect' => $request->query('redirect'),
+        ]);
+    }
+
+    /**
+     * Register via web session (Inertia).
+     */
+    public function registerWeb(RegisterRequest $request)
+    {
+        $user = $this->authService->registerWeb($request->validated());
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        $redirect = $this->authService->resolveWebRedirect(
+            $request->input('redirect') ?: $request->query('redirect')
+        );
+
+        return redirect($redirect);
+    }
+
+    /**
      * Login via web session (Inertia).
      */
     public function login(LoginRequest $request)
@@ -38,7 +66,11 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard'));
+        $redirect = $this->authService->resolveWebRedirect(
+            $request->input('redirect') ?: $request->query('redirect')
+        );
+
+        return redirect($redirect);
     }
 
     /**

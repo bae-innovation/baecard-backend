@@ -30,7 +30,6 @@ export async function fetchReview(id: number) {
 export async function createReview(payload: ReviewFormValues) {
   const body = {
     ...payload,
-    product_id: payload.product_id || undefined,
     title: payload.title || undefined,
   };
   const raw = await baecardApiClient.post('review/create', { json: body }).json();
@@ -40,7 +39,6 @@ export async function createReview(payload: ReviewFormValues) {
 export async function updateReview(id: number, payload: ReviewFormValues) {
   const body = {
     ...payload,
-    product_id: payload.product_id || undefined,
     title: payload.title || undefined,
   };
   const raw = await baecardApiClient.put(`review/update/${id}`, { json: body }).json();

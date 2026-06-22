@@ -93,7 +93,17 @@ export const currencyFormatter = createNumberFormatter({
 });
 
 /** BDT display for prices (same formatter as {@link currencyFormatter}). */
-export const formatPrice = currencyFormatter;
+export let formatPrice = currencyFormatter;
+
+export function configureAppCurrency(currency: string): void {
+  formatPrice = createNumberFormatter({
+    style: 'currency',
+    currency,
+    currencyDisplay: 'narrowSymbol',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
 
 // // Example usage
 // console.log(compactFormatter(1633.3) + '%'); // "1.6k%"

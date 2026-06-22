@@ -12,6 +12,7 @@ return [
     'users.assign_role' => ['SuperAdmin', 'Admin'],
     'roles.manage' => ['SuperAdmin'],
     'dashboard.card.view' => ['SuperAdmin', 'Admin', 'Marketing'],
+    'dashboard.card.manage' => ['SuperAdmin', 'Admin'],
     'dashboard.card.generate' => ['SuperAdmin', 'Admin'],
     'dashboard.card.regenerate' => ['SuperAdmin'],
     'contacts.view' => ['SuperAdmin', 'Admin'],
@@ -27,4 +28,5 @@ return [
     'appointments.view' => ['SuperAdmin', 'Admin', 'Marketing'],
     'appointments.manage' => ['SuperAdmin', 'Admin', 'Marketing'],
     'appointments.view_own' => ['User'],
+    'settings.manage' => ['SuperAdmin', 'Admin'],
 ];

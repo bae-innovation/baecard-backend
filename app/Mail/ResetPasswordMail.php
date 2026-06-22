@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Services\SettingService;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -16,8 +17,10 @@ class ResetPasswordMail extends Mailable
 
     public function envelope(): Envelope
     {
+        $appName = app(SettingService::class)->getAppSettings()['name'];
+
         return new Envelope(
-            subject: 'Reset your ' . config('mail.from.name', 'BAE Card') . ' password',
+            subject: 'Reset your '.$appName.' password',
         );
     }
 

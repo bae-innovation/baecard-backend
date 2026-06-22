@@ -6,7 +6,6 @@ use App\Http\Controllers\Concerns\RespondsWithInertia;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Review\StoreReviewRequest;
 use App\Http\Requests\Review\UpdateReviewRequest;
-use App\Models\Product;
 use App\Models\Review;
 use App\Services\ReviewService;
 use App\Support\InertiaData;
@@ -25,7 +24,7 @@ class ReviewController extends Controller
     public function indexPage(Request $request)
     {
         $user = $request->user();
-        $query = Review::with(['product:id,name', 'user:id,name']);
+        $query = Review::with(['user:id,name']);
 
         if (! $user || ! RoleAbility::allows($user, 'reviews.view')) {
             $query->where('is_visible', true);
@@ -35,31 +34,6 @@ class ReviewController extends Controller
             'reviews' => InertiaData::paginate(
                 $query->latest()->paginate($request->integer('per_page', 10))
             ),
-        ]);
-    }
-
-    public function createPage()
-    {
-        return Inertia::render('Reviews/Create', [
-            'products' => Product::query()
-                ->where('is_active', true)
-                ->select('id', 'name')
-                ->orderBy('name')
-                ->get(),
-        ]);
-    }
-
-    public function editPage(Review $review)
-    {
-        $review->load(['product:id,name', 'user:id,name']);
-
-        return Inertia::render('Reviews/Edit', [
-            'review' => $review,
-            'products' => Product::query()
-                ->where('is_active', true)
-                ->select('id', 'name')
-                ->orderBy('name')
-                ->get(),
         ]);
     }
 

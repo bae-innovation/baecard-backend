@@ -8,6 +8,7 @@ import { Toaster as SonnerToaster } from 'sonner';
 
 import { EnvironmentBanner } from '@/components/shared/environment-banner';
 import { OfflineIndicator } from '@/components/shared/offline-indicator';
+import { AccentPaletteProvider } from '@/components/providers/accent-palette-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { ApiErrorModalProvider } from '@/lib/api-error-modal';
 
@@ -20,13 +21,15 @@ createInertiaApp({
     setup({ el, App, props }) {
         createRoot(el).render(
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-                <ApiErrorModalProvider>
-                    <App {...props} />
-                    <Toaster />
-                    <OfflineIndicator />
-                    <SonnerToaster position="bottom-right" />
-                    <EnvironmentBanner style="ribbon" position="corner-right" />
-                </ApiErrorModalProvider>
+                <AccentPaletteProvider>
+                    <ApiErrorModalProvider>
+                        <App {...props} />
+                        <Toaster />
+                        <OfflineIndicator />
+                        <SonnerToaster position="bottom-right" />
+                        <EnvironmentBanner style="ribbon" position="corner-right" />
+                    </ApiErrorModalProvider>
+                </AccentPaletteProvider>
             </ThemeProvider>,
         );
     },

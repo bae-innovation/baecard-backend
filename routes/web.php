@@ -6,12 +6,16 @@ use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\BusinessCardController;
+use App\Http\Controllers\Api\CardCodeController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\CustomerSocialController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\Role\RoleController;
+use App\Http\Controllers\Api\ScanController;
+use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\User\UserController;
 use App\Http\Controllers\Api\VendorController;
 use Illuminate\Http\Request;
@@ -71,12 +75,27 @@ Route::prefix('api')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| Public card scan & profile
+|--------------------------------------------------------------------------
+*/
+Route::get('scan/{code}', [ScanController::class, 'scan'])->name('scan');
+Route::get('profile/{slug}/{code}', [ProfileController::class, 'show'])->name('profile.show');
+
+/*
+|--------------------------------------------------------------------------
 | Guest auth (Inertia)
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
-    Route::get('login', fn () => Inertia::render('Auth/Login'))->name('login');
+    Route::get('login', function (Request $request) {
+        return Inertia::render('Auth/Login', [
+            'redirect' => $request->query('redirect'),
+        ]);
+    })->name('login');
     Route::post('login', [AuthController::class, 'login']);
+
+    Route::get('register', [AuthController::class, 'registerPage'])->name('register');
+    Route::post('register', [AuthController::class, 'registerWeb']);
 
     Route::get('forgot-password', fn () => Inertia::render('Auth/ForgotPassword'))->name('password.request');
     Route::post('forgot-password', [ForgotPasswordController::class, 'store'])->name('password.email');
@@ -181,16 +200,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reviews', [ReviewController::class, 'indexPage'])
         ->middleware('ability:reviews.view')
         ->name('reviews.index');
-    Route::get('reviews/create', [ReviewController::class, 'createPage'])
-        ->middleware('ability:reviews.manage')
-        ->name('reviews.create');
     Route::post('reviews', [ReviewController::class, 'store'])
         ->middleware('ability:reviews.manage')
         ->name('reviews.store');
-    Route::get('reviews/{review}/edit', [ReviewController::class, 'editPage'])
-        ->middleware('ability:reviews.manage')
-        ->name('reviews.edit');
-    Route::put('reviews/{review}', [ReviewController::class, 'update'])
+    Route::patch('reviews/{review}', [ReviewController::class, 'update'])
         ->middleware('ability:reviews.manage')
         ->name('reviews.update');
     Route::patch('reviews/{review}/toggle-visibility', [ReviewController::class, 'toggleVisibility'])
@@ -245,6 +258,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('ability:dashboard.card.regenerate')
         ->name('cards.regenerate');
 
+    Route::get('cards/codes', [CardCodeController::class, 'indexPage'])
+        ->middleware('ability:dashboard.card.view')
+        ->name('cards.codes.index');
+    Route::get('cards/codes/generate', [CardCodeController::class, 'generateCode'])
+        ->middleware('ability:dashboard.card.manage')
+        ->name('cards.codes.generate');
+    Route::post('cards/codes', [CardCodeController::class, 'store'])
+        ->middleware('ability:dashboard.card.manage')
+        ->name('cards.codes.store');
+    Route::delete('cards/codes/{cardCode}', [CardCodeController::class, 'destroy'])
+        ->middleware('ability:dashboard.card.manage')
+        ->name('cards.codes.destroy');
+
     // Access control
     Route::get('access-control/roles', [RoleController::class, 'indexPage'])
         ->middleware('ability:roles.manage')
@@ -270,8 +296,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('ability:users.view')
         ->name('customers.index');
 
-    Route::get('settings', [UserController::class, 'settingsPage'])
+    Route::redirect('settings', '/settings/general')
+        ->middleware('ability:settings.manage')
         ->name('settings.index');
+    Route::get('settings/{group}', [SettingsController::class, 'show'])
+        ->middleware('ability:settings.manage')
+        ->name('settings.show');
+    Route::match(['post', 'patch'], 'settings/{group}', [SettingsController::class, 'update'])
+        ->middleware('ability:settings.manage')
+        ->whereIn('group', ['general', 'branding', 'business', 'social', 'email'])
+        ->name('settings.update');
 
     // Account
     Route::get('user/account', [UserController::class, 'accountPage'])
