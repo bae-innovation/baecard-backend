@@ -8,6 +8,7 @@ use App\Http\Requests\Contact\StoreContactRequest;
 use App\Models\Contact;
 use App\Services\ContactService;
 use App\Support\InertiaData;
+use App\Support\RoleAbility;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -21,9 +22,16 @@ class ContactController extends Controller
 
     public function indexPage(Request $request)
     {
+        $user = $request->user();
+        $query = Contact::query()->latest();
+
+        if ($user && ! RoleAbility::allows($user, 'contacts.view')) {
+            $query->where('user_id', $user->id);
+        }
+
         return Inertia::render('Contacts/Index', [
             'contacts' => InertiaData::paginate(
-                Contact::latest()->paginate($request->integer('per_page', 10))
+                $query->paginate($request->integer('per_page', 10))
             ),
         ]);
     }

@@ -45,7 +45,7 @@ class AppointmentService
     public function create(array $data): JsonResponse
     {
         $user = request()->user();
-        $customerId = $data['customer_id'] ?? $user?->id;
+        $customerId = ! empty($data['customer_id']) ? (int) $data['customer_id'] : $user?->id;
 
         if (! $customerId) {
             return $this->errorResponse('Customer is required.', null, 422);
@@ -130,10 +130,6 @@ class AppointmentService
 
     private function canManage($user, Appointment $appointment): bool
     {
-        if (RoleAbility::allows($user, 'appointments.manage')) {
-            return true;
-        }
-
-        return $user->id === $appointment->customer_id;
+        return RoleAbility::allows($user, 'appointments.manage');
     }
 }

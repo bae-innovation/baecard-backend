@@ -22,6 +22,11 @@ export type AuthUser = {
     email: string;
     phone?: string | null;
     avatar?: string | null;
+    avatar_url?: string | null;
+    active_template?: number;
+    bio?: string | null;
+    job_title?: string | null;
+    company?: string | null;
     roles?: Array<{ id: number; name: string }>;
 };
 

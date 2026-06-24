@@ -3,6 +3,7 @@ import { KeyRound, Loader2 } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,9 +11,13 @@ import { AuthLayout } from '@/Layouts/AuthLayout';
 
 type LoginPageProps = {
   redirect?: string;
+  cardCode?: {
+    code: string;
+    name: string;
+  } | null;
 };
 
-export default function Login({ redirect }: LoginPageProps) {
+export default function Login({ redirect, cardCode }: LoginPageProps) {
   const { data, setData, post, processing, errors } = useForm({
     email: '',
     password: '',
@@ -30,7 +35,11 @@ export default function Login({ redirect }: LoginPageProps) {
   return (
     <AuthLayout
       title="Sign in"
-      description="Enter your credentials to access the admin console."
+      description={
+        cardCode
+          ? `Sign in to activate card ${cardCode.code}.`
+          : 'Enter your credentials to access your account.'
+      }
       icon={KeyRound}
       footer={
         <p>
@@ -57,6 +66,21 @@ export default function Login({ redirect }: LoginPageProps) {
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {cardCode ? (
+          <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+            <p className="font-medium text-foreground">Activate your card</p>
+            <div className="mt-2 flex items-center gap-2">
+              <Badge variant="secondary" className="font-mono">
+                {cardCode.code}
+              </Badge>
+              <span className="text-muted-foreground">{cardCode.name}</span>
+            </div>
+            <p className="mt-2 text-muted-foreground">
+              This card is linked to your account. Sign in to verify and publish your public profile.
+            </p>
+          </div>
+        ) : null}
+
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input

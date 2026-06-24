@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Appointment\StoreAppointmentRequest;
 use App\Http\Requests\Appointment\UpdateAppointmentRequest;
 use App\Models\Appointment;
-use App\Models\User;
+use App\Models\Customer;
 use App\Services\AppointmentService;
 use App\Support\InertiaData;
 use App\Support\RoleAbility;
@@ -44,7 +44,7 @@ class AppointmentController extends Controller
 
         return Inertia::render('Appointments/Create', [
             'customers' => $canManage
-                ? User::query()->select('id', 'name', 'email')->orderBy('name')->get()
+                ? Customer::query()->select('id', 'name', 'email')->orderBy('name')->get()
                 : [],
             'canManage' => $canManage,
         ]);
@@ -58,7 +58,7 @@ class AppointmentController extends Controller
         return Inertia::render('Appointments/Edit', [
             'appointment' => $appointment,
             'customers' => $canManage
-                ? User::query()->select('id', 'name', 'email')->orderBy('name')->get()
+                ? Customer::query()->select('id', 'name', 'email')->orderBy('name')->get()
                 : [],
             'canManage' => $canManage,
         ]);

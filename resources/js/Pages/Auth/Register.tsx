@@ -3,6 +3,7 @@ import { Loader2, UserPlus } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,9 +11,15 @@ import { AuthLayout } from '@/Layouts/AuthLayout';
 
 type RegisterPageProps = {
   redirect?: string;
+  cardCode?: {
+    code: string;
+    name: string;
+  } | null;
 };
 
-export default function Register({ redirect }: RegisterPageProps) {
+export default function Register({ redirect, cardCode }: RegisterPageProps) {
+  const isCardClaim = Boolean(cardCode);
+
   const { data, setData, post, processing, errors } = useForm({
     name: '',
     email: '',
@@ -35,7 +42,11 @@ export default function Register({ redirect }: RegisterPageProps) {
   return (
     <AuthLayout
       title="Create account"
-      description="Register to claim your BAE Card and publish your profile."
+      description={
+        cardCode
+          ? `Register to claim card ${cardCode.code} and publish your profile.`
+          : 'Register to claim your BAE Card and publish your profile.'
+      }
       icon={UserPlus}
       footer={
         <p>
@@ -50,18 +61,35 @@ export default function Register({ redirect }: RegisterPageProps) {
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Full name</Label>
-          <Input
-            id="name"
-            value={data.name}
-            onChange={(e) => setData('name', e.target.value)}
-            placeholder="Jane Doe"
-            autoComplete="name"
-            disabled={processing}
-          />
-          {errors.name ? <p className="text-sm text-destructive">{errors.name}</p> : null}
-        </div>
+        {cardCode ? (
+          <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+            <p className="font-medium text-foreground">Claim your card</p>
+            <div className="mt-2 flex items-center gap-2">
+              <Badge variant="secondary" className="font-mono">
+                {cardCode.code}
+              </Badge>
+              <span className="text-muted-foreground">{cardCode.name}</span>
+            </div>
+            <p className="mt-2 text-muted-foreground">
+              Create an account, verify your email, and this link will be assigned to you.
+            </p>
+          </div>
+        ) : null}
+
+        {!isCardClaim ? (
+          <div className="space-y-2">
+            <Label htmlFor="name">Full name</Label>
+            <Input
+              id="name"
+              value={data.name}
+              onChange={(e) => setData('name', e.target.value)}
+              placeholder="Jane Doe"
+              autoComplete="name"
+              disabled={processing}
+            />
+            {errors.name ? <p className="text-sm text-destructive">{errors.name}</p> : null}
+          </div>
+        ) : null}
 
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -78,7 +106,12 @@ export default function Register({ redirect }: RegisterPageProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone">Mobile</Label>
+          <Label htmlFor="phone">
+            Mobile
+            {isCardClaim ? (
+              <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
+            ) : null}
+          </Label>
           <Input
             id="phone"
             type="tel"
@@ -105,18 +138,20 @@ export default function Register({ redirect }: RegisterPageProps) {
           {errors.password ? <p className="text-sm text-destructive">{errors.password}</p> : null}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password_confirmation">Confirm password</Label>
-          <Input
-            id="password_confirmation"
-            type="password"
-            value={data.password_confirmation}
-            onChange={(e) => setData('password_confirmation', e.target.value)}
-            placeholder="••••••••"
-            autoComplete="new-password"
-            disabled={processing}
-          />
-        </div>
+        {!isCardClaim ? (
+          <div className="space-y-2">
+            <Label htmlFor="password_confirmation">Confirm password</Label>
+            <Input
+              id="password_confirmation"
+              type="password"
+              value={data.password_confirmation}
+              onChange={(e) => setData('password_confirmation', e.target.value)}
+              placeholder="••••••••"
+              autoComplete="new-password"
+              disabled={processing}
+            />
+          </div>
+        ) : null}
 
         <Button type="submit" className="w-full" disabled={processing}>
           {processing ? (

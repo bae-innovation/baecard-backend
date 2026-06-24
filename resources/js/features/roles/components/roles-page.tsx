@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { DeleteRoleDialog } from '@/features/roles/components/delete-role-dialog';
 import { RoleFormDialog } from '@/features/roles/components/role-form-dialog';
 import type { Role } from '@/features/roles/schemas/role.schema';
+import { useAuth } from '@/hooks/useAuth';
 import { useInertiaPagination } from '@/hooks/useInertiaPagination';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 import type { LaravelPaginator } from '@/types/inertia';
@@ -44,6 +45,8 @@ type RolesPageProps = {
 };
 
 export function RolesPage({ roles }: RolesPageProps) {
+  const { hasAbility } = useAuth();
+  const canManage = hasAbility('roles.manage');
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(roles, ['roles']);
   const [globalFilter, setGlobalFilter] = React.useState('');
@@ -113,23 +116,27 @@ export function RolesPage({ roles }: RolesPageProps) {
 
           return (
             <DataTableRowActionsMenu label={`Actions for ${role.name}`}>
-              <TableDropdownAction icon={Pencil} onClick={() => openEdit(role)}>
-                Edit
-              </TableDropdownAction>
-              <TableDropdownAction
-                icon={Trash2}
-                className="text-destructive focus:text-destructive"
-                disabled={isProtected}
-                onClick={() => openDelete(role)}
-              >
-                Delete
-              </TableDropdownAction>
+              {canManage ? (
+                <>
+                  <TableDropdownAction icon={Pencil} onClick={() => openEdit(role)}>
+                    Edit
+                  </TableDropdownAction>
+                  <TableDropdownAction
+                    icon={Trash2}
+                    className="text-destructive focus:text-destructive"
+                    disabled={isProtected}
+                    onClick={() => openDelete(role)}
+                  >
+                    Delete
+                  </TableDropdownAction>
+                </>
+              ) : null}
             </DataTableRowActionsMenu>
           );
         },
       }),
     ],
-    [openDelete, openEdit],
+    [canManage, openDelete, openEdit],
   );
 
   const table = useReactTable({
@@ -155,10 +162,12 @@ export function RolesPage({ roles }: RolesPageProps) {
           color="violet"
           description="Manage platform roles and define who can access each area."
         />
-        <Button type="button" className="shrink-0" onClick={openCreate}>
-          <Plus className="size-4" />
-          Create role
-        </Button>
+        {canManage ? (
+          <Button type="button" className="shrink-0" onClick={openCreate}>
+            <Plus className="size-4" />
+            Create role
+          </Button>
+        ) : null}
       </div>
 
       <DataTableLayout

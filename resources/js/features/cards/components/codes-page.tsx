@@ -9,11 +9,13 @@ import {
 import {
   Copy,
   ExternalLink,
+  Eye,
   Loader2,
   Plus,
   QrCode,
   RefreshCw,
   Trash2,
+  UserRoundPlus,
 } from 'lucide-react';
 import * as React from 'react';
 import QRCode from 'react-qr-code';
@@ -54,8 +56,12 @@ import {
   cardCodeFormSchema,
   generateCodeResponseSchema,
   type CardCode,
+  type CardCodeAssignableUser,
   type CardCodeFormValues,
 } from '@/features/cards/schemas/card-code.schema';
+import { CardCodeDetailDialog } from '@/features/cards/components/card-code-detail-dialog';
+import { CardCodeAssignUserDialog } from '@/features/cards/components/card-code-assign-user-dialog';
+import { CardCodeUserSearchPicker } from '@/features/cards/components/card-code-user-search-picker';
 import { useAuth } from '@/hooks/useAuth';
 import { useCopyToClipboardWithStatus } from '@/hooks/useCopyToClipboardWithStatus';
 import { useInertiaPagination } from '@/hooks/useInertiaPagination';
@@ -69,12 +75,28 @@ type CodesPageProps = {
   codes: LaravelPaginator<CardCode>;
 };
 
-function StatusBadge({ status }: { status: CardCode['status'] }) {
-  return (
-    <Badge variant={status === 'published' ? 'default' : 'secondary'}>
-      {status === 'published' ? 'Published' : 'Pending'}
-    </Badge>
-  );
+type CardWorkflowStatus = 'verified' | 'awaiting_verification' | 'unassigned';
+
+function getWorkflowStatus(card: CardCode): CardWorkflowStatus {
+  if (card.status === 'published') {
+    return 'verified';
+  }
+
+  return card.user_id != null ? 'awaiting_verification' : 'unassigned';
+}
+
+function WorkflowBadge({ card }: { card: CardCode }) {
+  const workflow = getWorkflowStatus(card);
+
+  if (workflow === 'verified') {
+    return <Badge variant="default">Verified</Badge>;
+  }
+
+  if (workflow === 'awaiting_verification') {
+    return <Badge variant="secondary">Awaiting verification</Badge>;
+  }
+
+  return <Badge variant="outline">Unassigned</Badge>;
 }
 
 export function CodesPage({ codes }: CodesPageProps) {
@@ -87,10 +109,14 @@ export function CodesPage({ codes }: CodesPageProps) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [createOpen, setCreateOpen] = React.useState(false);
   const [qrOpen, setQrOpen] = React.useState(false);
+  const [detailOpen, setDetailOpen] = React.useState(false);
+  const [assignOpen, setAssignOpen] = React.useState(false);
   const [selectedCode, setSelectedCode] = React.useState<CardCode | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [pendingDeleteId, setPendingDeleteId] = React.useState<number | null>(null);
+  const [selectedAssignUser, setSelectedAssignUser] =
+    React.useState<CardCodeAssignableUser | null>(null);
 
   const form = useForm<CardCodeFormValues>({
     resolver: zodResolver(cardCodeFormSchema),
@@ -104,13 +130,14 @@ export function CodesPage({ codes }: CodesPageProps) {
   React.useEffect(() => {
     if (createOpen) {
       form.reset({ code: '', name: '', phone: '' });
+      setSelectedAssignUser(null);
     }
   }, [createOpen, form]);
 
   const generateCode = React.useCallback(async () => {
     setIsGenerating(true);
     try {
-      const response = await fetch('/cards/codes/generate', {
+      const response = await fetch('/cards/generate', {
         headers: {
           Accept: 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
@@ -132,6 +159,16 @@ export function CodesPage({ codes }: CodesPageProps) {
       setIsGenerating(false);
     }
   }, [form]);
+
+  const openAssign = React.useCallback((code: CardCode) => {
+    setSelectedCode(code);
+    setAssignOpen(true);
+  }, []);
+
+  const openDetails = React.useCallback((code: CardCode) => {
+    setSelectedCode(code);
+    setDetailOpen(true);
+  }, []);
 
   const columns = React.useMemo(
     () => [
@@ -191,13 +228,20 @@ export function CodesPage({ codes }: CodesPageProps) {
           </Button>
         ),
       }),
-      columnHelper.accessor('status', {
-        header: 'Status',
-        cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+      columnHelper.display({
+        id: 'workflow',
+        header: 'Workflow',
+        cell: ({ row }) => <WorkflowBadge card={row.original} />,
       }),
       createDataTableActionsColumn<CardCode>({
         cell: ({ row }) => (
           <DataTableRowActionsMenu label={`Actions for ${row.original.code}`}>
+            <TableDropdownAction
+              icon={Eye}
+              onClick={() => openDetails(row.original)}
+            >
+              View details
+            </TableDropdownAction>
             <TableDropdownAction
               icon={Copy}
               onClick={() => copy(row.original.scan_url)}
@@ -221,13 +265,20 @@ export function CodesPage({ codes }: CodesPageProps) {
               </TableDropdownAction>
             ) : null}
             {canManage ? (
-              <TableDropdownAction
-                icon={Trash2}
-                className="text-destructive focus:text-destructive"
-                disabled={pendingDeleteId === row.original.id}
-                onClick={() => {
+              <>
+                <TableDropdownAction
+                  icon={UserRoundPlus}
+                  onClick={() => openAssign(row.original)}
+                >
+                  Assign user
+                </TableDropdownAction>
+                <TableDropdownAction
+                  icon={Trash2}
+                  className="text-destructive focus:text-destructive"
+                  disabled={pendingDeleteId === row.original.id}
+                  onClick={() => {
                   setPendingDeleteId(row.original.id);
-                  router.delete(`/cards/codes/${row.original.id}`, {
+                  router.delete(`/cards/${row.original.id}`, {
                     preserveScroll: true,
                     only: ['codes'],
                     onSuccess: () => showMutationSuccess('Card code deleted'),
@@ -238,12 +289,13 @@ export function CodesPage({ codes }: CodesPageProps) {
               >
                 Delete
               </TableDropdownAction>
+              </>
             ) : null}
           </DataTableRowActionsMenu>
         ),
       }),
     ],
-    [canManage, copy, isCopied, pendingDeleteId],
+    [canManage, copy, isCopied, openAssign, openDetails, pendingDeleteId],
   );
 
   const table = useReactTable({
@@ -263,11 +315,12 @@ export function CodesPage({ codes }: CodesPageProps) {
   const handleCreate = form.handleSubmit((values) => {
     setIsSubmitting(true);
     router.post(
-      '/cards/codes',
+      '/cards',
       {
         code: values.code.toUpperCase(),
         name: values.name,
         phone: values.phone || null,
+        user_id: selectedAssignUser?.id ?? null,
       },
       {
         preserveScroll: true,
@@ -290,8 +343,8 @@ export function CodesPage({ codes }: CodesPageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <PageTitle
-          title="Card Codes"
-          description="Create NFC/QR card codes, track pending cards, and manage published profiles."
+          title="Cards"
+          description="Generate a code and QR, assign a customer, then the user verifies to activate their public profile link."
           icon={QrCode}
           color="teal"
         />
@@ -331,11 +384,12 @@ export function CodesPage({ codes }: CodesPageProps) {
       />
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create card code</DialogTitle>
+            <DialogTitle>Create card</DialogTitle>
             <DialogDescription>
-              Generate a unique code, add recipient details, and create a scannable card link.
+              Generate a unique code and QR link. Optionally assign a customer now, or leave
+              unassigned for the recipient to register when they scan the card.
             </DialogDescription>
           </DialogHeader>
 
@@ -409,6 +463,23 @@ export function CodesPage({ codes }: CodesPageProps) {
                 )}
               />
 
+              <div className="space-y-2 rounded-lg border p-4">
+                <div>
+                  <p className="text-sm font-medium">Assign customer (optional)</p>
+                  <p className="text-xs text-muted-foreground">
+                    Search by email or phone if the recipient already has an account.
+                    You can also assign later from the row actions menu.
+                  </p>
+                </div>
+                <CardCodeUserSearchPicker
+                  selectedUser={selectedAssignUser}
+                  onSelect={setSelectedAssignUser}
+                  disabled={isSubmitting}
+                  emailInputId="create-assign-email"
+                  phoneInputId="create-assign-phone"
+                />
+              </div>
+
               <DialogFooter className="gap-2 sm:gap-0">
                 <Button
                   type="button"
@@ -433,6 +504,18 @@ export function CodesPage({ codes }: CodesPageProps) {
           </Form>
         </DialogContent>
       </Dialog>
+
+      <CardCodeAssignUserDialog
+        open={assignOpen}
+        onOpenChange={setAssignOpen}
+        cardCode={selectedCode}
+      />
+
+      <CardCodeDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        cardCode={selectedCode}
+      />
 
       <Dialog open={qrOpen} onOpenChange={setQrOpen}>
         <DialogContent className="sm:max-w-sm">

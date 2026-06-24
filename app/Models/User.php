@@ -33,6 +33,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'phone',
+        'avatar',
+        'bio',
+        'job_title',
+        'company',
+        'active_template',
+        'profile_visibility',
+        'template_settings',
     ];
 
     /**
@@ -46,6 +53,13 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
+     * @var list<string>
+     */
+    protected $appends = [
+        'avatar_url',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -55,6 +69,9 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'active_template' => 'integer',
+            'profile_visibility' => 'array',
+            'template_settings' => 'array',
         ];
     }
 
@@ -66,9 +83,13 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->notify(new VerifyEmailNotification);
     }
 
-    public function businessCard(): HasOne
+    public function getAvatarUrlAttribute(): ?string
     {
-        return $this->hasOne(BusinessCard::class);
+        if (! $this->avatar) {
+            return null;
+        }
+
+        return asset($this->avatar);
     }
 
     public function cardCode(): HasOne
@@ -79,6 +100,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function customerSocials(): HasMany
     {
         return $this->hasMany(CustomerSocial::class, 'customer_id');
+    }
+
+    public function userServices(): HasMany
+    {
+        return $this->hasMany(UserService::class)->orderBy('sort_order');
     }
 
     public function orders(): HasMany

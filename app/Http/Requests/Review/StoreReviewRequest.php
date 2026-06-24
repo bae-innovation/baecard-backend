@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Review;
 
+use App\Support\RoleAbility;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreReviewRequest extends FormRequest
@@ -15,6 +16,15 @@ class StoreReviewRequest extends FormRequest
     {
         if ($this->has('title') && $this->input('title') === '') {
             $this->merge(['title' => null]);
+        }
+
+        $user = $this->user();
+
+        if ($user && ! RoleAbility::allows($user, 'reviews.manage')) {
+            $this->merge([
+                'name' => $user->name,
+                'email' => $user->email,
+            ]);
         }
     }
 

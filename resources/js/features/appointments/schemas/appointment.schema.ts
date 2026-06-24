@@ -26,7 +26,10 @@ export const appointmentSchema = z.object({
 export type Appointment = z.infer<typeof appointmentSchema>;
 
 export const appointmentFormSchema = z.object({
-  customer_id: z.coerce.number().optional().or(z.literal('')),
+  customer_id: z
+    .union([z.literal(''), z.coerce.number().int().positive()])
+    .optional()
+    .transform((value) => (value === '' ? undefined : value)),
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().optional().or(z.literal('')),
   appointment_date: z.string().min(1, 'Date is required'),

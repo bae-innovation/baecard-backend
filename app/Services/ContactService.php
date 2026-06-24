@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Contact;
+use App\Support\RoleAbility;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 
 class ContactService
@@ -12,14 +14,14 @@ class ContactService
 
     public function list(): JsonResponse
     {
-        $contacts = Contact::latest()->paginate(10);
+        $contacts = $this->scopedQuery()->latest()->paginate(10);
 
         return $this->successResponse($contacts, 'Contacts retrieved successfully.');
     }
 
     public function find(int $id): JsonResponse
     {
-        $contact = Contact::find($id);
+        $contact = $this->scopedQuery()->find($id);
 
         if (! $contact) {
             return $this->notFoundResponse('Contact not found.');
@@ -30,7 +32,10 @@ class ContactService
 
     public function create(array $data): JsonResponse
     {
+        $user = request()->user();
+
         $contact = Contact::create([
+            'user_id' => $user?->id,
             'name' => $data['name'],
             'email' => $data['email'],
             'message' => $data['message'],
@@ -42,7 +47,7 @@ class ContactService
 
     public function markRead(int $id): JsonResponse
     {
-        $contact = Contact::find($id);
+        $contact = $this->scopedQuery()->find($id);
 
         if (! $contact) {
             return $this->notFoundResponse('Contact not found.');
@@ -64,5 +69,17 @@ class ContactService
         $contact->delete();
 
         return $this->successResponse(null, 'Contact deleted successfully.');
+    }
+
+    public function scopedQuery(): Builder
+    {
+        $query = Contact::query();
+        $user = request()->user();
+
+        if ($user && ! RoleAbility::allows($user, 'contacts.view')) {
+            $query->where('user_id', $user->id);
+        }
+
+        return $query;
     }
 }

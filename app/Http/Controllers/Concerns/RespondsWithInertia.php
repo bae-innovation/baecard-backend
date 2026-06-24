@@ -24,4 +24,12 @@ trait RespondsWithInertia
             $routeParameters,
         );
     }
+
+    protected function webOrBack(
+        Request $request,
+        JsonResponse $response,
+        string $successMessage,
+    ): JsonResponse|RedirectResponse {
+        return InertiaData::webOrBack($request, $response, $successMessage);
+    }
 }

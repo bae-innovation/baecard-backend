@@ -46,6 +46,15 @@ export const generateCodeResponseSchema = z.object({
 
 export type GenerateCodeResponse = z.infer<typeof generateCodeResponseSchema>;
 
+export const cardCodeAssignableUserSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  email: z.string().email(),
+  phone: z.string().nullable().optional(),
+});
+
+export type CardCodeAssignableUser = z.infer<typeof cardCodeAssignableUserSchema>;
+
 export const publicProfileCardSchema = z.object({
   code: z.string(),
   name: z.string(),
@@ -61,6 +70,24 @@ export const publicProfileUserSchema = z.object({
   name: z.string(),
   email: z.string(),
   phone: z.string().nullable().optional(),
+  bio: z.string().nullable().optional(),
+  job_title: z.string().nullable().optional(),
+  company: z.string().nullable().optional(),
+  avatar_url: z.string().nullable().optional(),
+  active_template: z.coerce.number().int().optional(),
+  profile_visibility: z
+    .object({
+      bio: z.boolean().optional(),
+      phones: z.boolean().optional(),
+      emails: z.boolean().optional(),
+      social: z.boolean().optional(),
+      services: z.boolean().optional(),
+      cover: z.boolean().optional(),
+      qr: z.boolean().optional(),
+    })
+    .nullable()
+    .optional(),
+  cover_image_url: z.string().nullable().optional(),
 });
 
 export type PublicProfileUser = z.infer<typeof publicProfileUserSchema>;

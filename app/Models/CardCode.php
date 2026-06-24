@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
 
 class CardCode extends Model
 {
@@ -38,7 +37,7 @@ class CardCode extends Model
 
     public function getScanUrlAttribute(): string
     {
-        return rtrim(config('baecard.public_url'), '/').'/scan/'.$this->code;
+        return rtrim(config('baecard.public_url'), '/').'/'.$this->code;
     }
 
     public function getProfileUrlAttribute(): ?string
@@ -47,8 +46,7 @@ class CardCode extends Model
             return null;
         }
 
-        return rtrim(config('baecard.public_url'), '/').'/profile/'
-            .Str::slug($this->user->name).'/'.$this->code;
+        return $this->scan_url;
     }
 
     public function isPending(): bool

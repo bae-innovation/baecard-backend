@@ -26,7 +26,11 @@ class ReviewController extends Controller
         $user = $request->user();
         $query = Review::with(['user:id,name']);
 
-        if (! $user || ! RoleAbility::allows($user, 'reviews.view')) {
+        if ($user && RoleAbility::allows($user, 'reviews.view')) {
+            // Staff sees all reviews.
+        } elseif ($user && RoleAbility::allows($user, 'reviews.view_own')) {
+            $query->where('user_id', $user->id);
+        } else {
             $query->where('is_visible', true);
         }
 

@@ -214,10 +214,10 @@ describe('User Management - Role-based access', function () {
         ])->assertStatus(403);
     });
 
-    it('allows Admin role to create users but not delete', function () {
+    it('allows Admin role to create and delete staff users', function () {
         [, $token] = createVerifiedUserWithRole('Admin');
         $target = User::factory()->create();
-        $target->assignRole('User');
+        $target->assignRole('Marketing');
 
         $this->withHeaders([
             'Authorization' => 'Bearer ' . $token,
@@ -226,23 +226,29 @@ describe('User Management - Role-based access', function () {
             'email' => 'admincreated@example.com',
             'password' => 'password123',
             'password_confirmation' => 'password123',
-            'role' => 'User',
+            'role' => 'Marketing',
         ])->assertStatus(201);
 
         $this->withHeaders([
             'Authorization' => 'Bearer ' . $token,
-        ])->deleteJson('/api/user/delete/' . $target->id)->assertStatus(403);
+        ])->deleteJson('/api/user/delete/' . $target->id)->assertStatus(200);
     });
 
-    it('denies Admin from assigning roles', function () {
+    it('allows Admin to assign staff roles but not SuperAdmin', function () {
         [, $token] = createVerifiedUserWithRole('Admin');
         $target = User::factory()->create();
-        $target->assignRole('User');
+        $target->assignRole('Marketing');
 
         $this->withHeaders([
             'Authorization' => 'Bearer ' . $token,
         ])->patchJson('/api/user/assign-role/' . $target->id, [
             'role' => 'Admin',
+        ])->assertStatus(200);
+
+        $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->patchJson('/api/user/assign-role/' . $target->id, [
+            'role' => 'SuperAdmin',
         ])->assertStatus(403);
     });
 });

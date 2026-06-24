@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\UserRole;
 use App\Mail\ResetPasswordMail;
 use App\Models\User;
+use App\Support\CardCodePath;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
@@ -28,7 +29,7 @@ class AuthService
     {
         return DB::transaction(function () use ($data) {
             $user = User::create([
-                'name' => $data['name'],
+                'name' => $this->resolveRegistrationName($data),
                 'email' => $data['email'],
                 'password' => $data['password'],
                 'phone' => $data['phone'] ?? null,
@@ -57,7 +58,7 @@ class AuthService
     {
         return DB::transaction(function () use ($data) {
             $user = User::create([
-                'name' => $data['name'],
+                'name' => $this->resolveRegistrationName($data),
                 'email' => $data['email'],
                 'password' => $data['password'],
                 'phone' => $data['phone'] ?? null,
@@ -73,11 +74,39 @@ class AuthService
     }
 
     /**
+     * @param  array{name?: string|null, email: string}  $data
+     */
+    private function resolveRegistrationName(array $data): string
+    {
+        $name = trim((string) ($data['name'] ?? ''));
+
+        if ($name !== '') {
+            return $name;
+        }
+
+        $localPart = Str::before($data['email'], '@');
+
+        return Str::title(str_replace(['.', '_', '-'], ' ', $localPart));
+    }
+
+    /**
+     * Resolve a card-code redirect path when present.
+     */
+    public function resolveCardRedirect(?string $redirect): ?string
+    {
+        if (CardCodePath::isCardCodePath($redirect)) {
+            return $redirect;
+        }
+
+        return null;
+    }
+
+    /**
      * Resolve post-auth redirect for card scan claim flow.
      */
     public function resolveWebRedirect(?string $redirect): string
     {
-        if ($redirect && str_starts_with($redirect, '/scan/')) {
+        if ($redirect && CardCodePath::isCardCodePath($redirect)) {
             return $redirect;
         }
 

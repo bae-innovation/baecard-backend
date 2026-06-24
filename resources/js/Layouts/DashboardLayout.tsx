@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { AppHead } from '@/components/shared/app-head';
 import { AppSettingsSync } from '@/components/shared/app-settings-sync';
+import { FlashToaster } from '@/components/shared/flash-toaster';
 import { AppSidebar } from '@/components/shared/sidebar/app-sidebar';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
 import {
@@ -69,6 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <>
             <AppHead />
             <AppSettingsSync />
+            <FlashToaster />
             <SidebarProvider>
             <AppSidebar />
             <SidebarInset>

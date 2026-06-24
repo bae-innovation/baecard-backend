@@ -5,17 +5,22 @@ const ROLE_ABILITIES: Record<string, readonly string[]> = {
   'users.view': ['SuperAdmin', 'Admin', 'Marketing'],
   'users.create': ['SuperAdmin', 'Admin'],
   'users.update': ['SuperAdmin', 'Admin'],
-  'users.delete': ['SuperAdmin'],
+  'users.delete': ['SuperAdmin', 'Admin'],
   'users.assign_role': ['SuperAdmin', 'Admin'],
-  'roles.manage': ['SuperAdmin'],
+  'roles.manage': ['SuperAdmin', 'Admin'],
   'dashboard.card.view': ['SuperAdmin', 'Admin', 'Marketing'],
+  'dashboard.card.manage': ['SuperAdmin', 'Admin'],
   'dashboard.card.generate': ['SuperAdmin', 'Admin'],
   'dashboard.card.regenerate': ['SuperAdmin'],
   'contacts.view': ['SuperAdmin', 'Admin'],
+  'contacts.view_own': ['User'],
+  'contacts.create': ['User'],
   'contacts.delete': ['SuperAdmin', 'Admin'],
-  'products.view': ['SuperAdmin', 'Admin', 'Marketing'],
+  'products.view': ['SuperAdmin', 'Admin', 'Marketing', 'User'],
   'products.manage': ['SuperAdmin', 'Admin', 'Marketing'],
   'reviews.view': ['SuperAdmin', 'Admin'],
+  'reviews.view_own': ['User'],
+  'reviews.create': ['User'],
   'reviews.manage': ['SuperAdmin', 'Admin'],
   'vendors.view': ['SuperAdmin', 'Admin', 'Marketing'],
   'vendors.manage': ['SuperAdmin', 'Admin', 'Marketing'],
@@ -24,6 +29,8 @@ const ROLE_ABILITIES: Record<string, readonly string[]> = {
   'appointments.view': ['SuperAdmin', 'Admin', 'Marketing'],
   'appointments.manage': ['SuperAdmin', 'Admin', 'Marketing'],
   'appointments.view_own': ['User'],
+  'profile.manage': ['User'],
+  'settings.manage': ['SuperAdmin', 'Admin'],
 };
 
 export function derivePermissionsFromRoles(
@@ -54,10 +61,22 @@ export function resolvePermissions(
   permissions: readonly { name: string }[],
   roleNames: readonly string[] | undefined,
 ): Permissions {
-  if (permissions.length > 0) {
+  const derived = derivePermissionsFromRoles(roleNames ?? []);
+
+  if (permissions.length === 0) {
+    return derived;
+  }
+
+  if ((roleNames?.length ?? 0) === 0) {
     return permissions as Permissions;
   }
-  return derivePermissionsFromRoles(roleNames ?? []);
+
+  const abilityNames = new Set<string>([
+    ...permissions.map((permission) => permission.name),
+    ...derived.map((permission) => permission.name),
+  ]);
+
+  return [...abilityNames].map((name, index) => ({ id: index + 1, name }));
 }
 
 export function hasAbilityForUser(
@@ -66,4 +85,14 @@ export function hasAbilityForUser(
   ability: string,
 ): boolean {
   return hasAbility(resolvePermissions(permissions, roleNames), ability);
+}
+
+export function hasAnyAbilityForUser(
+  permissions: readonly { name: string }[],
+  roleNames: readonly string[] | undefined,
+  abilities: readonly string[],
+): boolean {
+  return abilities.some((ability) =>
+    hasAbilityForUser(permissions, roleNames, ability),
+  );
 }

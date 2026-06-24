@@ -45,6 +45,12 @@ export type NavItem = {
   icon?: LucideIcon;
   isActive?: boolean;
   badge?: number;
+  /** Show when the user has any of these abilities. Omit to always show. */
+  requiredAbilities?: readonly string[];
+  /** Always show in the sidebar regardless of abilities. */
+  alwaysVisible?: boolean;
+  /** Show a dot when this template is active. */
+  activeIndicator?: boolean;
   items?: ReadonlyArray<NavItem>;
 };
 
@@ -110,6 +116,9 @@ function NavSubItem({ subItem }: { subItem: NavItem }) {
         >
           {subItem.icon && <subItem.icon />}
           <span className="min-w-0 flex-1 truncate">{subItem.title}</span>
+          {subItem.activeIndicator ? (
+            <span className="size-2 shrink-0 rounded-full bg-emerald-500" aria-label="Active template" />
+          ) : null}
           {subItem.badge ? (
             <NavUnseenIndicator count={subItem.badge} className="shrink-0" />
           ) : null}

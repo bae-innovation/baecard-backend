@@ -17,6 +17,10 @@ class InertiaData
 
     public static function prefersJson(Request $request): bool
     {
+        if ($request->header('X-Inertia')) {
+            return false;
+        }
+
         return $request->expectsJson() || $request->is('api/*');
     }
 
@@ -42,5 +46,25 @@ class InertiaData
         return redirect()
             ->route($successRoute, $routeParameters)
             ->with('success', $successMessage);
+    }
+
+    public static function webOrBack(
+        Request $request,
+        JsonResponse $response,
+        string $successMessage,
+    ): JsonResponse|RedirectResponse {
+        if (self::prefersJson($request)) {
+            return $response;
+        }
+
+        if ($response->getStatusCode() >= 400) {
+            $data = json_decode($response->getContent(), true);
+
+            return back()->withErrors([
+                'form' => $data['message'] ?? 'An error occurred.',
+            ]);
+        }
+
+        return back()->with('success', $successMessage);
     }
 }

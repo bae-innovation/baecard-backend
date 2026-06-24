@@ -1,7 +1,7 @@
 import { usePage } from '@inertiajs/react';
 
 import type { SharedPageProps } from '@/types/inertia';
-import { hasAbilityForUser } from '@/lib/permissions';
+import { hasAbilityForUser, hasAnyAbilityForUser } from '@/lib/permissions';
 
 export function useAuth() {
     const { auth } = usePage<{ auth: SharedPageProps['auth'] }>().props;
@@ -15,6 +15,12 @@ export function useAuth() {
                 auth.permissions,
                 auth.user?.roles?.map((role) => role.name),
                 ability,
+            ),
+        hasAnyAbility: (abilities: readonly string[]) =>
+            hasAnyAbilityForUser(
+                auth.permissions,
+                auth.user?.roles?.map((role) => role.name),
+                abilities,
             ),
     };
 }

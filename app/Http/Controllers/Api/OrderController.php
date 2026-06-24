@@ -7,9 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Order\AddPaymentRequest;
 use App\Http\Requests\Order\StoreOrderRequest;
 use App\Http\Requests\Order\UpdateOrderRequest;
+use App\Models\Customer;
 use App\Models\Order;
-use App\Models\Product;
-use App\Models\User;
 use App\Services\OrderService;
 use App\Support\InertiaData;
 use Illuminate\Http\Request;
@@ -42,7 +41,7 @@ class OrderController extends Controller
                 ->select('id', 'name', 'price')
                 ->orderBy('name')
                 ->get(),
-            'customers' => User::query()
+            'customers' => Customer::query()
                 ->select('id', 'name', 'email')
                 ->orderBy('name')
                 ->get(),
@@ -60,7 +59,7 @@ class OrderController extends Controller
                 ->select('id', 'name', 'price')
                 ->orderBy('name')
                 ->get(),
-            'customers' => User::query()
+            'customers' => Customer::query()
                 ->select('id', 'name', 'email')
                 ->orderBy('name')
                 ->get(),

@@ -18,6 +18,17 @@ class SettingsController extends Controller
         protected SettingService $settingService,
     ) {}
 
+    public function appearancePage(Request $request)
+    {
+        if (InertiaData::prefersJson($request)) {
+            abort(404);
+        }
+
+        return Inertia::render('Settings/Index', [
+            'group' => 'appearance',
+        ]);
+    }
+
     public function show(Request $request, string $group)
     {
         if ($group === 'appearance') {

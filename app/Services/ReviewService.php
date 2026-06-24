@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Review;
+use App\Support\RoleAbility;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 
@@ -68,6 +69,12 @@ class ReviewService
 
     public function update(int $id, array $data): JsonResponse
     {
+        $user = request()->user();
+
+        if (! $user || ! RoleAbility::allows($user, 'reviews.manage')) {
+            return $this->forbiddenResponse('You are not allowed to update reviews.');
+        }
+
         $review = Review::find($id);
 
         if (! $review) {
@@ -84,6 +91,12 @@ class ReviewService
 
     public function toggleVisibility(int $id): JsonResponse
     {
+        $user = request()->user();
+
+        if (! $user || ! RoleAbility::allows($user, 'reviews.manage')) {
+            return $this->forbiddenResponse('You are not allowed to update review visibility.');
+        }
+
         $review = Review::find($id);
 
         if (! $review) {
@@ -97,6 +110,12 @@ class ReviewService
 
     public function delete(int $id): JsonResponse
     {
+        $user = request()->user();
+
+        if (! $user || ! RoleAbility::allows($user, 'reviews.manage')) {
+            return $this->forbiddenResponse('You are not allowed to delete reviews.');
+        }
+
         $review = Review::find($id);
 
         if (! $review) {

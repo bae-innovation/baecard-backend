@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Support\CardCodePath;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RegisterRequest extends FormRequest
@@ -21,12 +22,24 @@ class RegisterRequest extends FormRequest
      */
     public function rules(): array
     {
+        $isCardClaim = $this->isCardClaimRegistration();
+
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [$isCardClaim ? 'nullable' : 'required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => $isCardClaim
+                ? ['required', 'string', 'min:8']
+                : ['required', 'string', 'min:8', 'confirmed'],
             'phone' => ['nullable', 'string', 'max:20'],
+            'redirect' => ['nullable', 'string'],
         ];
+    }
+
+    private function isCardClaimRegistration(): bool
+    {
+        $redirect = $this->input('redirect') ?? $this->query('redirect');
+
+        return CardCodePath::isCardCodePath(is_string($redirect) ? $redirect : null);
     }
 
     /**

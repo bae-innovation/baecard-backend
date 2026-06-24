@@ -15,6 +15,9 @@ type ReviewFormDialogProps = {
   review?: Review | null;
   onSubmit: (values: ReviewFormValues) => Promise<void>;
   isSubmitting?: boolean;
+  defaultValues?: Partial<ReviewFormValues>;
+  lockName?: boolean;
+  lockEmail?: boolean;
 };
 
 export function ReviewFormDialog({
@@ -24,6 +27,9 @@ export function ReviewFormDialog({
   review,
   onSubmit,
   isSubmitting = false,
+  defaultValues,
+  lockName = false,
+  lockEmail = false,
 }: ReviewFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -43,6 +49,9 @@ export function ReviewFormDialog({
           variant="dialog"
           review={review}
           isSubmitting={isSubmitting}
+          defaultValues={defaultValues}
+          lockName={lockName}
+          lockEmail={lockEmail}
           onCancel={() => onOpenChange(false)}
           onSubmit={onSubmit}
           submitLabel={mode === 'create' ? 'Create review' : 'Save changes'}

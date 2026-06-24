@@ -16,6 +16,7 @@ describe('Auth - Register', function () {
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password123',
+            'password_confirmation' => 'password123',
             'phone' => '1234567890',
         ]);
 

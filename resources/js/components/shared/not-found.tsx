@@ -38,7 +38,7 @@ export function NotFound() {
               <span className="text-sm font-medium">Dashboard</span>
             </Link>
             <Link
-              href="/users"
+              href="/access-control/users"
               className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
             >
               <Users className="mb-2 size-6 text-green-500" />

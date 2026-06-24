@@ -105,8 +105,8 @@ function UserFormDialogContent({
         </DialogTitle>
         <DialogDescription>
           {mode === 'create'
-            ? 'Add a new team member with credentials. New users are assigned the User role by default.'
-            : 'Update profile details for this user.'}
+            ? 'Add a new team member with credentials and role.'
+            : 'Update profile details for this team user.'}
         </DialogDescription>
       </DialogHeader>
 

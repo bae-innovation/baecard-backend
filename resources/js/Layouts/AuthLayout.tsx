@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { AppBrandLogo } from '@/components/shared/app-brand-logo';
 import { AppHead } from '@/components/shared/app-head';
 import { AppSettingsSync } from '@/components/shared/app-settings-sync';
+import { FlashToaster } from '@/components/shared/flash-toaster';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +32,7 @@ export function AuthLayout({
         <>
             <AppHead title={title} />
             <AppSettingsSync />
+            <FlashToaster />
             <div className="relative flex min-h-svh flex-col bg-background lg:flex-row">
                 <div className="relative hidden flex-1 overflow-hidden lg:flex">
                     <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-violet-600 to-teal-500" />

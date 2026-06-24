@@ -1,0 +1,1 @@
+function p(a,r,e){const n=new FormData;return Object.entries(a).forEach(([o,t])=>{if(!(t===void 0||t==="")){if(typeof t=="boolean"){n.append(o,t?"1":"0");return}n.append(o,String(t))}}),r&&Object.entries(r).forEach(([o,t])=>{t&&n.append(o,t)}),e&&n.append("_method",e),n}export{p as o};

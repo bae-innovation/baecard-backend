@@ -46,7 +46,7 @@ type AppointmentsPageProps = {
 };
 
 export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
-  const { hasAbility, user } = useAuth();
+  const { hasAbility } = useAuth();
   const canManage = hasAbility('appointments.manage');
   const canCreate = canManage || hasAbility('appointments.view_own');
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
@@ -61,9 +61,8 @@ export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
   const [isDeleting, setIsDeleting] = React.useState(false);
 
   const canModifyAppointment = React.useCallback(
-    (appointment: Appointment) =>
-      canManage || appointment.customer_id === user?.id,
-    [canManage, user?.id],
+    () => canManage,
+    [canManage],
   );
 
   const openDelete = React.useCallback((appointment: Appointment) => {
@@ -120,7 +119,7 @@ export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
             <TableDropdownAction icon={Eye} onClick={() => openView(row.original)}>
               View
             </TableDropdownAction>
-            {canModifyAppointment(row.original) ? (
+            {canModifyAppointment() ? (
               <>
                 <TableDropdownAction
                   icon={Pencil}

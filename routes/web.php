@@ -5,13 +5,16 @@ use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\Auth\ForgotPasswordController;
-use App\Http\Controllers\Api\BusinessCardController;
 use App\Http\Controllers\Api\CardCodeController;
 use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\Customer\CustomerController;
 use App\Http\Controllers\Api\CustomerSocialController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\ProfileServiceController;
+use App\Http\Controllers\Api\ProfileSocialController;
+use App\Http\Controllers\Api\ProfileTemplateController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\Role\RoleController;
 use App\Http\Controllers\Api\ScanController;
@@ -28,7 +31,7 @@ use Inertia\Inertia;
 |--------------------------------------------------------------------------
 */
 Route::prefix('api')->group(function () {
-    Route::get('card/{uid}', [BusinessCardController::class, 'show']);
+    Route::get('card-code/{code}', [CardCodeController::class, 'showPublic']);
 
     Route::post('contact/create', [ContactController::class, 'store']);
 
@@ -75,11 +78,14 @@ Route::prefix('api')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Public card scan & profile
+| Public card profile by code
 |--------------------------------------------------------------------------
 */
-Route::get('scan/{code}', [ScanController::class, 'scan'])->name('scan');
-Route::get('profile/{slug}/{code}', [ProfileController::class, 'show'])->name('profile.show');
+Route::redirect('get-started/{code}', '/{code}')->where('code', '[A-Za-z0-9]{6,8}');
+Route::redirect('scan/{code}', '/{code}')->where('code', '[A-Za-z0-9]{6,8}');
+Route::get('profile/{slug}/{code}', [ProfileController::class, 'show'])
+    ->where('code', '[A-Za-z0-9]{6,8}')
+    ->name('profile.show');
 
 /*
 |--------------------------------------------------------------------------
@@ -87,11 +93,7 @@ Route::get('profile/{slug}/{code}', [ProfileController::class, 'show'])->name('p
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
-    Route::get('login', function (Request $request) {
-        return Inertia::render('Auth/Login', [
-            'redirect' => $request->query('redirect'),
-        ]);
-    })->name('login');
+    Route::get('login', [AuthController::class, 'loginPage'])->name('login');
     Route::post('login', [AuthController::class, 'login']);
 
     Route::get('register', [AuthController::class, 'registerPage'])->name('register');
@@ -113,6 +115,29 @@ Route::middleware('guest')->group(function () {
 Route::post('logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
+
+Route::middleware('auth')->group(function () {
+    Route::get('email/verify', [EmailVerificationController::class, 'notice'])
+        ->name('verification.notice');
+    Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verifyWeb'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify.web');
+    Route::post('email/verification-notification', [EmailVerificationController::class, 'resend'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+
+    // My Account — permission-free for every authenticated user (no ability check).
+    Route::get('user/account', [UserController::class, 'accountPage'])
+        ->name('user.account');
+    Route::match(['put', 'post'], 'user/account', [UserController::class, 'updateAccount'])
+        ->name('user.account.update');
+    Route::put('user/account/password', [UserController::class, 'updateAccountPassword'])
+        ->name('user.account.password');
+
+    // Appearance — permission-free; theme and accent are stored in the browser only.
+    Route::get('settings/appearance', [SettingsController::class, 'appearancePage'])
+        ->name('settings.appearance');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -187,8 +212,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Contacts
     Route::get('contacts', [ContactController::class, 'indexPage'])
-        ->middleware('ability:contacts.view')
+        ->middleware('ability:contacts.view,contacts.view_own')
         ->name('contacts.index');
+    Route::post('contacts', [ContactController::class, 'store'])
+        ->middleware('ability:contacts.create')
+        ->name('contacts.store');
     Route::patch('contacts/{contact}/mark-read', [ContactController::class, 'markRead'])
         ->middleware('ability:contacts.view')
         ->name('contacts.mark-read');
@@ -198,10 +226,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Reviews
     Route::get('reviews', [ReviewController::class, 'indexPage'])
-        ->middleware('ability:reviews.view')
+        ->middleware('ability:reviews.view,reviews.view_own')
         ->name('reviews.index');
     Route::post('reviews', [ReviewController::class, 'store'])
-        ->middleware('ability:reviews.manage')
+        ->middleware('ability:reviews.manage,reviews.create')
         ->name('reviews.store');
     Route::patch('reviews/{review}', [ReviewController::class, 'update'])
         ->middleware('ability:reviews.manage')
@@ -224,52 +252,68 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('ability:appointments.manage,appointments.view_own')
         ->name('appointments.store');
     Route::get('appointments/{appointment}/edit', [AppointmentController::class, 'editPage'])
-        ->middleware('ability:appointments.manage,appointments.view_own')
+        ->middleware('ability:appointments.manage')
         ->name('appointments.edit');
     Route::put('appointments/{appointment}', [AppointmentController::class, 'update'])
-        ->middleware('ability:appointments.manage,appointments.view_own')
+        ->middleware('ability:appointments.manage')
         ->name('appointments.update');
     Route::delete('appointments/{appointment}', [AppointmentController::class, 'destroy'])
-        ->middleware('ability:appointments.manage,appointments.view_own')
+        ->middleware('ability:appointments.manage')
         ->name('appointments.destroy');
 
-    // Users management
-    Route::get('users', [UserController::class, 'indexPage'])
-        ->middleware('ability:users.view')
-        ->name('users.index');
-    Route::post('users', [UserController::class, 'store'])
-        ->middleware('ability:users.create')
-        ->name('users.store');
-    Route::put('users/{user}', [UserController::class, 'update'])
-        ->middleware('ability:users.update')
-        ->name('users.update');
-    Route::delete('users/{user}', [UserController::class, 'destroy'])
-        ->middleware('ability:users.delete')
-        ->name('users.destroy');
+    // Legacy redirect
+    Route::redirect('users', '/access-control/users')
+        ->middleware('ability:users.view');
 
-    // Business cards
-    Route::get('cards', [DashboardController::class, 'cardsPage'])
+    // Customers
+    Route::get('customers', [CustomerController::class, 'indexPage'])
+        ->middleware('ability:users.view')
+        ->name('customers.index');
+    Route::get('customers/{customer}', [CustomerController::class, 'show'])
+        ->middleware('ability:users.view')
+        ->name('customers.show');
+    Route::post('customers', [CustomerController::class, 'store'])
+        ->middleware('ability:users.create')
+        ->name('customers.store');
+    Route::put('customers/{customer}', [CustomerController::class, 'update'])
+        ->middleware('ability:users.update')
+        ->name('customers.update');
+    Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])
+        ->middleware('ability:users.delete')
+        ->name('customers.destroy');
+
+    Route::middleware('ability:users.view')->group(function () {
+        Route::post('customers/{customer}/social-links', [CustomerSocialController::class, 'store'])
+            ->name('customers.social-links.store');
+        Route::put('customers/{customer}/social-links/{id}', [CustomerSocialController::class, 'update'])
+            ->name('customers.social-links.update');
+        Route::delete('customers/{customer}/social-links/{id}', [CustomerSocialController::class, 'destroy'])
+            ->name('customers.social-links.destroy');
+    });
+
+    // Cards (code + QR workflow)
+    Route::get('cards', [CardCodeController::class, 'indexPage'])
         ->middleware('ability:dashboard.card.view')
         ->name('cards.index');
-    Route::post('cards/{user}/generate', [DashboardController::class, 'generate'])
-        ->middleware('ability:dashboard.card.generate')
+    Route::get('cards/generate', [CardCodeController::class, 'generateCode'])
+        ->middleware('ability:dashboard.card.manage')
         ->name('cards.generate');
-    Route::post('cards/{user}/regenerate', [DashboardController::class, 'regenerate'])
-        ->middleware('ability:dashboard.card.regenerate')
-        ->name('cards.regenerate');
+    Route::post('cards', [CardCodeController::class, 'store'])
+        ->middleware('ability:dashboard.card.manage')
+        ->name('cards.store');
+    Route::get('cards/search-users', [CardCodeController::class, 'searchUsers'])
+        ->middleware('ability:dashboard.card.manage')
+        ->name('cards.search-users');
+    Route::delete('cards/{cardCode}', [CardCodeController::class, 'destroy'])
+        ->middleware('ability:dashboard.card.manage')
+        ->name('cards.destroy');
+    Route::patch('cards/{cardCode}/assign-user', [CardCodeController::class, 'assignUser'])
+        ->middleware('ability:dashboard.card.manage')
+        ->name('cards.assign-user');
 
-    Route::get('cards/codes', [CardCodeController::class, 'indexPage'])
-        ->middleware('ability:dashboard.card.view')
-        ->name('cards.codes.index');
-    Route::get('cards/codes/generate', [CardCodeController::class, 'generateCode'])
-        ->middleware('ability:dashboard.card.manage')
-        ->name('cards.codes.generate');
-    Route::post('cards/codes', [CardCodeController::class, 'store'])
-        ->middleware('ability:dashboard.card.manage')
-        ->name('cards.codes.store');
-    Route::delete('cards/codes/{cardCode}', [CardCodeController::class, 'destroy'])
-        ->middleware('ability:dashboard.card.manage')
-        ->name('cards.codes.destroy');
+    Route::redirect('cards/codes', '/cards');
+    Route::redirect('cards/codes/generate', '/cards/generate');
+    Route::redirect('cards/codes/search-users', '/cards/search-users');
 
     // Access control
     Route::get('access-control/roles', [RoleController::class, 'indexPage'])
@@ -288,28 +332,70 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('access-control/users', [UserController::class, 'accessControlIndexPage'])
         ->middleware('ability:users.view')
         ->name('access-control.users.index');
+    Route::post('access-control/users', [UserController::class, 'store'])
+        ->middleware('ability:users.create')
+        ->name('access-control.users.store');
+    Route::put('access-control/users/{user}', [UserController::class, 'update'])
+        ->middleware('ability:users.update')
+        ->name('access-control.users.update');
+    Route::delete('access-control/users/{user}', [UserController::class, 'destroy'])
+        ->middleware('ability:users.delete')
+        ->name('access-control.users.destroy');
     Route::patch('access-control/users/{user}/assign-role', [UserController::class, 'assignRole'])
         ->middleware('ability:users.assign_role')
         ->name('access-control.users.assign-role');
-
-    Route::get('customers', [UserController::class, 'customersIndexPage'])
-        ->middleware('ability:users.view')
-        ->name('customers.index');
 
     Route::redirect('settings', '/settings/general')
         ->middleware('ability:settings.manage')
         ->name('settings.index');
     Route::get('settings/{group}', [SettingsController::class, 'show'])
         ->middleware('ability:settings.manage')
+        ->whereIn('group', ['general'])
         ->name('settings.show');
     Route::match(['post', 'patch'], 'settings/{group}', [SettingsController::class, 'update'])
         ->middleware('ability:settings.manage')
         ->whereIn('group', ['general', 'branding', 'business', 'social', 'email'])
         ->name('settings.update');
 
-    // Account
-    Route::get('user/account', [UserController::class, 'accountPage'])
-        ->name('user.account');
+    Route::middleware('ability:profile.manage')->group(function () {
+        Route::get('profile/social', [ProfileSocialController::class, 'indexPage'])
+            ->name('profile.social.index');
+        Route::post('profile/social', [ProfileSocialController::class, 'store'])
+            ->name('profile.social.store');
+        Route::put('profile/social/{id}', [ProfileSocialController::class, 'update'])
+            ->name('profile.social.update');
+        Route::delete('profile/social/{id}', [ProfileSocialController::class, 'destroy'])
+            ->name('profile.social.destroy');
+        Route::post('profile/social/reorder', [ProfileSocialController::class, 'reorder'])
+            ->name('profile.social.reorder');
+
+        Route::get('profile/services', [ProfileServiceController::class, 'indexPage'])
+            ->name('profile.services.index');
+        Route::post('profile/services', [ProfileServiceController::class, 'store'])
+            ->name('profile.services.store');
+        Route::put('profile/services/{id}', [ProfileServiceController::class, 'update'])
+            ->name('profile.services.update');
+        Route::delete('profile/services/{id}', [ProfileServiceController::class, 'destroy'])
+            ->name('profile.services.destroy');
+        Route::post('profile/services/reorder', [ProfileServiceController::class, 'reorder'])
+            ->name('profile.services.reorder');
+
+        Route::get('profile/templates/{template}', [ProfileTemplateController::class, 'templatePage'])
+            ->whereIn('template', ['1', '2', '3', '4'])
+            ->name('profile.template.show');
+        Route::post('profile/templates/{template}/activate', [ProfileTemplateController::class, 'activate'])
+            ->whereIn('template', ['1', '2', '3', '4'])
+            ->name('profile.template.activate');
+        Route::patch('profile/visibility', [ProfileTemplateController::class, 'updateVisibility'])
+            ->name('profile.visibility.update');
+        Route::post('profile/templates/{template}/cover', [ProfileTemplateController::class, 'uploadCover'])
+            ->whereIn('template', ['1', '2', '3', '4'])
+            ->name('profile.template.cover');
+    });
 });
+
+Route::get('{code}', [ScanController::class, 'show'])
+    ->where('code', '[A-Za-z0-9]{6,8}')
+    ->name('card.show');
 
 Route::fallback(fn () => Inertia::render('Dashboard/Index'));

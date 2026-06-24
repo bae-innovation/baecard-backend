@@ -31,6 +31,9 @@ export type ReviewFormProps = {
   isSubmitting?: boolean;
   onCancel?: () => void;
   submitLabel?: string;
+  defaultValues?: Partial<ReviewFormValues>;
+  lockName?: boolean;
+  lockEmail?: boolean;
 };
 
 function FormActions({
@@ -67,19 +70,27 @@ export function ReviewForm({
   isSubmitting,
   onCancel,
   submitLabel,
+  defaultValues,
+  lockName = false,
+  lockEmail = false,
 }: ReviewFormProps) {
   const isPage = variant === 'page';
 
+  const createDefaults = React.useMemo(
+    (): ReviewFormValues => ({
+      name: defaultValues?.name ?? '',
+      email: defaultValues?.email ?? '',
+      rating: defaultValues?.rating ?? 5,
+      title: defaultValues?.title ?? '',
+      body: defaultValues?.body ?? '',
+      is_visible: defaultValues?.is_visible ?? true,
+    }),
+    [defaultValues],
+  );
+
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewFormSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      rating: 5,
-      title: '',
-      body: '',
-      is_visible: true,
-    },
+    defaultValues: createDefaults,
   });
 
   React.useEffect(() => {
@@ -93,9 +104,9 @@ export function ReviewForm({
         is_visible: review.is_visible,
       });
     } else if (mode === 'create') {
-      form.reset();
+      form.reset(createDefaults);
     }
-  }, [form, mode, review]);
+  }, [createDefaults, form, mode, review]);
 
   const reviewerFields = (
     <>
@@ -106,7 +117,7 @@ export function ReviewForm({
           <FormItem>
             <FormLabel>Reviewer Name *</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} readOnly={lockName} disabled={lockName || isSubmitting} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -119,7 +130,12 @@ export function ReviewForm({
           <FormItem>
             <FormLabel>Email *</FormLabel>
             <FormControl>
-              <Input type="email" {...field} />
+              <Input
+                type="email"
+                {...field}
+                readOnly={lockEmail}
+                disabled={lockEmail || isSubmitting}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

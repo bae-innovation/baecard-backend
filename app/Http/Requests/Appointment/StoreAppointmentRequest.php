@@ -12,6 +12,15 @@ class StoreAppointmentRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $customerId = $this->input('customer_id');
+
+        if ($customerId === '' || $customerId === '0' || $customerId === 0) {
+            $this->merge(['customer_id' => null]);
+        }
+    }
+
     public function rules(): array
     {
         return [

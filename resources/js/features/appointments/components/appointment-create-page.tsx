@@ -30,7 +30,13 @@ export function AppointmentCreatePage() {
         onCancel={() => router.visit('/appointments')}
         onSubmit={async (values: AppointmentFormValues) => {
           setProcessing(true);
-          router.post('/appointments', values, {
+          const payload = { ...values };
+
+          if (!canManage) {
+            delete payload.customer_id;
+          }
+
+          router.post('/appointments', payload, {
             onSuccess: () => showMutationSuccess('Appointment created'),
             onError: () => showMutationError(null, 'Failed to create appointment'),
             onFinish: () => setProcessing(false),

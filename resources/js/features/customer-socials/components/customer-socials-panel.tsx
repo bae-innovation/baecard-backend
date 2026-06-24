@@ -37,7 +37,7 @@ import {
   type CustomerSocial,
   type CustomerSocialFormValues,
 } from '@/features/customer-socials/schemas/customer-social.schema';
-import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
+import { showMutationError } from '@/lib/mutation-toast';
 
 const PLATFORMS = [
   'whatsapp',
@@ -164,14 +164,17 @@ export function CustomerSocialsPanel({
         onSubmit={async (values) => {
           setIsSubmitting(true);
           if (formMode === 'create') {
-            router.post(`/users/${customerId}/social-links`, values, {
+            router.post(`/customers/${customerId}/social-links`, values, {
               preserveScroll: true,
               onSuccess: () => {
-                showMutationSuccess('Social link added');
                 setFormOpen(false);
                 reload();
               },
-              onError: () => showMutationError(null, 'Failed to add social link'),
+              onError: (errors) => {
+                if (!errors?.form) {
+                  showMutationError(null, 'Failed to add social link');
+                }
+              },
               onFinish: () => setIsSubmitting(false),
             });
             return;
@@ -180,14 +183,17 @@ export function CustomerSocialsPanel({
             setIsSubmitting(false);
             return;
           }
-          router.put(`/users/${customerId}/social-links/${selected.id}`, values, {
+          router.put(`/customers/${customerId}/social-links/${selected.id}`, values, {
             preserveScroll: true,
             onSuccess: () => {
-              showMutationSuccess('Social link updated');
               setFormOpen(false);
               reload();
             },
-            onError: () => showMutationError(null, 'Failed to update social link'),
+            onError: (errors) => {
+              if (!errors?.form) {
+                showMutationError(null, 'Failed to update social link');
+              }
+            },
             onFinish: () => setIsSubmitting(false),
           });
         }}
@@ -201,15 +207,18 @@ export function CustomerSocialsPanel({
         onConfirm={async () => {
           if (!selectedForDelete) return;
           setIsDeleting(true);
-          router.delete(`/users/${customerId}/social-links/${selectedForDelete.id}`, {
+          router.delete(`/customers/${customerId}/social-links/${selectedForDelete.id}`, {
             preserveScroll: true,
             onSuccess: () => {
-              showMutationSuccess('Social link removed');
               setDeleteOpen(false);
               setSelectedForDelete(null);
               reload();
             },
-            onError: () => showMutationError(null, 'Failed to remove social link'),
+            onError: (errors) => {
+              if (!errors?.form) {
+                showMutationError(null, 'Failed to remove social link');
+              }
+            },
             onFinish: () => setIsDeleting(false),
           });
         }}

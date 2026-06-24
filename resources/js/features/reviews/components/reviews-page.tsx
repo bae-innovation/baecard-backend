@@ -57,8 +57,9 @@ type ReviewsPageProps = {
 };
 
 export function ReviewsPage({ reviews }: ReviewsPageProps) {
-  const { hasAbility } = useAuth();
+  const { hasAbility, user } = useAuth();
   const canManage = hasAbility('reviews.manage');
+  const canCreate = canManage || hasAbility('reviews.create');
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(reviews, ['reviews']);
   const [globalFilter, setGlobalFilter] = React.useState('');
@@ -116,14 +117,18 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
           <p className="max-w-xs truncate text-sm">{getValue()}</p>
         ),
       }),
-      columnHelper.accessor('is_visible', {
-        header: 'Visible',
-        cell: ({ getValue }) => (
-          <Badge variant={getValue() ? 'default' : 'secondary'}>
-            {getValue() ? 'Visible' : 'Hidden'}
-          </Badge>
-        ),
-      }),
+      ...(canManage
+        ? [
+            columnHelper.accessor('is_visible', {
+              header: 'Visible',
+              cell: ({ getValue }) => (
+                <Badge variant={getValue() ? 'default' : 'secondary'}>
+                  {getValue() ? 'Visible' : 'Hidden'}
+                </Badge>
+              ),
+            }),
+          ]
+        : []),
       createDataTableActionsColumn<Review>({
         cell: ({ row }) => (
           <DataTableRowActionsMenu label={`Actions for ${row.original.name}`}>
@@ -191,7 +196,7 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <PageTitle title="Reviews" description="Customer reviews" icon={Star} />
-        {canManage ? (
+        {canCreate ? (
           <Button type="button" onClick={openCreate}>
             <Plus className="mr-2 h-4 w-4" />
             Add Review
@@ -229,64 +234,72 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
         onOpenChange={setDetailOpen}
         review={selected}
       />
-      {canManage ? (
-        <>
-          <ReviewFormDialog
-            open={formOpen}
-            onOpenChange={setFormOpen}
-            mode={formMode}
-            review={selectedForEdit}
-            isSubmitting={isSubmitting}
-            onSubmit={async (values: ReviewFormValues) => {
-              setIsSubmitting(true);
+      {canCreate ? (
+        <ReviewFormDialog
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          mode={formMode}
+          review={selectedForEdit}
+          isSubmitting={isSubmitting}
+          defaultValues={
+            !canManage && formMode === 'create'
+              ? { name: user?.name ?? '', email: user?.email ?? '' }
+              : undefined
+          }
+          lockName={!canManage && formMode === 'create'}
+          lockEmail={!canManage && formMode === 'create'}
+          onSubmit={async (values: ReviewFormValues) => {
+            setIsSubmitting(true);
 
-              if (formMode === 'create') {
-                router.post('/reviews', serializeReviewFormPayload(values, 'create'), {
-                  preserveScroll: true,
-                  only: ['reviews'],
-                  onSuccess: () => {
-                    showMutationSuccess('Review created');
-                    setFormOpen(false);
-                  },
-                  onError: (errors) => {
-                    const message =
-                      messageFromLaravelResponseBody({ errors }) ??
-                      'Failed to create review';
-                    toast.error(message);
-                  },
-                  onFinish: () => setIsSubmitting(false),
-                });
-                return;
-              }
-
-              if (!selectedForEdit) {
-                setIsSubmitting(false);
-                return;
-              }
-
-              router.patch(
-                `/reviews/${selectedForEdit.id}`,
-                serializeReviewFormPayload(values, 'edit'),
-                {
-                  preserveScroll: true,
-                  only: ['reviews'],
-                  onSuccess: () => {
-                    showMutationSuccess('Review updated');
-                    setFormOpen(false);
-                    setSelectedForEdit(null);
-                  },
-                  onError: (errors) => {
-                    const message =
-                      messageFromLaravelResponseBody({ errors }) ??
-                      'Failed to update review';
-                    toast.error(message);
-                  },
-                  onFinish: () => setIsSubmitting(false),
+            if (formMode === 'create') {
+              router.post('/reviews', serializeReviewFormPayload(values, 'create'), {
+                preserveScroll: true,
+                only: ['reviews'],
+                onSuccess: () => {
+                  showMutationSuccess('Review created');
+                  setFormOpen(false);
                 },
-              );
-            }}
-          />
-          <DeleteReviewDialog
+                onError: (errors) => {
+                  const message =
+                    messageFromLaravelResponseBody({ errors }) ??
+                    'Failed to create review';
+                  toast.error(message);
+                },
+                onFinish: () => setIsSubmitting(false),
+              });
+              return;
+            }
+
+            if (!canManage || !selectedForEdit) {
+              setIsSubmitting(false);
+              return;
+            }
+
+            router.patch(
+              `/reviews/${selectedForEdit.id}`,
+              serializeReviewFormPayload(values, 'edit'),
+              {
+                preserveScroll: true,
+                only: ['reviews'],
+                onSuccess: () => {
+                  showMutationSuccess('Review updated');
+                  setFormOpen(false);
+                  setSelectedForEdit(null);
+                },
+                onError: (errors) => {
+                  const message =
+                    messageFromLaravelResponseBody({ errors }) ??
+                    'Failed to update review';
+                  toast.error(message);
+                },
+                onFinish: () => setIsSubmitting(false),
+              },
+            );
+          }}
+        />
+      ) : null}
+      {canManage ? (
+        <DeleteReviewDialog
             open={deleteOpen}
             onOpenChange={setDeleteOpen}
             review={selectedForDelete}
@@ -307,7 +320,6 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
               });
             }}
           />
-        </>
       ) : null}
     </div>
   );

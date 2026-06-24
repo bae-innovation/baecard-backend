@@ -1,0 +1,1 @@
+function o(r){return{bio:r?.bio??!0,phones:r?.phones??!0,emails:r?.emails??!0,social:r?.social??!0,services:r?.services??!0,cover:r?.cover??!0,qr:r?.qr??!0}}function u(r){if(r==null||r==="")return"";const e=typeof r=="string"?Number(r):r;return Number.isNaN(e)?String(r):`${e.toLocaleString()} ৳`}export{u as f,o as r};

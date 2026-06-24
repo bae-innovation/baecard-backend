@@ -1,16 +1,16 @@
 import type { ReactNode } from 'react';
 
-import { UsersManagementPage } from '@/features/users/components/users-management-page';
-import type { AdminUser } from '@/features/users/schemas/user.schema';
+import { CustomersPage } from '@/features/customers/components/customers-page';
+import type { Customer } from '@/features/customers/schemas/customer.schema';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import type { LaravelPaginator } from '@/types/inertia';
 
 export default function Index({
   customers,
 }: {
-  customers: LaravelPaginator<AdminUser>;
+  customers: LaravelPaginator<Customer>;
 }) {
-  return <UsersManagementPage users={customers} variant="customers" />;
+  return <CustomersPage customers={customers} />;
 }
 
 Index.layout = (page: ReactNode) => <DashboardLayout>{page}</DashboardLayout>;

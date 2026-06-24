@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Contact extends Model
 {
     protected $fillable = [
+        'user_id',
         'name',
         'email',
         'message',
@@ -20,5 +21,10 @@ class Contact extends Model
         return [
             'is_read' => 'boolean',
         ];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

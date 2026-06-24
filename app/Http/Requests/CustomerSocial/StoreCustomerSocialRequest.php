@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\CustomerSocial;
 
+use App\Support\ProfileSocialPlatform;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -16,10 +17,7 @@ class StoreCustomerSocialRequest extends FormRequest
     {
         return [
             'customer_id' => ['required', 'integer', 'exists:users,id'],
-            'platform' => ['required', Rule::in([
-                'whatsapp', 'facebook', 'instagram', 'twitter',
-                'linkedin', 'tiktok', 'youtube', 'snapchat', 'other',
-            ])],
+            'platform' => ['required', Rule::in(ProfileSocialPlatform::all())],
             'platform_value' => ['required', 'string', 'max:255'],
             'url' => ['nullable', 'string', 'max:500'],
             'label' => ['nullable', 'string', 'max:255'],

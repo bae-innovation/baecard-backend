@@ -48,3 +48,28 @@ it('stores a review via inertia request', function () {
 
     $response->assertRedirect(route('reviews.index'));
 });
+
+it('uses the logged-in customer name when a user submits a review', function () {
+    $customer = User::factory()->create([
+        'name' => 'Real Customer',
+        'email' => 'real@example.com',
+        'email_verified_at' => now(),
+    ]);
+    $customer->assignRole('User');
+
+    $response = $this->actingAs($customer)->post('/reviews', [
+        'name' => 'Fake Name',
+        'email' => 'fake@example.com',
+        'rating' => 5,
+        'body' => 'Great service',
+    ]);
+
+    $response->assertRedirect(route('reviews.index'));
+
+    $this->assertDatabaseHas('reviews', [
+        'user_id' => $customer->id,
+        'name' => 'Real Customer',
+        'email' => 'real@example.com',
+        'body' => 'Great service',
+    ]);
+});

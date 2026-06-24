@@ -30,6 +30,8 @@ class RoleAbility
      */
     public static function permissionsForUser(User $user): array
     {
+        $user->loadMissing('roles');
+
         $roleNames = $user->roles->pluck('name')->all();
         $permissions = [];
         $id = 1;

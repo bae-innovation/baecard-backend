@@ -4,18 +4,27 @@ namespace App\Services;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Services\ImageUploadService;
 use App\Support\RoleAbility;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class UserService
 {
     use ApiResponseTrait;
 
+    public function __construct(
+        protected ImageUploadService $imageUploadService,
+    ) {}
+
     public function list(): JsonResponse
     {
-        $users = User::with('roles')->paginate(10);
+        $users = User::query()
+            ->with('roles')
+            ->whereDoesntHave('roles', fn ($query) => $query->where('name', UserRole::User->value))
+            ->paginate(10);
 
         return $this->successResponse($users, 'Users retrieved successfully.');
     }
@@ -31,11 +40,11 @@ class UserService
         return $this->successResponse($user, 'User retrieved successfully.');
     }
 
-    public function create(array $data): JsonResponse
+    public function createStaff(array $data): JsonResponse
     {
         return DB::transaction(function () use ($data) {
             $authUser = request()->user();
-            $requestedRole = $data['role'] ?? null;
+            $requestedRole = $data['role'];
 
             if (
                 $requestedRole === UserRole::SuperAdmin->value
@@ -46,20 +55,71 @@ class UserService
                 return $this->errorResponse('You cannot assign the SuperAdmin role.', null, 403);
             }
 
+            if ($requestedRole === UserRole::User->value) {
+                return $this->errorResponse(
+                    'Customer accounts must be created from the Customers page.',
+                    null,
+                    422,
+                );
+            }
+
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
-                'password' => $data['password'] ?? 'password',
+                'password' => $data['password'],
                 'phone' => $data['phone'] ?? null,
             ]);
 
-            $roleName = $this->resolveRoleForCreate($requestedRole);
-            $user->assignRole($roleName);
+            $user->assignRole($requestedRole);
 
             return $this->successResponse(
                 $user->load('roles'),
                 'User created successfully.',
                 201
+            );
+        });
+    }
+
+    public function updateAccount(User $user, array $data): JsonResponse
+    {
+        return DB::transaction(function () use ($user, $data) {
+            $fields = [
+                'name' => $data['name'],
+                'phone' => $data['phone'] ?? null,
+            ];
+
+            if (request()->hasFile('avatar')) {
+                $fields['avatar'] = $this->imageUploadService->replace(
+                    request()->file('avatar'),
+                    $user->avatar,
+                    'user',
+                );
+            } elseif (request()->boolean('remove_avatar')) {
+                $this->imageUploadService->delete($user->avatar);
+                $fields['avatar'] = null;
+            }
+
+            $user->update($fields);
+
+            return $this->successResponse(
+                $user->fresh()->load('roles'),
+                'Account updated successfully.'
+            );
+        });
+    }
+
+    public function updateAccountPassword(User $user, array $data): JsonResponse
+    {
+        return DB::transaction(function () use ($user, $data) {
+            $user->update([
+                'password' => Hash::make($data['password']),
+            ]);
+
+            $user->tokens()->delete();
+
+            return $this->successResponse(
+                null,
+                'Password updated successfully.'
             );
         });
     }
@@ -71,6 +131,14 @@ class UserService
 
             if (! $user) {
                 return $this->notFoundResponse('User not found.');
+            }
+
+            if ($user->hasRole(UserRole::User->value)) {
+                return $this->errorResponse(
+                    'Customers are managed from the Customers page.',
+                    null,
+                    422,
+                );
             }
 
             $fields = [];
@@ -117,6 +185,22 @@ class UserService
                 return $this->notFoundResponse('User not found.');
             }
 
+            if ($user->hasRole(UserRole::User->value)) {
+                return $this->errorResponse(
+                    'Customers are managed from the Customers page.',
+                    null,
+                    422,
+                );
+            }
+
+            if ($roleName === UserRole::User->value) {
+                return $this->errorResponse(
+                    'The User role is managed from the Customers page.',
+                    null,
+                    422,
+                );
+            }
+
             $user->syncRoles([$roleName]);
 
             return $this->successResponse(
@@ -135,6 +219,14 @@ class UserService
                 return $this->notFoundResponse('User not found.');
             }
 
+            if ($user->hasRole(UserRole::User->value)) {
+                return $this->errorResponse(
+                    'Customers are managed from the Customers page.',
+                    null,
+                    422,
+                );
+            }
+
             if (request()->user() && request()->user()->id === $user->id) {
                 return $this->errorResponse('You cannot delete your own account.', null, 400);
             }
@@ -144,16 +236,5 @@ class UserService
 
             return $this->successResponse(null, 'User deleted successfully.');
         });
-    }
-
-    private function resolveRoleForCreate(?string $requestedRole): string
-    {
-        $authUser = request()->user();
-
-        if ($authUser && RoleAbility::allows($authUser, 'users.assign_role') && $requestedRole) {
-            return $requestedRole;
-        }
-
-        return UserRole::User->value;
     }
 }
