@@ -18,6 +18,10 @@ const fallback: AppSettings = {
     email_from_name: 'BAE Card',
     email_from_email: null,
     email_support: null,
+    whatsapp: '+8801897543515',
+    facebook: 'https://www.facebook.com/baecard.info/',
+    instagram: 'https://www.instagram.com/bae_card/',
+    linkedin: 'https://www.linkedin.com/company/bae-card/',
 };
 
 export function useAppSettings(): AppSettings {

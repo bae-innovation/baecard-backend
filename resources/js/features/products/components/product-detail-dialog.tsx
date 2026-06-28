@@ -333,7 +333,7 @@ export function ProductDetailDialog({
                 variant="outline"
                 onClick={() => {
                   onOpenChange(false);
-                  router.visit(`/products/${product.id}/edit`);
+                  router.visit(`/admin/products/${product.id}/edit`);
                 }}
               >
                 <Pencil className="mr-2 h-4 w-4" />

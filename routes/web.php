@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\CmsController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\Auth\AuthController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\Api\ScanController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\User\UserController;
 use App\Http\Controllers\Api\VendorController;
+use App\Http\Controllers\MarketingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,6 +36,8 @@ Route::prefix('api')->group(function () {
     Route::get('card-code/{code}', [CardCodeController::class, 'showPublic']);
 
     Route::post('contact/create', [ContactController::class, 'store']);
+
+    Route::post('appointment/create', [AppointmentController::class, 'storePublic']);
 
     Route::prefix('product')->group(function () {
         Route::get('list', [ProductController::class, 'index']);
@@ -83,6 +87,22 @@ Route::prefix('api')->group(function () {
 */
 Route::redirect('get-started/{code}', '/{code}')->where('code', '[A-Za-z0-9]{6,8}');
 Route::redirect('scan/{code}', '/{code}')->where('code', '[A-Za-z0-9]{6,8}');
+
+/*
+|--------------------------------------------------------------------------
+| Public marketing site
+|--------------------------------------------------------------------------
+*/
+Route::get('/', [MarketingController::class, 'home'])->name('home');
+Route::get('/products', [MarketingController::class, 'products'])->name('products');
+Route::get('/corporate', [MarketingController::class, 'corporate'])->name('corporate');
+Route::get('/security', [MarketingController::class, 'security'])->name('security');
+Route::get('/contact', [MarketingController::class, 'contact'])->name('contact');
+Route::get('/faq', [MarketingController::class, 'faq'])->name('faq');
+Route::get('/about', [MarketingController::class, 'about'])->name('about');
+Route::get('/terms', [MarketingController::class, 'terms'])->name('terms');
+Route::get('/policy', [MarketingController::class, 'policy'])->name('policy');
+
 Route::get('profile/{slug}/{code}', [ProfileController::class, 'show'])
     ->where('code', '[A-Za-z0-9]{6,8}')
     ->name('profile.show');
@@ -145,27 +165,29 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/', [DashboardController::class, 'indexPage'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'indexPage'])->name('dashboard');
 
-    // Products
-    Route::get('products', [ProductController::class, 'indexPage'])
-        ->middleware('ability:products.view')
-        ->name('products.index');
-    Route::get('products/create', [ProductController::class, 'createPage'])
-        ->middleware('ability:products.manage')
-        ->name('products.create');
-    Route::post('products', [ProductController::class, 'store'])
-        ->middleware('ability:products.manage')
-        ->name('products.store');
-    Route::get('products/{product}/edit', [ProductController::class, 'editPage'])
-        ->middleware('ability:products.manage')
-        ->name('products.edit');
-    Route::put('products/{product}', [ProductController::class, 'update'])
-        ->middleware('ability:products.manage')
-        ->name('products.update');
-    Route::delete('products/{product}', [ProductController::class, 'destroy'])
-        ->middleware('ability:products.manage')
-        ->name('products.destroy');
+    // Products (admin — public catalog lives at GET /products)
+    Route::prefix('admin/products')->name('products.')->group(function () {
+        Route::get('/', [ProductController::class, 'indexPage'])
+            ->middleware('ability:products.view')
+            ->name('index');
+        Route::get('create', [ProductController::class, 'createPage'])
+            ->middleware('ability:products.manage')
+            ->name('create');
+        Route::post('/', [ProductController::class, 'store'])
+            ->middleware('ability:products.manage')
+            ->name('store');
+        Route::get('{product}/edit', [ProductController::class, 'editPage'])
+            ->middleware('ability:products.manage')
+            ->name('edit');
+        Route::put('{product}', [ProductController::class, 'update'])
+            ->middleware('ability:products.manage')
+            ->name('update');
+        Route::delete('{product}', [ProductController::class, 'destroy'])
+            ->middleware('ability:products.manage')
+            ->name('destroy');
+    });
 
     // Vendors
     Route::get('vendors', [VendorController::class, 'indexPage'])
@@ -357,6 +379,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->whereIn('group', ['general', 'branding', 'business', 'social', 'email'])
         ->name('settings.update');
 
+    Route::redirect('admin/cms', '/admin/cms/index')
+        ->middleware('ability:cms.view')
+        ->name('admin.cms.redirect');
+    Route::get('admin/cms/index', [CmsController::class, 'indexPage'])
+        ->middleware('ability:cms.view')
+        ->name('admin.cms.index');
+    Route::get('admin/cms/{key}', [CmsController::class, 'editPage'])
+        ->middleware('ability:cms.view')
+        ->where('key', '[a-z0-9._]+')
+        ->name('admin.cms.edit');
+    Route::put('admin/cms/{key}', [CmsController::class, 'update'])
+        ->middleware('ability:cms.manage')
+        ->where('key', '[a-z0-9._]+')
+        ->name('admin.cms.update');
+    Route::post('admin/cms/upload', [CmsController::class, 'upload'])
+        ->middleware('ability:cms.manage')
+        ->name('admin.cms.upload');
+
     Route::middleware('ability:profile.manage')->group(function () {
         Route::get('profile/social', [ProfileSocialController::class, 'indexPage'])
             ->name('profile.social.index');
@@ -398,4 +438,10 @@ Route::get('{code}', [ScanController::class, 'show'])
     ->where('code', '[A-Za-z0-9]{6,8}')
     ->name('card.show');
 
-Route::fallback(fn () => Inertia::render('Dashboard/Index'));
+Route::fallback(function (Request $request) {
+    if ($request->user()) {
+        return Inertia::render('Dashboard/Index');
+    }
+
+    return redirect()->route('home');
+});

@@ -25,7 +25,7 @@ export function TeamSwitcher() {
           asChild
         >
           <Link
-            href="/"
+            href="/dashboard"
             className="flex w-full items-center justify-start gap-2 group-data-[collapsible=icon]:justify-center"
           >
             <span

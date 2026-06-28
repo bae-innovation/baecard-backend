@@ -13,11 +13,21 @@ import { Toaster } from '@/components/ui/toaster';
 import { ApiErrorModalProvider } from '@/lib/api-error-modal';
 
 createInertiaApp({
-    resolve: (name) =>
-        resolvePageComponent(
+    resolve: (name) => {
+        if (name.startsWith('Frontend/')) {
+            const page = name.replace('Frontend/', '');
+
+            return resolvePageComponent(
+                `./frontend/pages/${page}.tsx`,
+                import.meta.glob('./frontend/pages/**/*.tsx'),
+            );
+        }
+
+        return resolvePageComponent(
             `./Pages/${name}.tsx`,
             import.meta.glob('./Pages/**/*.tsx'),
-        ),
+        );
+    },
     setup({ el, App, props }) {
         createRoot(el).render(
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

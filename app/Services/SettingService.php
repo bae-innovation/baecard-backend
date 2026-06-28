@@ -88,6 +88,7 @@ class SettingService
         $general = Setting::get('general', self::defaults('general'));
         $branding = $this->formatBranding(Setting::get('branding', self::defaults('branding')));
         $business = Setting::get('business', self::defaults('business'));
+        $social = Setting::get('social', self::defaults('social'));
         $email = Setting::get('email', self::defaults('email'));
 
         return [
@@ -95,7 +96,7 @@ class SettingService
             'tagline' => $general['tagline'] ?? null,
             'site_url' => $general['site_url'] ?? config('app.url'),
             'contact_email' => $general['contact_email'] ?? null,
-            'support_phone' => $general['support_phone'] ?? null,
+            'support_phone' => $general['support_phone'] ?? '+8801897543515',
             'copyright' => $general['copyright_text'] ?? null,
             'logo_white_url' => $branding['logo_white_url'] ?? null,
             'logo_black_url' => $branding['logo_black_url'] ?? null,
@@ -106,6 +107,10 @@ class SettingService
             'email_from_name' => $email['from_name'] ?? config('app.name', 'BAE Card'),
             'email_from_email' => $email['from_email'] ?? null,
             'email_support' => $email['support_email'] ?? null,
+            'whatsapp' => $social['whatsapp'] ?? '+8801897543515',
+            'facebook' => $social['facebook'] ?? 'https://www.facebook.com/baecard.info/',
+            'instagram' => $social['instagram'] ?? 'https://www.instagram.com/bae_card/',
+            'linkedin' => $social['linkedin'] ?? 'https://www.linkedin.com/company/bae-card/',
         ];
     }
 

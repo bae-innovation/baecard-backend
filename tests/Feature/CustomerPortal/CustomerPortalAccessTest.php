@@ -43,17 +43,22 @@ it('derives customer portal abilities for the User role', function () {
         ->not->toContain('settings.manage');
 });
 
-it('allows customers to view products but not manage them', function () {
+it('allows customers to view admin products but not manage them', function () {
     $this->actingAs($this->customer)
-        ->get('/products')
+        ->get('/admin/products')
         ->assertOk();
 
     $this->actingAs($this->customer)
-        ->post('/products', [
+        ->post('/admin/products', [
             'name' => 'Blocked Product',
             'price' => 10,
         ])
         ->assertForbidden();
+});
+
+it('serves the public product catalog without authentication', function () {
+    $this->get('/products')
+        ->assertOk();
 });
 
 it('blocks customers from staff-only modules', function () {

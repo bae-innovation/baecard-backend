@@ -11,7 +11,10 @@ class Contact extends Model
         'user_id',
         'name',
         'email',
+        'phone',
+        'subject',
         'message',
+        'metadata',
         'is_read',
         'ip_address',
     ];
@@ -20,6 +23,7 @@ class Contact extends Model
     {
         return [
             'is_read' => 'boolean',
+            'metadata' => 'array',
         ];
     }
 

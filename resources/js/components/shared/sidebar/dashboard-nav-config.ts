@@ -95,7 +95,7 @@ const TEMPLATE_NAV: NavItem[] = [
     items: [
       {
         title: 'Products',
-        url: '/products',
+        url: '/admin/products',
         icon: Package,
         requiredAbilities: ['products.view'],
       },
@@ -211,6 +211,12 @@ const TEMPLATE_NAV: NavItem[] = [
     icon: LayoutTemplate,
     requiredAbilities: ['profile.manage'],
     items: buildTemplateNav(),
+  },
+  {
+    title: 'Website CMS',
+    url: '/admin/cms/index',
+    icon: Globe,
+    requiredAbilities: ['cms.view'],
   },
   {
     title: 'Settings',

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -54,6 +56,7 @@
 
     --animate-accordion-down: accordion-down 0.2s ease-out;
     --animate-accordion-up: accordion-up 0.2s ease-out;
+    --animate-offer-shine: offer-shine 4s ease-in-out infinite;
 }
 
 @keyframes accordion-down {
@@ -71,6 +74,15 @@
     }
     to {
         height: 0;
+    }
+}
+
+@keyframes offer-shine {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
     }
 }
 
@@ -225,6 +237,76 @@
     .sos-alert-audio::-webkit-media-controls-panel {
         background-color: hsl(var(--background));
     }
+
+    /* Marketing / frontend site theme tokens */
+    .frontend-site {
+        --fe-bg: #080814;
+        --fe-surface: #0f0f1a;
+        --fe-text: #ffffff;
+        --fe-muted: rgba(255, 255, 255, 0.6);
+        --fe-border: rgba(255, 255, 255, 0.1);
+        --fe-accent: #66fcf1;
+        --fe-promo: #e53e3e;
+        --fe-nav-bg: rgba(8, 8, 20, 0.95);
+    }
+
+    .frontend-site.light,
+    :root:not(.dark) .frontend-site {
+        --fe-bg: #f8fafc;
+        --fe-surface: #ffffff;
+        --fe-text: #0f172a;
+        --fe-muted: rgba(15, 23, 42, 0.65);
+        --fe-border: rgba(15, 23, 42, 0.1);
+        --fe-accent: #0891b2;
+        --fe-promo: #dc2626;
+        --fe-nav-bg: rgba(248, 250, 252, 0.95);
+    }
+
+    .dark .frontend-site {
+        --fe-bg: #080814;
+        --fe-surface: #0f0f1a;
+        --fe-text: #ffffff;
+        --fe-muted: rgba(255, 255, 255, 0.6);
+        --fe-border: rgba(255, 255, 255, 0.1);
+        --fe-accent: #66fcf1;
+        --fe-promo: #e53e3e;
+        --fe-nav-bg: rgba(8, 8, 20, 0.95);
+    }
+
+    /* Mobile app-like shell */
+    .frontend-site {
+        scroll-behavior: smooth;
+        -webkit-tap-highlight-color: transparent;
+        text-size-adjust: 100%;
+    }
+
+    .frontend-site main {
+        overflow-x: clip;
+    }
+
+    .fe-app-shell {
+        min-height: 100dvh;
+        padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    @media (min-width: 768px) {
+        .fe-app-shell {
+            padding-bottom: 0;
+        }
+    }
+
+    .fe-safe-top {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    .fe-mobile-tab-bar {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .fe-touch {
+        touch-action: manipulation;
+        -webkit-touch-callout: none;
+    }
 }
 
 @layer utilities {
@@ -246,6 +328,56 @@
 
     .data-table-loading-ellipsis-dot:nth-child(3) {
         animation-delay: 0.3s;
+    }
+
+    .bg-fe-bg {
+        background-color: var(--fe-bg);
+    }
+
+    .bg-fe-surface {
+        background-color: var(--fe-surface);
+    }
+
+    .bg-fe-nav {
+        background-color: var(--fe-nav-bg);
+    }
+
+    .text-fe-text {
+        color: var(--fe-text);
+    }
+
+    .text-fe-muted {
+        color: var(--fe-muted);
+    }
+
+    .text-fe-accent {
+        color: var(--fe-accent);
+    }
+
+    .border-fe-border {
+        border-color: var(--fe-border);
+    }
+
+    .hover\:text-fe-accent:hover {
+        color: var(--fe-accent);
+    }
+
+    .fe-scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .fe-scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    .fe-snap-x-mandatory {
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .fe-snap-center {
+        scroll-snap-align: center;
     }
 }
 

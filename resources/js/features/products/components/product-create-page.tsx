@@ -14,7 +14,7 @@ export function ProductCreatePage() {
 
   return (
     <FormPageShell
-      backTo="/products"
+      backTo="/admin/products"
       backLabel="Back to Products"
       title="Create Product"
       description="Add a new NFC card product to your catalog"
@@ -25,11 +25,11 @@ export function ProductCreatePage() {
         mode="create"
         variant="page"
         isSubmitting={processing}
-        onCancel={() => router.visit('/products')}
+        onCancel={() => router.visit('/admin/products')}
         onSubmit={async (values: ProductFormValues, image?: File | null) => {
           setProcessing(true);
           router.post(
-            '/products',
+            '/admin/products',
             objectToFormData(values as Record<string, unknown>, { image }),
             {
               forceFormData: true,

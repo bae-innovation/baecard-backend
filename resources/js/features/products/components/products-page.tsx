@@ -255,7 +255,7 @@ export function ProductsPage({ products }: ProductsPageProps) {
               <>
                 <TableDropdownAction
                   icon={Pencil}
-                  onClick={() => router.visit(`/products/${row.original.id}/edit`)}
+                  onClick={() => router.visit(`/admin/products/${row.original.id}/edit`)}
                 >
                   Edit
                 </TableDropdownAction>
@@ -306,7 +306,7 @@ export function ProductsPage({ products }: ProductsPageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <PageTitle title="Products" description="NFC card products" icon={Package} />
-        <Button type="button" onClick={() => router.visit('/products/create')}>
+        <Button type="button" onClick={() => router.visit('/admin/products/create')}>
           <Plus className="mr-2 h-4 w-4" />
           Add Product
         </Button>
@@ -378,7 +378,7 @@ export function ProductsPage({ products }: ProductsPageProps) {
           onConfirm={async () => {
             if (!selectedForDelete) return;
             setIsDeleting(true);
-            router.delete(`/products/${selectedForDelete.id}`, {
+            router.delete(`/admin/products/${selectedForDelete.id}`, {
               onSuccess: () => {
                 showMutationSuccess('Product deleted');
                 setDeleteOpen(false);

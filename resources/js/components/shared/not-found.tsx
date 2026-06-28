@@ -31,7 +31,7 @@ export function NotFound() {
           </p>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <Link
-              href="/"
+              href="/dashboard"
               className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
             >
               <LayoutDashboard className="mb-2 size-6 text-blue-500" />
@@ -45,14 +45,14 @@ export function NotFound() {
               <span className="text-sm font-medium">Users</span>
             </Link>
             <Link
-              href="/"
+              href="/settings/general"
               className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
             >
               <Settings className="mb-2 size-6 text-purple-500" />
               <span className="text-sm font-medium">Settings</span>
             </Link>
             <Link
-              href="/"
+              href="/dashboard"
               className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
             >
               <BarChart3 className="mb-2 size-6 text-red-500" />
@@ -60,7 +60,7 @@ export function NotFound() {
             </Link>
           </div>
           <Button asChild className="mt-8">
-            <Link href="/" className="inline-flex items-center">
+            <Link href="/dashboard" className="inline-flex items-center">
               <ArrowLeft className="mr-2 size-4" />
               Back to Dashboard
             </Link>

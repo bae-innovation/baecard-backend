@@ -9,6 +9,9 @@ class Appointment extends Model
 {
     protected $fillable = [
         'customer_id',
+        'guest_name',
+        'guest_phone',
+        'guest_email',
         'title',
         'description',
         'appointment_date',

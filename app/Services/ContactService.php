@@ -34,11 +34,17 @@ class ContactService
     {
         $user = request()->user();
 
+        $subject = $data['subject'] ?? 'message';
+        $message = $data['message'] ?? $this->buildMessageFromSubject($subject, $data);
+
         $contact = Contact::create([
             'user_id' => $user?->id,
             'name' => $data['name'],
-            'email' => $data['email'],
-            'message' => $data['message'],
+            'email' => $data['email'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'subject' => $subject,
+            'message' => $message,
+            'metadata' => $data['metadata'] ?? null,
             'ip_address' => request()->ip(),
         ]);
 
@@ -81,5 +87,16 @@ class ContactService
         }
 
         return $query;
+    }
+
+    private function buildMessageFromSubject(string $subject, array $data): string
+    {
+        if ($subject === 'order') {
+            $productName = $data['metadata']['product_name'] ?? 'Unknown product';
+
+            return "Product order request for: {$productName}";
+        }
+
+        return '';
     }
 }

@@ -42,6 +42,30 @@ class AppointmentService
         return $this->successResponse($appointment, 'Appointment retrieved successfully.');
     }
 
+    public function createPublic(array $data): JsonResponse
+    {
+        $appointment = Appointment::create([
+            'customer_id' => null,
+            'guest_name' => $data['guest_name'],
+            'guest_phone' => $data['guest_phone'],
+            'guest_email' => $data['guest_email'] ?? null,
+            'title' => 'Website Booking',
+            'description' => null,
+            'appointment_date' => $data['appointment_date'],
+            'duration_minutes' => 60,
+            'status' => 'pending',
+            'location' => null,
+            'notes' => $data['notes'] ?? null,
+            'created_by' => null,
+        ]);
+
+        return $this->successResponse(
+            $appointment,
+            'Appointment request submitted successfully.',
+            201
+        );
+    }
+
     public function create(array $data): JsonResponse
     {
         $user = request()->user();

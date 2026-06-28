@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Concerns\RespondsWithInertia;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Appointment\StoreAppointmentRequest;
+use App\Http\Requests\Appointment\StorePublicAppointmentRequest;
 use App\Http\Requests\Appointment\UpdateAppointmentRequest;
 use App\Models\Appointment;
 use App\Models\Customer;
@@ -72,6 +73,11 @@ class AppointmentController extends Controller
     public function show(int $id)
     {
         return $this->appointmentService->find($id);
+    }
+
+    public function storePublic(StorePublicAppointmentRequest $request)
+    {
+        return $this->appointmentService->createPublic($request->validated());
     }
 
     public function store(StoreAppointmentRequest $request)

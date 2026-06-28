@@ -14,4 +14,8 @@ export type AppSettings = {
     email_from_name: string;
     email_from_email: string | null;
     email_support: string | null;
+    whatsapp?: string | null;
+    facebook?: string | null;
+    instagram?: string | null;
+    linkedin?: string | null;
 };

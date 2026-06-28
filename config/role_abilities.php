@@ -37,4 +37,6 @@ return [
     'appointments.view_own' => ['User'],
     'profile.manage' => ['User'],
     'settings.manage' => ['SuperAdmin', 'Admin'],
+    'cms.view' => ['SuperAdmin', 'Admin'],
+    'cms.manage' => ['SuperAdmin', 'Admin'],
 ];

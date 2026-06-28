@@ -20,7 +20,7 @@ export function ProductEditPage({ product }: ProductEditPageProps) {
 
   return (
     <FormPageShell
-      backTo="/products"
+      backTo="/admin/products"
       backLabel="Back to Products"
       title="Edit Product"
       description={product.name}
@@ -33,11 +33,11 @@ export function ProductEditPage({ product }: ProductEditPageProps) {
         variant="page"
         product={product}
         isSubmitting={processing}
-        onCancel={() => router.visit('/products')}
+        onCancel={() => router.visit('/admin/products')}
         onSubmit={async (values: ProductFormValues, image?: File | null) => {
           setProcessing(true);
           router.post(
-            `/products/${product.id}`,
+            `/admin/products/${product.id}`,
             objectToFormData(values as Record<string, unknown>, { image }, 'PUT'),
             {
               forceFormData: true,
