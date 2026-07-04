@@ -1,7 +1,8 @@
 import { FrontendLayout } from '@frontend/layouts/FrontendLayout';
-import { ProductGrid } from '@frontend/components/blocks/product-grid';
+import { ProductCatalog } from '@frontend/components/catalog/product-catalog';
 import { StepTimeline } from '@frontend/components/blocks/step-timeline';
 import { TrustLogosBlock } from '@frontend/components/blocks/trust-logos';
+import { CorporateForm } from '@frontend/components/corporate/corporate-form';
 import { FeatureGrid } from '@frontend/components/features/feature-grid';
 import { HeroSection } from '@frontend/components/hero/hero-section';
 import { HowItWorksSection } from '@frontend/components/how-it-works/how-it-works-section';
@@ -24,11 +25,12 @@ export default function Home({ products, reviews, marketing }: HomeProps) {
       contactVariant="home"
     >
       <HeroSection />
+      <ProductCatalog products={products} limit={4} showViewAll />
       <StepTimeline />
       <HowItWorksSection />
       <FeatureGrid />
-      <ProductGrid products={products} limit={4} showViewAll id="products" />
       <ReviewsSection reviews={reviews} />
+      <CorporateForm variant="section" />
       <TrustLogosBlock />
     </FrontendLayout>
   );

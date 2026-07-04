@@ -1,3 +1,13 @@
+export type FloatingSocialLink = {
+  id: string;
+  platform: string;
+  platform_value: string;
+  url?: string | null;
+  label?: string | null;
+  href: string;
+  show_in_floating?: boolean;
+};
+
 export type AppSettings = {
     name: string;
     tagline: string | null;
@@ -18,4 +28,5 @@ export type AppSettings = {
     facebook?: string | null;
     instagram?: string | null;
     linkedin?: string | null;
+    floating_socials?: FloatingSocialLink[];
 };

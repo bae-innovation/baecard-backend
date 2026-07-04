@@ -11,6 +11,10 @@ class CmsService
 {
     public const CACHE_KEY = 'cms.marketing.public';
 
+    public function __construct(
+        protected OfferTickerService $offerTickerService,
+    ) {}
+
     /**
      * Partial overrides merged on the frontend with static defaults.
      *
@@ -27,6 +31,12 @@ class CmsService
                 ->each(function (CmsEntry $entry) use (&$overrides) {
                     $this->applyEntry($overrides, $entry->key, $entry->content ?? []);
                 });
+
+            $tickers = $this->offerTickerService->getPublicTickers();
+
+            if ($tickers !== []) {
+                $overrides['offers'] = $tickers;
+            }
 
             return $overrides;
         });
@@ -116,7 +126,6 @@ class CmsService
             'section.features' => $base['features'] = $content['items'] ?? $content,
             'section.security' => $base['security'] = $content['items'] ?? $content,
             'section.faq' => $base['faq'] = $content['items'] ?? $content,
-            'section.offers' => $base['offers'] = $content['items'] ?? $content,
             'section.navigation' => $base['navigation'] = $content['items'] ?? $content,
             'section.section_headings' => $base['sectionHeadings'] = array_replace_recursive($base['sectionHeadings'] ?? [], $content),
             'section.contact' => $base['contact'] = array_merge($base['contact'] ?? [], $content),

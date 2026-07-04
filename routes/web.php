@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\CardCodeController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\Customer\CustomerController;
 use App\Http\Controllers\Api\CustomerSocialController;
+use App\Http\Controllers\Api\OfferTickerController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfileController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Api\ProfileTemplateController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\Role\RoleController;
 use App\Http\Controllers\Api\ScanController;
+use App\Http\Controllers\Api\SiteSocialController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\User\UserController;
 use App\Http\Controllers\Api\VendorController;
@@ -38,6 +40,8 @@ Route::prefix('api')->group(function () {
     Route::post('contact/create', [ContactController::class, 'store']);
 
     Route::post('appointment/create', [AppointmentController::class, 'storePublic']);
+
+    Route::post('order/create', [OrderController::class, 'storePublic']);
 
     Route::prefix('product')->group(function () {
         Route::get('list', [ProductController::class, 'index']);
@@ -95,9 +99,12 @@ Route::redirect('scan/{code}', '/{code}')->where('code', '[A-Za-z0-9]{6,8}');
 */
 Route::get('/', [MarketingController::class, 'home'])->name('home');
 Route::get('/products', [MarketingController::class, 'products'])->name('products');
+Route::get('/products/{slug}/order', [MarketingController::class, 'checkout'])->name('products.checkout');
+Route::get('/order/thank-you/{orderNumber}', [MarketingController::class, 'orderThankYou'])->name('order.thank-you');
 Route::get('/corporate', [MarketingController::class, 'corporate'])->name('corporate');
 Route::get('/security', [MarketingController::class, 'security'])->name('security');
 Route::get('/contact', [MarketingController::class, 'contact'])->name('contact');
+Route::get('/appointment', [MarketingController::class, 'appointment'])->name('appointment');
 Route::get('/faq', [MarketingController::class, 'faq'])->name('faq');
 Route::get('/about', [MarketingController::class, 'about'])->name('about');
 Route::get('/terms', [MarketingController::class, 'terms'])->name('terms');
@@ -378,6 +385,57 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('ability:settings.manage')
         ->whereIn('group', ['general', 'branding', 'business', 'social', 'email'])
         ->name('settings.update');
+
+    Route::prefix('admin/offer-tickers')->name('offer-tickers.')->group(function () {
+        Route::get('/', [OfferTickerController::class, 'indexPage'])
+            ->middleware('ability:offer_tickers.view')
+            ->name('index');
+        Route::get('create', [OfferTickerController::class, 'createPage'])
+            ->middleware('ability:offer_tickers.manage')
+            ->name('create');
+        Route::post('/', [OfferTickerController::class, 'store'])
+            ->middleware('ability:offer_tickers.manage')
+            ->name('store');
+        Route::get('{offerTicker}/edit', [OfferTickerController::class, 'editPage'])
+            ->middleware('ability:offer_tickers.manage')
+            ->name('edit');
+        Route::put('{offerTicker}', [OfferTickerController::class, 'update'])
+            ->middleware('ability:offer_tickers.manage')
+            ->name('update');
+        Route::patch('{offerTicker}/toggle-active', [OfferTickerController::class, 'toggleActive'])
+            ->middleware('ability:offer_tickers.manage')
+            ->name('toggle-active');
+        Route::delete('{offerTicker}', [OfferTickerController::class, 'destroy'])
+            ->middleware('ability:offer_tickers.manage')
+            ->name('destroy');
+    });
+
+    Route::prefix('admin/site-social')->name('site-social.')->group(function () {
+        Route::get('/', [SiteSocialController::class, 'indexPage'])
+            ->middleware('ability:site_social.view')
+            ->name('index');
+        Route::get('create', [SiteSocialController::class, 'createPage'])
+            ->middleware('ability:site_social.manage')
+            ->name('create');
+        Route::post('/', [SiteSocialController::class, 'store'])
+            ->middleware('ability:site_social.manage')
+            ->name('store');
+        Route::get('{siteSocialLink}/edit', [SiteSocialController::class, 'editPage'])
+            ->middleware('ability:site_social.manage')
+            ->name('edit');
+        Route::put('{siteSocialLink}', [SiteSocialController::class, 'update'])
+            ->middleware('ability:site_social.manage')
+            ->name('update');
+        Route::patch('{siteSocialLink}/toggle-active', [SiteSocialController::class, 'toggleActive'])
+            ->middleware('ability:site_social.manage')
+            ->name('toggle-active');
+        Route::patch('{siteSocialLink}/toggle-floating', [SiteSocialController::class, 'toggleFloating'])
+            ->middleware('ability:site_social.manage')
+            ->name('toggle-floating');
+        Route::delete('{siteSocialLink}', [SiteSocialController::class, 'destroy'])
+            ->middleware('ability:site_social.manage')
+            ->name('destroy');
+    });
 
     Route::redirect('admin/cms', '/admin/cms/index')
         ->middleware('ability:cms.view')

@@ -51,6 +51,22 @@ class Product extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function effectiveUnitPrice(): float
+    {
+        $base = (float) $this->price;
+        $value = (float) ($this->discount_value ?? 0);
+
+        if ($value <= 0) {
+            return round($base, 2);
+        }
+
+        if ($this->discount_type === 'percentage') {
+            return round(max(0, $base - $base * ($value / 100)), 2);
+        }
+
+        return round(max(0, $base - $value), 2);
+    }
+
     public function getImageUrlAttribute(): ?string
     {
         if (! $this->image) {

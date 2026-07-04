@@ -12,10 +12,15 @@ class Review extends Model
         'user_id',
         'name',
         'email',
+        'image',
         'rating',
         'title',
         'body',
         'is_visible',
+    ];
+
+    protected $appends = [
+        'image_url',
     ];
 
     protected function casts(): array
@@ -34,5 +39,14 @@ class Review extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if (! $this->image) {
+            return null;
+        }
+
+        return asset($this->image);
     }
 }

@@ -49,6 +49,25 @@ it('stores a review via inertia request', function () {
     $response->assertRedirect(route('reviews.index'));
 });
 
+it('stores a review with an optional reviewer image', function () {
+    $file = \Illuminate\Http\UploadedFile::fake()->image('reviewer.jpg', 200, 200);
+
+    $response = $this->actingAs($this->admin)->post('/reviews', [
+        'name' => 'Jane Doe',
+        'email' => 'jane@example.com',
+        'rating' => 5,
+        'body' => 'Loved it',
+        'image' => $file,
+    ]);
+
+    $response->assertRedirect(route('reviews.index'));
+
+    $review = \App\Models\Review::query()->where('email', 'jane@example.com')->first();
+    expect($review)->not->toBeNull();
+    expect($review->image)->not->toBeNull();
+    expect($review->image_url)->not->toBeNull();
+});
+
 it('uses the logged-in customer name when a user submits a review', function () {
     $customer = User::factory()->create([
         'name' => 'Real Customer',

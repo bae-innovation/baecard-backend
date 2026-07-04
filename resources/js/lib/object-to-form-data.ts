@@ -7,6 +7,7 @@ export function objectToFormData(
 
   Object.entries(values).forEach(([key, value]) => {
     if (value === undefined || value === '') return;
+    if (typeof value === 'number' && Number.isNaN(value)) return;
     if (typeof value === 'boolean') {
       formData.append(key, value ? '1' : '0');
       return;

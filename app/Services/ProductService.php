@@ -43,7 +43,7 @@ class ProductService
 
         $product = Product::create([
             'name' => $data['name'],
-            'slug' => $data['slug'] ?? Str::slug($data['name']),
+            'slug' => $this->resolveUniqueSlug($data['slug'] ?? null, $data['name']),
             'description' => $data['description'] ?? null,
             'short_description' => $data['short_description'] ?? null,
             'sku' => $data['sku'] ?? null,
@@ -99,5 +99,27 @@ class ProductService
         $product->delete();
 
         return $this->successResponse(null, 'Product deleted successfully.');
+    }
+
+    private function resolveUniqueSlug(?string $slug, string $name, ?int $ignoreId = null): string
+    {
+        $base = filled($slug) ? Str::slug($slug) : Str::slug($name);
+        if ($base === '') {
+            $base = 'product';
+        }
+        $candidate = $base;
+        $counter = 1;
+
+        while (
+            Product::query()
+                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+                ->where('slug', $candidate)
+                ->exists()
+        ) {
+            $candidate = "{$base}-{$counter}";
+            $counter++;
+        }
+
+        return $candidate;
     }
 }

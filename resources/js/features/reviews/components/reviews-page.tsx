@@ -34,6 +34,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useInertiaPagination } from '@/hooks/useInertiaPagination';
 import { messageFromLaravelResponseBody } from '@/lib/laravel-validation-message';
+import { objectToFormData } from '@/lib/object-to-form-data';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 import type { LaravelPaginator } from '@/types/inertia';
 
@@ -248,25 +249,32 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
           }
           lockName={!canManage && formMode === 'create'}
           lockEmail={!canManage && formMode === 'create'}
-          onSubmit={async (values: ReviewFormValues) => {
+          onSubmit={async (values: ReviewFormValues, image?: File | null) => {
             setIsSubmitting(true);
 
             if (formMode === 'create') {
-              router.post('/reviews', serializeReviewFormPayload(values, 'create'), {
-                preserveScroll: true,
-                only: ['reviews'],
-                onSuccess: () => {
-                  showMutationSuccess('Review created');
-                  setFormOpen(false);
+              router.post(
+                '/reviews',
+                objectToFormData(serializeReviewFormPayload(values, 'create'), {
+                  image: image ?? undefined,
+                }),
+                {
+                  preserveScroll: true,
+                  only: ['reviews'],
+                  forceFormData: true,
+                  onSuccess: () => {
+                    showMutationSuccess('Review created');
+                    setFormOpen(false);
+                  },
+                  onError: (errors) => {
+                    const message =
+                      messageFromLaravelResponseBody({ errors }) ??
+                      'Failed to create review';
+                    toast.error(message);
+                  },
+                  onFinish: () => setIsSubmitting(false),
                 },
-                onError: (errors) => {
-                  const message =
-                    messageFromLaravelResponseBody({ errors }) ??
-                    'Failed to create review';
-                  toast.error(message);
-                },
-                onFinish: () => setIsSubmitting(false),
-              });
+              );
               return;
             }
 
@@ -275,12 +283,17 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
               return;
             }
 
-            router.patch(
+            router.post(
               `/reviews/${selectedForEdit.id}`,
-              serializeReviewFormPayload(values, 'edit'),
+              objectToFormData(
+                serializeReviewFormPayload(values, 'edit'),
+                { image: image ?? undefined },
+                'PATCH',
+              ),
               {
                 preserveScroll: true,
                 only: ['reviews'],
+                forceFormData: true,
                 onSuccess: () => {
                   showMutationSuccess('Review updated');
                   setFormOpen(false);

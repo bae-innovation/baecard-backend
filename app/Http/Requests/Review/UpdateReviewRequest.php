@@ -6,6 +6,9 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateReviewRequest extends FormRequest
 {
+    /** @var list<string> */
+    public const ALLOWED_IMAGE_MIMES = ['jpg', 'jpeg', 'png', 'webp', 'avif'];
+
     public function authorize(): bool
     {
         return true;
@@ -27,6 +30,7 @@ class UpdateReviewRequest extends FormRequest
             'title' => ['nullable', 'string', 'max:255'],
             'body' => ['sometimes', 'required', 'string', 'max:5000'],
             'is_visible' => ['nullable', 'boolean'],
+            'image' => ['nullable', 'file', 'mimes:'.implode(',', self::ALLOWED_IMAGE_MIMES)],
         ];
     }
 }

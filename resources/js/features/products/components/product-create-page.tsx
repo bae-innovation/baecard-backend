@@ -6,7 +6,8 @@ import { FormPageShell } from '@/components/shared/form-page-shell';
 import { ProductForm } from '@/features/products/components/product-form';
 import type { ProductFormValues } from '@/features/products/schemas/product.schema';
 import { objectToFormData } from '@/lib/object-to-form-data';
-import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
+import { showMutationSuccess } from '@/lib/mutation-toast';
+import { toast } from 'sonner';
 
 export function ProductCreatePage() {
   const [processing, setProcessing] = React.useState(false);
@@ -34,7 +35,10 @@ export function ProductCreatePage() {
             {
               forceFormData: true,
               onSuccess: () => showMutationSuccess('Product created'),
-              onError: () => showMutationError(null, 'Failed to create product'),
+              onError: (errors) => {
+                const message = Object.values(errors).flat().join(' ');
+                toast.error(message || 'Failed to create product');
+              },
               onFinish: () => setProcessing(false),
             },
           );

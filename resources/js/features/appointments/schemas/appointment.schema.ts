@@ -2,7 +2,10 @@ import { z } from 'zod';
 
 export const appointmentSchema = z.object({
   id: z.number(),
-  customer_id: z.coerce.number(),
+  customer_id: z.coerce.number().nullable().optional(),
+  guest_name: z.string().nullable().optional(),
+  guest_phone: z.string().nullable().optional(),
+  guest_email: z.string().nullable().optional(),
   title: z.string(),
   description: z.string().nullable().optional(),
   appointment_date: z.string(),

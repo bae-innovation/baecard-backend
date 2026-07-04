@@ -23,6 +23,11 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  convertImageToWebp,
+  UPLOAD_CONVERTIBLE_IMAGE_ACCEPT,
+} from '@/lib/convert-image-to-webp';
+import { showMutationError } from '@/lib/mutation-toast';
 import { cn } from '@/lib/utils';
 import {
   productFormSchema,
@@ -108,6 +113,7 @@ export function ProductForm({
 }: ProductFormProps) {
   const [imageFile, setImageFile] = React.useState<File | null>(null);
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+  const [isConvertingImage, setIsConvertingImage] = React.useState(false);
   const isPage = variant === 'page';
 
   const form = useForm<ProductFormValues>({
@@ -166,6 +172,28 @@ export function ProductForm({
     setImagePreview(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
   }, [imageFile, product?.image_url]);
+
+  const handleImageChange = React.useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      setImageFile(null);
+      return;
+    }
+
+    setIsConvertingImage(true);
+
+    try {
+      const webpFile = await convertImageToWebp(file);
+      setImageFile(webpFile);
+    } catch (error) {
+      setImageFile(null);
+      event.target.value = '';
+      showMutationError(error, 'Failed to convert image to WebP');
+    } finally {
+      setIsConvertingImage(false);
+    }
+  }, []);
 
   const basicsFields = (
     <>
@@ -394,13 +422,23 @@ export function ProductForm({
         <div className="flex-1 space-y-2">
           <Input
             type="file"
-            accept="image/*"
+            accept={UPLOAD_CONVERTIBLE_IMAGE_ACCEPT}
+            disabled={isSubmitting || isConvertingImage}
             className="cursor-pointer file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1 file:text-sm file:font-medium file:text-primary-foreground"
-            onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+            onChange={(event) => {
+              void handleImageChange(event);
+            }}
           />
           <p className="text-xs text-muted-foreground">
-            JPG, PNG or WebP. Recommended at least 400×400px.
+            PNG, JPG, JPEG, AVIF, or WebP. Converted to WebP before upload. Recommended at least
+            400×400px.
           </p>
+          {isConvertingImage ? (
+            <p className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" />
+              Converting image to WebP…
+            </p>
+          ) : null}
         </div>
       </div>
     </FormItem>
@@ -480,7 +518,7 @@ export function ProductForm({
             <div className="sticky bottom-0 z-10 mt-8 border-t bg-background/95 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
               <FormActions
                 onCancel={onCancel}
-                isSubmitting={isSubmitting}
+                isSubmitting={isSubmitting || isConvertingImage}
                 submitLabel={submitLabel}
                 mode={mode}
               />
@@ -508,7 +546,7 @@ export function ProductForm({
             {visibilityFields}
             <FormActions
               onCancel={onCancel}
-              isSubmitting={isSubmitting}
+              isSubmitting={isSubmitting || isConvertingImage}
               submitLabel={submitLabel}
               mode={mode}
             />

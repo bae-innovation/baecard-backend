@@ -5,6 +5,7 @@ export const reviewSchema = z.object({
   user_id: z.coerce.number().nullable().optional(),
   name: z.string(),
   email: z.string().email(),
+  image_url: z.string().nullable().optional(),
   rating: z.coerce.number().int().min(1).max(5),
   title: z.string().nullable().optional(),
   body: z.string(),

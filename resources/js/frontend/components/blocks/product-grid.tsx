@@ -7,14 +7,13 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 
-import { useActionHub } from '@frontend/hooks/use-action-hub';
-import { OrderForm } from '@frontend/components/actions/order-form';
 import { MarketingButton } from '@frontend/components/ui/marketing-button';
 import { MarketingCard } from '@frontend/components/ui/marketing-card';
 import { StaggerContainer, StaggerItem } from '@frontend/components/ui/motion-section';
 import { SectionHeading } from '@frontend/components/ui/section-heading';
 import { useMarketingContent } from '@frontend/providers/marketing-content-provider';
 import type { MarketingProduct } from '@frontend/types/marketing';
+import { productCheckoutUrl } from '@frontend/utils/product-checkout-url';
 import { formatPrice, getDiscountedPrice } from '@frontend/utils/format-price';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
@@ -25,23 +24,16 @@ type ProductGridProps = {
   limit?: number;
   showViewAll?: boolean;
   id?: string;
-  orderMode?: 'hub' | 'inline';
 };
 
 function ProductCard({
   product,
   currency_symbol,
-  onOrder,
   translate,
-  orderMode,
-  isOrderOpen,
 }: {
   product: MarketingProduct;
   currency_symbol: string;
-  onOrder: () => void;
   translate: (v: { en: string; bn: string }) => string;
-  orderMode: 'hub' | 'inline';
-  isOrderOpen: boolean;
 }) {
   const discounted = getDiscountedPrice(product);
   const hasDiscount =
@@ -90,22 +82,11 @@ function ProductCard({
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-      <MarketingButton className="mt-auto w-full" onClick={onOrder}>
-        {translate({
-          en: isOrderOpen ? 'Close' : 'Order Now',
-          bn: isOrderOpen ? 'বন্ধ করুন' : 'অর্ডার করুন',
-        })}
-      </MarketingButton>
-      {orderMode === 'inline' && isOrderOpen ? (
-        <div className="mt-4 rounded-xl border border-fe-border bg-fe-surface/80 p-4">
-          <OrderForm
-            variant="inline"
-            products={[product]}
-            preselected={product}
-            onComplete={onOrder}
-          />
-        </div>
-      ) : null}
+      <Link href={productCheckoutUrl(product)} className="mt-auto">
+        <MarketingButton className="w-full">
+          {translate({ en: 'Order Now', bn: 'অর্ডার করুন' })}
+        </MarketingButton>
+      </Link>
     </MarketingCard>
   );
 }
@@ -115,22 +96,11 @@ export function ProductGrid({
   limit,
   showViewAll,
   id = 'products',
-  orderMode = 'hub',
 }: ProductGridProps) {
-  const { openHub } = useActionHub();
   const { currency_symbol } = useAppSettings();
   const { content, translate } = useMarketingContent();
-  const [activeOrderId, setActiveOrderId] = React.useState<number | null>(null);
 
   const visible = limit ? products.slice(0, limit) : products;
-
-  function handleOrder(product: MarketingProduct) {
-    if (orderMode === 'inline') {
-      setActiveOrderId((current) => (current === product.id ? null : product.id));
-      return;
-    }
-    openHub('order', product);
-  }
 
   if (visible.length === 0) {
     return (
@@ -153,7 +123,6 @@ export function ProductGrid({
         subtitle={translate(content.sectionHeadings.catalog.subtitle)}
       />
 
-      {/* Mobile: horizontal snap carousel */}
       <div className="fe-snap-x-mandatory fe-scrollbar-hide -mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:hidden">
         {visible.map((product) => (
           <div key={product.id} className="fe-snap-center w-[85vw] max-w-sm shrink-0">
@@ -161,15 +130,11 @@ export function ProductGrid({
               product={product}
               currency_symbol={currency_symbol}
               translate={translate}
-              orderMode={orderMode}
-              isOrderOpen={activeOrderId === product.id}
-              onOrder={() => handleOrder(product)}
             />
           </div>
         ))}
       </div>
 
-      {/* Tablet/desktop: grid */}
       <StaggerContainer className="hidden gap-6 sm:grid sm:grid-cols-2 lg:grid-cols-4">
         {visible.map((product) => (
           <StaggerItem key={product.id}>
@@ -177,9 +142,6 @@ export function ProductGrid({
               product={product}
               currency_symbol={currency_symbol}
               translate={translate}
-              orderMode={orderMode}
-              isOrderOpen={activeOrderId === product.id}
-              onOrder={() => handleOrder(product)}
             />
           </StaggerItem>
         ))}

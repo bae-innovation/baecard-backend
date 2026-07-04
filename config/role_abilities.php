@@ -39,4 +39,8 @@ return [
     'settings.manage' => ['SuperAdmin', 'Admin'],
     'cms.view' => ['SuperAdmin', 'Admin'],
     'cms.manage' => ['SuperAdmin', 'Admin'],
+    'offer_tickers.view' => ['SuperAdmin', 'Admin', 'Marketing'],
+    'offer_tickers.manage' => ['SuperAdmin', 'Admin', 'Marketing'],
+    'site_social.view' => ['SuperAdmin', 'Admin', 'Marketing'],
+    'site_social.manage' => ['SuperAdmin', 'Admin', 'Marketing'],
 ];

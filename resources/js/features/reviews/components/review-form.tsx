@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
+import { ImagePlus, Loader2 } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -8,14 +8,17 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { useFilePreviewUrl } from '@/hooks/use-file-preview-url';
 import { cn } from '@/lib/utils';
 import {
   reviewFormSchema,
@@ -27,7 +30,7 @@ export type ReviewFormProps = {
   mode: 'create' | 'edit';
   variant?: 'dialog' | 'page';
   review?: Review | null;
-  onSubmit: (values: ReviewFormValues) => Promise<void>;
+  onSubmit: (values: ReviewFormValues, image?: File | null) => Promise<void>;
   isSubmitting?: boolean;
   onCancel?: () => void;
   submitLabel?: string;
@@ -75,6 +78,10 @@ export function ReviewForm({
   lockEmail = false,
 }: ReviewFormProps) {
   const isPage = variant === 'page';
+  const [imageFile, setImageFile] = React.useState<File | null>(null);
+  const [existingPreview, setExistingPreview] = React.useState<string | null>(null);
+  const filePreview = useFilePreviewUrl(imageFile);
+  const avatarPreview = filePreview ?? existingPreview;
 
   const createDefaults = React.useMemo(
     (): ReviewFormValues => ({
@@ -103,13 +110,49 @@ export function ReviewForm({
         body: review.body,
         is_visible: review.is_visible,
       });
+      setImageFile(null);
+      setExistingPreview(review.image_url ?? null);
     } else if (mode === 'create') {
       form.reset(createDefaults);
+      setImageFile(null);
+      setExistingPreview(null);
     }
   }, [createDefaults, form, mode, review]);
 
+  const imageField = (
+    <div className="space-y-2">
+      <Label>Reviewer photo</Label>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative mx-auto size-24 shrink-0 overflow-hidden rounded-full border-2 border-dashed border-muted-foreground/30 bg-muted/30 sm:mx-0">
+          {avatarPreview ? (
+            <img src={avatarPreview} alt="Reviewer preview" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <ImagePlus className="h-8 w-8 text-muted-foreground" />
+            </div>
+          )}
+        </div>
+        <div className="flex-1 space-y-2">
+          <Input
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/webp,image/avif,.png,.jpg,.jpeg,.webp,.avif"
+            disabled={isSubmitting}
+            onChange={(event) => {
+              const file = event.target.files?.[0] ?? null;
+              setImageFile(file);
+            }}
+          />
+          <p className="text-xs text-muted-foreground">
+            Optional. Shown on the homepage reviews section.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   const reviewerFields = (
     <>
+      {imageField}
       <FormField
         control={form.control}
         name="name"
@@ -212,7 +255,7 @@ export function ReviewForm({
       <form
         className={cn(isPage ? 'space-y-6 pb-6' : 'space-y-4')}
         onSubmit={form.handleSubmit(async (values) => {
-          await onSubmit(values);
+          await onSubmit(values, imageFile);
         })}
       >
         {isPage ? (

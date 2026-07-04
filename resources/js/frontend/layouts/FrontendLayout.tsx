@@ -8,7 +8,7 @@ import { Footer } from '@frontend/components/layout/footer';
 import { FloatingActions } from '@frontend/components/layout/floating-actions';
 import { MobileActionBar } from '@frontend/components/layout/mobile-action-bar';
 import { Navbar } from '@frontend/components/layout/navbar';
-import { OfferBannerBar } from '@frontend/components/layout/offer-banner';
+import { OfferTickerMarquee } from '@frontend/components/layout/offer-ticker-marquee';
 import { ActionHubProvider } from '@frontend/hooks/use-action-hub';
 import { CartProvider } from '@frontend/providers/cart-provider';
 import { LocaleProvider } from '@frontend/providers/locale-provider';
@@ -57,7 +57,7 @@ function FrontendLayoutInner({
         className={`frontend-site fe-app-shell min-h-dvh bg-fe-bg font-[Poppins,sans-serif] text-fe-text ${themeClass}`}
       >
         <header className="fe-safe-top sticky top-0 z-40">
-          <OfferBannerBar offers={marketing?.offers ?? content.offers} />
+          <OfferTickerMarquee offers={marketing?.offers ?? content.offers} />
           <Navbar />
         </header>
         <main>

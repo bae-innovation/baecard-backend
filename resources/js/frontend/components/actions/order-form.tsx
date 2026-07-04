@@ -1,3 +1,4 @@
+import { Link, router } from '@inertiajs/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
@@ -8,6 +9,7 @@ import { z } from 'zod';
 import { useActionHub } from '@frontend/hooks/use-action-hub';
 import { submitContact } from '@frontend/lib/marketing-api';
 import type { MarketingProduct } from '@frontend/types/marketing';
+import { productCheckoutUrl } from '@frontend/utils/product-checkout-url';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -66,9 +68,31 @@ export function OrderForm({
     }
   }, [preselected, form]);
 
+  if (preselected?.slug && !isInline) {
+    return (
+      <div className="space-y-4">
+        <p className="text-center text-sm font-semibold text-white">{preselected.name}</p>
+        <p className="text-center text-sm text-white/70">
+          Review product details and complete your order on the checkout page.
+        </p>
+        <Link href={productCheckoutUrl(preselected)} onClick={() => closeHub()}>
+          <MarketingButton variant="solid" className="w-full">
+            Continue to checkout
+          </MarketingButton>
+        </Link>
+      </div>
+    );
+  }
+
   async function onSubmit(values: FormValues) {
     const product =
       products.find((p) => String(p.id) === values.product_id) ?? preselected ?? products[0];
+
+    if (product?.slug) {
+      closeHub();
+      router.visit(productCheckoutUrl(product));
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -154,8 +178,13 @@ export function OrderForm({
       ) : null}
       <MarketingButton type="submit" variant="solid" className="w-full" disabled={submitting}>
         {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
-        Submit order
+        Continue to checkout
       </MarketingButton>
+      {preselected?.slug ? (
+        <p className="text-center text-xs text-white/60">
+          You will review product details on the next page.
+        </p>
+      ) : null}
     </form>
   );
 }

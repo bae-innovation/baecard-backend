@@ -6,9 +6,11 @@ use App\Http\Controllers\Concerns\RespondsWithInertia;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Order\AddPaymentRequest;
 use App\Http\Requests\Order\StoreOrderRequest;
+use App\Http\Requests\Order\StorePublicOrderRequest;
 use App\Http\Requests\Order\UpdateOrderRequest;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\Product;
 use App\Services\OrderService;
 use App\Support\InertiaData;
 use Illuminate\Http\Request;
@@ -84,6 +86,11 @@ class OrderController extends Controller
             'orders.index',
             'Order created.',
         );
+    }
+
+    public function storePublic(StorePublicOrderRequest $request)
+    {
+        return $this->orderService->createPublicCheckout($request->validated());
     }
 
     public function update(UpdateOrderRequest $request, Order $order)

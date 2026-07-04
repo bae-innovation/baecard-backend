@@ -9,7 +9,9 @@ type AboutProps = {
 
 function AboutContent() {
   const { content, translate } = useMarketingContent();
-  return <StructuredPageBody page={content.pages.about} translate={translate} />;
+  return (
+    <StructuredPageBody page={content.pages.about} translate={translate} variant="about" />
+  );
 }
 
 export default function About({ marketing }: AboutProps) {

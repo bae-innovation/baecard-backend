@@ -51,3 +51,27 @@ export function submitContact(payload: ContactPayload) {
 export function submitAppointment(payload: AppointmentPayload) {
   return postJson<{ success: boolean; message: string }>('/api/appointment/create', payload);
 }
+
+export type PublicOrderPayload = {
+  name: string;
+  phone: string;
+  product_id: number;
+  quantity?: number;
+  notes?: string;
+};
+
+export type PublicOrderResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    id: number;
+    order_number: string;
+    product_name: string;
+    quantity: number;
+    total: string | number;
+  };
+};
+
+export function submitPublicOrder(payload: PublicOrderPayload) {
+  return postJson<PublicOrderResponse>('/api/order/create', payload);
+}

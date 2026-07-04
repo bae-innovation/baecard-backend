@@ -27,7 +27,7 @@ class UpdateProductRequest extends FormRequest
             'discount_type' => ['nullable', Rule::in(['percentage', 'fixed'])],
             'discount_value' => ['nullable', 'numeric', 'min:0'],
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => ['nullable', 'file', 'mimes:'.implode(',', StoreProductRequest::ALLOWED_IMAGE_MIMES)],
             'images' => ['nullable', 'array'],
             'nfc_type' => ['nullable', 'string', 'max:100'],
             'weight' => ['nullable', 'numeric', 'min:0'],
@@ -35,6 +35,13 @@ class UpdateProductRequest extends FormRequest
             'is_featured' => ['nullable', 'boolean'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'image.mimes' => 'Please upload a PNG, JPG, JPEG, AVIF, or WebP image.',
         ];
     }
 

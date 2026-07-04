@@ -27,13 +27,6 @@ export const CMS_ENTRY_CATALOG: CmsCatalogEntry[] = [
     previewPath: '/',
   },
   {
-    key: 'section.offers',
-    label: 'Offer Banners',
-    description: 'Promo ticker messages above the navigation bar.',
-    group: 'homepage',
-    previewPath: '/',
-  },
-  {
     key: 'section.order_steps',
     label: 'Order Steps',
     description: 'Three-step timeline on the homepage.',

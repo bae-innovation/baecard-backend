@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Support\RoleAbility;
+use App\Models\Product;
+use App\Models\User;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class OrderService
 {
@@ -32,6 +35,35 @@ class OrderService
         }
 
         return $this->successResponse($order, 'Order retrieved successfully.');
+    }
+
+    public function createPublicCheckout(array $data): JsonResponse
+    {
+        return DB::transaction(function () use ($data) {
+            $product = Product::query()
+                ->where('id', $data['product_id'])
+                ->where('is_active', true)
+                ->first();
+
+            if (! $product) {
+                return $this->notFoundResponse('Product not found.');
+            }
+
+            $customer = $this->resolveOrCreateGuestCustomer($data['name'], $data['phone']);
+            $quantity = (int) ($data['quantity'] ?? 1);
+            $unitPrice = $product->effectiveUnitPrice();
+
+            return $this->create([
+                'customer_id' => $customer->id,
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'unit_price' => $unitPrice,
+                'quantity' => $quantity,
+                'status' => 'pending',
+                'payment_status' => 'pending',
+                'notes' => $data['notes'] ?? null,
+            ]);
+        });
     }
 
     public function create(array $data): JsonResponse
@@ -169,6 +201,49 @@ class OrderService
         $order->delete();
 
         return $this->successResponse(null, 'Order deleted successfully.');
+    }
+
+    private function resolveOrCreateGuestCustomer(string $name, string $phone): User
+    {
+        UserRole::ensureExists(UserRole::User);
+
+        $customer = User::role(UserRole::User->value)
+            ->where('phone', $phone)
+            ->first();
+
+        if ($customer) {
+            if ($customer->name !== $name) {
+                $customer->update(['name' => $name]);
+            }
+
+            return $customer;
+        }
+
+        $customer = User::create([
+            'name' => $name,
+            'email' => $this->uniqueGuestEmail($phone),
+            'phone' => $phone,
+            'password' => Str::password(32),
+            'email_verified_at' => now(),
+        ]);
+
+        $customer->assignRole(UserRole::User->value);
+
+        return $customer;
+    }
+
+    private function uniqueGuestEmail(string $phone): string
+    {
+        $base = "guest.{$phone}@orders.baecard.local";
+        $email = $base;
+        $suffix = 1;
+
+        while (User::where('email', $email)->exists()) {
+            $email = str_replace('@', ".{$suffix}@", $base);
+            $suffix++;
+        }
+
+        return $email;
     }
 
     private function generateOrderNumber(): string

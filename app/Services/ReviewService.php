@@ -11,6 +11,10 @@ class ReviewService
 {
     use ApiResponseTrait;
 
+    public function __construct(
+        protected ImageUploadService $imageUploadService
+    ) {}
+
     public function list(): JsonResponse
     {
         $reviews = Review::with(['user:id,name'])
@@ -51,10 +55,16 @@ class ReviewService
     {
         $user = request()->user();
 
+        $imagePath = null;
+        if (request()->hasFile('image')) {
+            $imagePath = $this->imageUploadService->store(request()->file('image'), 'review');
+        }
+
         $review = Review::create([
             'user_id' => $user?->id,
             'name' => $data['name'],
             'email' => $data['email'],
+            'image' => $imagePath,
             'rating' => $data['rating'],
             'title' => $data['title'] ?? null,
             'body' => $data['body'],
@@ -79,6 +89,14 @@ class ReviewService
 
         if (! $review) {
             return $this->notFoundResponse('Review not found.');
+        }
+
+        if (request()->hasFile('image')) {
+            $data['image'] = $this->imageUploadService->replace(
+                request()->file('image'),
+                $review->image,
+                'review'
+            );
         }
 
         $review->update($data);
@@ -122,6 +140,7 @@ class ReviewService
             return $this->notFoundResponse('Review not found.');
         }
 
+        $this->imageUploadService->delete($review->image);
         $review->delete();
 
         return $this->successResponse(null, 'Review deleted successfully.');

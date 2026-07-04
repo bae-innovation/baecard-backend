@@ -5,6 +5,7 @@ import {
   CreditCard,
   Globe,
   LayoutTemplate,
+  Megaphone,
   MessageSquare,
   Package,
   Settings,
@@ -214,9 +215,29 @@ const TEMPLATE_NAV: NavItem[] = [
   },
   {
     title: 'Website CMS',
-    url: '/admin/cms/index',
+    url: '.',
     icon: Globe,
-    requiredAbilities: ['cms.view'],
+    requiredAbilities: ['cms.view', 'offer_tickers.view', 'site_social.view'],
+    items: [
+      {
+        title: 'CMS Sections',
+        url: '/admin/cms/index',
+        icon: Globe,
+        requiredAbilities: ['cms.view'],
+      },
+      {
+        title: 'Offer Ticker',
+        url: '/admin/offer-tickers',
+        icon: Megaphone,
+        requiredAbilities: ['offer_tickers.view'],
+      },
+      {
+        title: 'Social Management',
+        url: '/admin/site-social',
+        icon: Share2,
+        requiredAbilities: ['site_social.view'],
+      },
+    ],
   },
   {
     title: 'Settings',

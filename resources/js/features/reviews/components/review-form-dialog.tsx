@@ -13,7 +13,7 @@ type ReviewFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   mode: 'create' | 'edit';
   review?: Review | null;
-  onSubmit: (values: ReviewFormValues) => Promise<void>;
+  onSubmit: (values: ReviewFormValues, image?: File | null) => Promise<void>;
   isSubmitting?: boolean;
   defaultValues?: Partial<ReviewFormValues>;
   lockName?: boolean;

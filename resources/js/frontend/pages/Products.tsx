@@ -1,4 +1,4 @@
-import { ProductGrid } from '@frontend/components/blocks/product-grid';
+import { ProductCatalog } from '@frontend/components/catalog/product-catalog';
 import { StructuredPageBody } from '@frontend/components/blocks/structured-page';
 import { FrontendLayout } from '@frontend/layouts/FrontendLayout';
 import { useMarketingContent } from '@frontend/providers/marketing-content-provider';
@@ -16,7 +16,7 @@ function ProductsContent({ products }: { products: MarketingProduct[] }) {
   return (
     <>
       <StructuredPageBody page={content.pages.products} translate={translate} />
-      <ProductGrid products={products} orderMode="inline" />
+      <ProductCatalog products={products} limit={null} showViewAll={false} showHeading={false} />
     </>
   );
 }

@@ -28,6 +28,7 @@ class SettingService
 
     public function __construct(
         protected BrandingLogoService $brandingLogoService,
+        protected SiteSocialService $siteSocialService,
     ) {}
 
     public static function isValidGroup(string $group): bool
@@ -111,6 +112,7 @@ class SettingService
             'facebook' => $social['facebook'] ?? 'https://www.facebook.com/baecard.info/',
             'instagram' => $social['instagram'] ?? 'https://www.instagram.com/bae_card/',
             'linkedin' => $social['linkedin'] ?? 'https://www.linkedin.com/company/bae-card/',
+            'floating_socials' => $this->siteSocialService->getFloatingLinks(),
         ];
     }
 

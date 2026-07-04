@@ -41,12 +41,32 @@ export function ReviewDetailDialog({
         </DialogHeader>
         {review ? (
           <div className="space-y-4 text-sm">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="font-medium">{review.name}</p>
-                <p className="text-muted-foreground">{review.email}</p>
+            <div className="flex items-center gap-4">
+              {review.image_url ? (
+                <img
+                  src={review.image_url}
+                  alt={review.name}
+                  className="size-16 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-muted text-lg font-semibold">
+                  {review.name
+                    .split(' ')
+                    .map((part) => part[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-medium">{review.name}</p>
+                    <p className="text-muted-foreground">{review.email}</p>
+                  </div>
+                  <RatingStars rating={review.rating} />
+                </div>
               </div>
-              <RatingStars rating={review.rating} />
             </div>
             <div className="flex flex-wrap gap-2">
               <Badge variant={review.is_visible ? 'default' : 'secondary'}>

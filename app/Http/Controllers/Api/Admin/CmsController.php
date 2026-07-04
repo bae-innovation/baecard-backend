@@ -82,7 +82,7 @@ class CmsController extends Controller
     {
         return match ($key) {
             'section.hero' => ['type' => 'hero'],
-            'section.faq', 'section.offers', 'section.order_steps' => [
+            'section.faq', 'section.order_steps' => [
                 'type' => 'repeater',
                 'variant' => str_replace('section.', '', $key),
             ],

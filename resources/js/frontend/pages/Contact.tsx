@@ -8,7 +8,7 @@ type ContactProps = {
 export default function Contact({ marketing }: ContactProps) {
   return (
     <FrontendLayout marketing={marketing} pageSlug="contact" contactVariant="contact" showContactBlock>
-      <div className="py-8" />
+      <div aria-hidden className="h-0" />
     </FrontendLayout>
   );
 }

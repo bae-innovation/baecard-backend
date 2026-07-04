@@ -17,7 +17,7 @@ class MarketingDefaults
         return [
             'hero' => [
                 'title' => self::ls("Bangladesh's Smart NFC Digital Business Card", 'বাংলাদেশের স্মার্ট এনএফসি ডিজিটাল বিজনেস কার্ড'),
-                'subtitle' => self::ls('Share your contact info with just a tap or scan. Update anytime.', 'একটি ট্যাপ বা স্ক্যানে যোগাযোগের তথ্য শেয়ার করুন।'),
+                'subtitle' => self::ls('Share your contact info with just a tap or scan.', 'একটি ট্যাপ বা স্ক্যানে যোগাযোগের তথ্য শেয়ার করুন।'),
                 'ctaPrimary' => self::ls('Get Started', 'শুরু করুন'),
                 'ctaSecondary' => self::ls('Book a Demo', 'ডেমো বুক করুন'),
             ],
@@ -97,7 +97,6 @@ class MarketingDefaults
             'section.features' => ['items' => $payload['features']],
             'section.security' => ['items' => $payload['security']],
             'section.faq' => ['items' => $payload['faq']],
-            'section.offers' => ['items' => $payload['offers']],
             'section.navigation' => ['items' => $payload['navigation']],
             'section.section_headings' => $payload['sectionHeadings'],
             'section.contact' => $payload['contact'],

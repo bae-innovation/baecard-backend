@@ -9,8 +9,8 @@ export const DEFAULT_MARKETING_CONTENT: MarketingContent = {
       'বাংলাদেশের স্মার্ট এনএফসি ডিজিটাল বিজনেস কার্ড',
     ),
     subtitle: ls(
-      'Share your contact info with just a tap or scan. Update anytime.',
-      'একটি ট্যাপ বা স্ক্যানে যোগাযোগের তথ্য শেয়ার করুন। যেকোনো সময় আপডেট করুন।',
+      'Share your contact info with just a tap or scan.',
+      'একটি ট্যাপ বা স্ক্যানে যোগাযোগের তথ্য শেয়ার করুন।',
     ),
     ctaPrimary: ls('Get Started', 'শুরু করুন'),
     ctaSecondary: ls('Book a Demo', 'ডেমো বুক করুন'),
@@ -72,32 +72,32 @@ export const DEFAULT_MARKETING_CONTENT: MarketingContent = {
       icon: frontendAsset('Get card2.svg'),
       title: ls('Get your BAE CARD', 'আপনার BAE CARD নিন'),
       description: ls(
-        'Put your personal info into networks with your smart business card.',
-        'স্মার্ট বিজনেস কার্ড দিয়ে নেটওয়ার্কে আপনার তথ্য শেয়ার করুন।',
+        'Receive a premium NFC business card crafted for modern professionals. Share your brand identity instantly at meetings, events, and everyday encounters — no paper cards, no reprints.',
+        'আধুনিক পেশাদারদের জন্য প্রিমিয়াম NFC বিজনেস কার্ড। মিটিং, ইভেন্ট ও দৈনন্দিন পরিচিতিতে তৎক্ষণাৎ ব্র্যান্ড পরিচয় শেয়ার করুন — কাগজের কার্ড বা পুনর্মুদ্রণের ঝামেলা নেই।',
       ),
     },
     {
       icon: frontendAsset('Profile2.svg'),
       title: ls('BAE CARD PROFILE', 'BAE CARD প্রোফাইল'),
       description: ls(
-        'Personalize your profile landing page with an attractive design.',
-        'আকর্ষণীয় ডিজাইনে প্রোফাইল ল্যান্ডিং পেজ কাস্টমাইজ করুন।',
+        'Build a stunning digital profile with photo, bio, social links, services, and contact details. Update anytime from your dashboard — your card always reflects your latest information.',
+        'ছবি, বায়ো, সোশ্যাল লিংক, সেবা ও যোগাযোগের তথ্য দিয়ে আকর্ষণীয় ডিজিটাল প্রোফাইল তৈরি করুন। ড্যাশবোর্ড থেকে যেকোনো সময় আপডেট করুন।',
       ),
     },
     {
       icon: frontendAsset('Share2.svg'),
       title: ls('Effortless Sharing', 'সহজ শেয়ারিং'),
       description: ls(
-        'Tap on NFC smartphones to instantly share contact information.',
-        'NFC স্মার্টফোনে ট্যাপ করে তৎক্ষণাৎ যোগাযোগের তথ্য শেয়ার করুন।',
+        'One tap on any NFC-enabled smartphone opens your full profile instantly. No app download required for the person receiving your details — networking made frictionless.',
+        'যেকোনো NFC স্মার্টফোনে একটি ট্যাপেই সম্পূর্ণ প্রোফাইল খুলে যায়। গ্রহণকারীর অ্যাপ ডাউনলোডের প্রয়োজন নেই — নেটওয়ার্কিং এখন ঝামেলামুক্ত।',
       ),
     },
     {
       icon: frontendAsset('QR2.svg'),
       title: ls('QR Code', 'QR কোড'),
       description: ls(
-        'For non-NFC users, share your information using the QR code on your card.',
-        'NFC ছাড়া ব্যবহারকারীদের জন্য কার্ডের QR কোড ব্যবহার করুন।',
+        'Every card includes a scannable QR code for devices without NFC. Universal compatibility ensures you never miss a connection, whether at conferences or casual meetups.',
+        'প্রতিটি কার্ডে NFC-বিহীন ডিভাইসের জন্য স্ক্যানযোগ্য QR কোড। সার্বজনীন সামঞ্জস্যতা মানে কোনো সংযোগ মিস হবে না।',
       ),
     },
   ],
@@ -370,7 +370,7 @@ export const DEFAULT_MARKETING_CONTENT: MarketingContent = {
     },
     corporate: {
       title: ls('CORPORATE', 'কর্পোরেট'),
-      subtitle: ls('Solutions for teams and organizations', 'টিম ও প্রতিষ্ঠানের জন্য'),
+      subtitle: ls('Empower your team with smart NFC cards', 'স্মার্ট NFC কার্ডে টিমকে শক্তিশালী করুন'),
     },
     trust: {
       title: ls('As trusted by', 'যাদের বিশ্বাস'),

@@ -9,7 +9,7 @@ type FaqProps = {
 export default function Faq({ marketing }: FaqProps) {
   return (
     <FrontendLayout marketing={marketing} pageSlug="faq" contactVariant="faq">
-      <FaqAccordionBlock />
+      <FaqAccordionBlock showHeading={false} />
     </FrontendLayout>
   );
 }

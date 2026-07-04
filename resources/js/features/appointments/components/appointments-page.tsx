@@ -41,6 +41,22 @@ function formatDateTime(value: string) {
   return new Date(value).toLocaleString();
 }
 
+function customerLabel(appointment: Appointment) {
+  if (appointment.customer?.name) {
+    return appointment.customer.name;
+  }
+
+  if (appointment.guest_name) {
+    return appointment.guest_name;
+  }
+
+  if (appointment.customer_id) {
+    return `#${appointment.customer_id}`;
+  }
+
+  return 'Guest';
+}
+
 type AppointmentsPageProps = {
   appointments: LaravelPaginator<Appointment>;
 };
@@ -93,7 +109,14 @@ export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
       }),
       columnHelper.accessor('customer', {
         header: 'Customer',
-        cell: ({ row }) => row.original.customer?.name ?? `#${row.original.customer_id}`,
+        cell: ({ row }) => (
+          <div className="min-w-[140px]">
+            <p>{customerLabel(row.original)}</p>
+            {row.original.guest_phone ? (
+              <p className="text-sm text-muted-foreground">{row.original.guest_phone}</p>
+            ) : null}
+          </div>
+        ),
       }),
       columnHelper.accessor('appointment_date', {
         header: 'Date & Time',
@@ -203,8 +226,18 @@ export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
             <div className="space-y-3 text-sm">
               <p>
                 <span className="font-medium">Customer:</span>{' '}
-                {selectedForView.customer?.name ?? `#${selectedForView.customer_id}`}
+                {customerLabel(selectedForView)}
               </p>
+              {selectedForView.guest_phone ? (
+                <p>
+                  <span className="font-medium">Phone:</span> {selectedForView.guest_phone}
+                </p>
+              ) : null}
+              {selectedForView.guest_email ? (
+                <p>
+                  <span className="font-medium">Email:</span> {selectedForView.guest_email}
+                </p>
+              ) : null}
               <p>
                 <span className="font-medium">Date:</span>{' '}
                 {formatDateTime(selectedForView.appointment_date)}

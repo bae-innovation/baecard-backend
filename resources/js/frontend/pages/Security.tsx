@@ -14,7 +14,7 @@ function SecurityContent() {
   return (
     <>
       <StructuredPageBody page={content.pages.security} translate={translate} />
-      <SecurityCardsBlock />
+      <SecurityCardsBlock showHeading={false} />
     </>
   );
 }

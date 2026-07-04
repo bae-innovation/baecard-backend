@@ -1,7 +1,9 @@
 export type MarketingProduct = {
   id: number;
   name: string;
+  slug: string | null;
   description: string | null;
+  short_description?: string | null;
   price: string | number | null;
   discount_type: string | null;
   discount_value: string | number | null;
@@ -13,6 +15,7 @@ export type MarketingReview = {
   name: string;
   body: string;
   rating: number;
+  image_url?: string | null;
 };
 
 export type MarketingVendor = {

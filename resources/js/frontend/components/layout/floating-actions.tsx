@@ -1,39 +1,176 @@
 import { motion } from 'framer-motion';
 import { Phone } from 'lucide-react';
+import * as React from 'react';
 
 import { frontendAsset } from '@frontend/lib/brand';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import type { FloatingSocialLink } from '@/types/app-settings';
+import { cn } from '@/lib/utils';
+
+const PLATFORM_ICONS: Record<string, string> = {
+  whatsapp: frontendAsset('socials/whatsapp.svg'),
+  facebook: frontendAsset('socials/facebook.svg'),
+  instagram: frontendAsset('socials/instagram.svg'),
+  linkedin: frontendAsset('socials/linkedin.svg'),
+  telegram: frontendAsset('socials/telegram.svg'),
+  youtube: frontendAsset('socials/youtube.svg'),
+  tiktok: frontendAsset('socials/tiktok.svg'),
+  twitter: frontendAsset('socials/twitter.svg'),
+};
+
+function buildFallbackLinks(app: ReturnType<typeof useAppSettings>): FloatingSocialLink[] {
+  const links: FloatingSocialLink[] = [];
+
+  if (app.support_phone) {
+    links.push({
+      id: 'fallback-phone',
+      platform: 'phone',
+      platform_value: app.support_phone,
+      href: `tel:${app.support_phone.replace(/\s/g, '')}`,
+      show_in_floating: true,
+    });
+  }
+
+  if (app.whatsapp) {
+    links.push({
+      id: 'fallback-whatsapp',
+      platform: 'whatsapp',
+      platform_value: app.whatsapp,
+      href: `https://wa.me/${app.whatsapp.replace(/\D/g, '')}`,
+      show_in_floating: true,
+    });
+  }
+
+  if (app.facebook) {
+    links.push({
+      id: 'fallback-facebook',
+      platform: 'facebook',
+      platform_value: app.facebook,
+      href: app.facebook,
+      show_in_floating: true,
+    });
+  }
+
+  return links;
+}
+
+function FloatingIconButton({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<typeof motion.button>) {
+  return (
+    <motion.button
+      type="button"
+      className={cn(
+        'fe-touch flex size-14 items-center justify-center rounded-full bg-fe-accent text-fe-bg shadow-lg shadow-fe-accent/25 ring-2 ring-white/10',
+        className,
+      )}
+      whileHover={{ scale: 1.15 }}
+      whileTap={{ scale: 0.95 }}
+      {...props}
+    >
+      {children}
+    </motion.button>
+  );
+}
+
+function FloatingIconLink({
+  href,
+  label,
+  children,
+  className,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <motion.a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
+      className={cn(
+        'fe-touch flex size-14 items-center justify-center rounded-full bg-fe-accent text-fe-bg shadow-lg shadow-fe-accent/25 ring-2 ring-white/10',
+        className,
+      )}
+      whileHover={{ scale: 1.15 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      {children}
+    </motion.a>
+  );
+}
+
+function renderSocialIcon(platform: string) {
+  if (platform === 'phone') {
+    return <Phone className="size-6" />;
+  }
+
+  const iconSrc = PLATFORM_ICONS[platform];
+  if (iconSrc) {
+    return <img src={iconSrc} alt="" className="size-7" />;
+  }
+
+  return <span className="text-sm font-bold uppercase">{platform.slice(0, 2)}</span>;
+}
+
+function FloatingSocialItem({ link }: { link: FloatingSocialLink }) {
+  const label = link.label ?? link.platform;
+
+  if (link.platform === 'phone') {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <FloatingIconButton aria-label="Show phone number">
+            <Phone className="size-6" />
+          </FloatingIconButton>
+        </PopoverTrigger>
+        <PopoverContent side="right" align="end" className="w-auto max-w-xs p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Phone</p>
+          <p className="mt-1 text-lg font-semibold">{link.platform_value}</p>
+          <a
+            href={link.href}
+            className="mt-3 inline-flex text-sm font-medium text-primary hover:underline"
+          >
+            Call now
+          </a>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  return (
+    <FloatingIconLink href={link.href} label={label}>
+      {renderSocialIcon(link.platform)}
+    </FloatingIconLink>
+  );
+}
 
 export function FloatingActions() {
   const app = useAppSettings();
-  const phone = (app.support_phone ?? '+8801897543515').replace(/\s/g, '');
-  const whatsapp = (app.whatsapp ?? '+8801897543515').replace(/\D/g, '');
+  const links = React.useMemo(() => {
+    const managed = app.floating_socials ?? [];
+    if (managed.length > 0) {
+      return managed;
+    }
+
+    return buildFallbackLinks(app);
+  }, [app]);
+
+  if (links.length === 0) {
+    return null;
+  }
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 hidden md:block">
-      <div className="pointer-events-auto mx-auto max-w-7xl px-4 pb-6">
-        <div className="flex justify-between">
-          <motion.a
-            href={`tel:${phone}`}
-            className="fe-touch flex size-14 items-center justify-center rounded-full bg-fe-accent text-fe-bg shadow-lg shadow-fe-accent/20"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Call"
-          >
-            <Phone className="size-6" />
-          </motion.a>
-          <motion.a
-            href={`https://wa.me/${whatsapp}`}
-            target="_blank"
-            rel="noreferrer"
-            className="fe-touch flex size-14 items-center justify-center rounded-full bg-fe-accent text-fe-bg shadow-lg shadow-fe-accent/20"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            aria-label="WhatsApp"
-          >
-            <img src={frontendAsset('socials/whatsapp.svg')} alt="" className="size-7" />
-          </motion.a>
-        </div>
+    <div className="pointer-events-none fixed bottom-20 left-4 z-30 md:bottom-6 md:left-6">
+      <div className="pointer-events-auto flex flex-col gap-3">
+        {links.map((link) => (
+          <FloatingSocialItem key={link.id} link={link} />
+        ))}
       </div>
     </div>
   );
