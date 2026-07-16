@@ -1,4 +1,4 @@
-import { Calendar, MessageSquare, Package } from 'lucide-react';
+import { Calendar, MessageSquare } from 'lucide-react';
 
 import { useActionHub } from '@frontend/hooks/use-action-hub';
 import { useMarketingContent } from '@frontend/providers/marketing-content-provider';
@@ -14,14 +14,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { AppointmentForm } from './appointment-form';
 import { MessageForm } from './message-form';
-import { OrderForm } from './order-form';
 
 type ActionHubProps = {
   products: MarketingProduct[];
 };
 
-export function ActionHub({ products }: ActionHubProps) {
-  const { open, tab, selectedProduct, closeHub, setTab } = useActionHub();
+export function ActionHub({ products: _products }: ActionHubProps) {
+  const { open, tab, closeHub, setTab } = useActionHub();
   const { translate } = useMarketingContent();
 
   return (
@@ -32,10 +31,10 @@ export function ActionHub({ products }: ActionHubProps) {
             {translate({ en: 'How can we help?', bn: 'কীভাবে সাহায্য করতে পারি?' })}
           </DrawerTitle>
           <DrawerDescription className="text-fe-muted">
-            {translate({
-              en: 'Order a card, send a message, or book an appointment.',
-              bn: 'কার্ড অর্ডার, মেসেজ বা অ্যাপয়েন্টমেন্ট বুক করুন।',
-            })}
+          {translate({
+            en: 'Send a message or book an appointment.',
+            bn: 'মেসেজ বা অ্যাপয়েন্টমেন্ট বুক করুন।',
+          })}
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex max-h-[calc(92dvh-7rem)] flex-col overflow-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
@@ -44,14 +43,7 @@ export function ActionHub({ products }: ActionHubProps) {
             onValueChange={(v) => setTab(v as ActionHubTab)}
             className="flex min-h-0 flex-1 flex-col"
           >
-            <TabsList className="fe-touch grid h-auto w-full shrink-0 grid-cols-3 gap-1 bg-fe-border/30 p-1">
-              <TabsTrigger
-                value="order"
-                className="fe-touch min-h-11 gap-1 text-xs sm:text-sm data-[state=active]:bg-fe-accent data-[state=active]:text-fe-bg"
-              >
-                <Package className="size-4 shrink-0" />
-                {translate({ en: 'Order', bn: 'অর্ডার' })}
-              </TabsTrigger>
+            <TabsList className="fe-touch grid h-auto w-full shrink-0 grid-cols-2 gap-1 bg-fe-border/30 p-1">
               <TabsTrigger
                 value="message"
                 className="fe-touch min-h-11 gap-1 text-xs sm:text-sm data-[state=active]:bg-fe-accent data-[state=active]:text-fe-bg"
@@ -68,9 +60,6 @@ export function ActionHub({ products }: ActionHubProps) {
               </TabsTrigger>
             </TabsList>
             <div className="mt-4 min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2">
-              <TabsContent value="order" className="mt-0">
-                <OrderForm products={products} preselected={selectedProduct} />
-              </TabsContent>
               <TabsContent value="message" className="mt-0">
                 <MessageForm />
               </TabsContent>

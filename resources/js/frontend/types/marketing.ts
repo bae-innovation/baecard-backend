@@ -26,4 +26,4 @@ export type MarketingVendor = {
   image_url: string | null;
 };
 
-export type ActionHubTab = 'order' | 'message' | 'appointment';
+export type ActionHubTab = 'message' | 'appointment';

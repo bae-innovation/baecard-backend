@@ -85,7 +85,7 @@ export function AppointmentForm({ variant = 'drawer' }: AppointmentFormProps) {
   }
 
   const minDateTime = format(new Date(Date.now() + 3600000), "yyyy-MM-dd'T'HH:mm");
-  const fieldClass = isPage ? 'border-fe-border bg-fe-bg' : 'border-white/20 bg-white/5';
+  const fieldClass = isPage ? 'border-fe-border bg-fe-bg' : 'border-fe-border bg-fe-bg/80 backdrop-blur-sm';
 
   if (isPage && submitted) {
     return (

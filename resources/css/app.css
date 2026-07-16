@@ -347,6 +347,40 @@
         }
     }
 
+    /* Mobile responsive improvements */
+    .fe-responsive-padding {
+        padding-left: max(1rem, env(safe-area-inset-left, 0px));
+        padding-right: max(1rem, env(safe-area-inset-right, 0px));
+    }
+
+    @media (max-width: 639px) {
+        .fe-mobile-full-width {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .fe-mobile-stack {
+            flex-direction: column !important;
+        }
+
+        .fe-mobile-text-sm {
+            font-size: 0.8125rem !important;
+            line-height: 1.25rem !important;
+        }
+
+        .fe-mobile-gap-2 {
+            gap: 0.5rem !important;
+        }
+
+        .fe-mobile-p-3 {
+            padding: 0.75rem !important;
+        }
+
+        .fe-mobile-rounded-lg {
+            border-radius: 0.75rem !important;
+        }
+    }
+
     .fe-safe-top {
         padding-top: env(safe-area-inset-top, 0px);
     }

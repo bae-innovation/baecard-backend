@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, MessageCircle, X } from 'lucide-react';
 import * as React from 'react';
 
 import { LanguageToggle } from '@frontend/components/layout/language-toggle';
@@ -10,15 +10,21 @@ import { useActionHub } from '@frontend/hooks/use-action-hub';
 import { useBodyScrollLock } from '@frontend/hooks/use-body-scroll-lock';
 import { frontendAsset } from '@frontend/lib/brand';
 import { useMarketingContent } from '@frontend/providers/marketing-content-provider';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { cn } from '@/lib/utils';
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const { openHub } = useActionHub();
   const { content, translate } = useMarketingContent();
+  const app = useAppSettings();
   const page = usePage<{ auth: { user: { name: string } | null } }>();
   const { auth } = page.props;
   const url = page.url;
+  const whatsappNumber = app.whatsapp ?? app.support_phone;
+  const whatsappHref = whatsappNumber
+    ? `https://wa.me/${whatsappNumber.replace(/\D/g, '')}`
+    : null;
 
   useBodyScrollLock(mobileOpen);
 
@@ -64,9 +70,6 @@ export function Navbar() {
         <div className="hidden items-center gap-2 lg:flex">
           <LanguageToggle />
           <ThemeToggle />
-          <MarketingButton size="sm" onClick={() => openHub('order')}>
-            {translate({ en: 'Order', bn: 'অর্ডার' })}
-          </MarketingButton>
           {auth.user ? (
             <Link href="/dashboard">
               <MarketingButton size="sm" variant="solid">
@@ -115,7 +118,7 @@ export function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="fixed inset-y-0 right-0 z-[60] flex w-[min(100%,20rem)] flex-col border-l border-fe-border bg-fe-surface shadow-2xl lg:hidden"
+              className="fixed inset-y-0 right-0 z-[60] flex w-[min(100%,22rem)] flex-col border-l border-fe-border bg-fe-surface shadow-2xl lg:hidden"
               role="dialog"
               aria-modal="true"
               aria-label="Navigation menu"
@@ -131,8 +134,8 @@ export function Navbar() {
                   <X className="size-5" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-4">
-                <div className="flex flex-col gap-1">
+              <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 pb-8">
+                <div className="flex flex-col gap-0.5">
                   {content.navigation.map((link) => {
                     const href = link.route ?? link.href;
                     const active = isActive(href);
@@ -142,10 +145,10 @@ export function Navbar() {
                         href={href}
                         onClick={() => setMobileOpen(false)}
                         className={cn(
-                          'fe-touch rounded-xl px-4 py-3.5 text-base font-medium transition-colors active:scale-[0.99]',
+                          'fe-touch rounded-xl px-4 py-3 text-sm font-medium transition-colors active:scale-[0.99]',
                           active
                             ? 'bg-fe-accent/15 text-fe-accent'
-                            : 'text-fe-text active:bg-fe-border/40',
+                            : 'text-fe-text hover:bg-fe-border/20 active:bg-fe-border/40',
                         )}
                       >
                         {translate(link.label)}
@@ -153,36 +156,37 @@ export function Navbar() {
                     );
                   })}
                 </div>
-                <div className="mt-6 grid gap-2 border-t border-fe-border pt-6">
-                  <MarketingButton
-                    className="w-full"
-                    onClick={() => {
-                      openHub('order');
-                      setMobileOpen(false);
-                    }}
-                  >
-                    {translate({ en: 'Order Now', bn: 'অর্ডার করুন' })}
-                  </MarketingButton>
-                  <MarketingButton
-                    className="w-full"
-                    variant="solid"
-                    onClick={() => {
-                      openHub('message');
-                      setMobileOpen(false);
-                    }}
-                  >
-                    {translate({ en: 'Message Us', bn: 'মেসেজ করুন' })}
-                  </MarketingButton>
-                  <MarketingButton
-                    className="w-full"
-                    variant="ghost"
-                    onClick={() => {
-                      openHub('appointment');
-                      setMobileOpen(false);
-                    }}
-                  >
-                    {translate({ en: 'Book Appointment', bn: 'অ্যাপয়েন্টমেন্ট' })}
-                  </MarketingButton>
+                <div className="mt-5 grid gap-2 border-t border-fe-border pt-5">
+                  {whatsappHref ? (
+                    <a
+                      href={whatsappHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      <MarketingButton className="w-full" variant="solid">
+                        <MessageCircle className="size-4" />
+                        {translate({ en: 'WhatsApp', bn: 'হোয়াটসঅ্যাপ' })}
+                      </MarketingButton>
+                    </a>
+                  ) : (
+                    <MarketingButton
+                      className="w-full"
+                      variant="solid"
+                      onClick={() => {
+                        openHub('message');
+                        setMobileOpen(false);
+                      }}
+                    >
+                      {translate({ en: 'Message Us', bn: 'মেসেজ করুন' })}
+                    </MarketingButton>
+                  )}
+                  <Link href="/appointment" className="w-full" onClick={() => setMobileOpen(false)}>
+                    <MarketingButton className="w-full" variant="ghost">
+                      {translate({ en: 'Book Appointment', bn: 'অ্যাপয়েন্টমেন্ট' })}
+                    </MarketingButton>
+                  </Link>
                   {auth.user ? (
                     <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
                       <MarketingButton className="w-full" variant="outline">

@@ -1,4 +1,4 @@
-import { Calendar, MessageSquare, Package } from 'lucide-react';
+import { Calendar, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { useActionHub } from '@frontend/hooks/use-action-hub';
@@ -7,12 +7,6 @@ import { MotionSection, StaggerContainer, StaggerItem } from '@frontend/componen
 import { SectionHeading } from '@frontend/components/ui/section-heading';
 
 const items = [
-  {
-    tab: 'order' as const,
-    icon: Package,
-    title: 'Order a BAE Card',
-    description: 'Choose your card and we will call you to confirm.',
-  },
   {
     tab: 'message' as const,
     icon: MessageSquare,
@@ -34,7 +28,7 @@ export function GetInTouchSection() {
     <MotionSection id="get-in-touch" className="py-16 md:py-24">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <SectionHeading title="Get in Touch" subtitle="We are here to help" />
-        <StaggerContainer className="grid gap-6 md:grid-cols-3">
+        <StaggerContainer className="grid gap-6 md:grid-cols-2">
           {items.map((item) => (
             <StaggerItem key={item.tab}>
               <motion.button

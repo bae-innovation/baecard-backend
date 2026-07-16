@@ -3,7 +3,6 @@ import { Phone } from 'lucide-react';
 import * as React from 'react';
 
 import { frontendAsset } from '@frontend/lib/brand';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import type { FloatingSocialLink } from '@/types/app-settings';
 import { cn } from '@/lib/utils';
@@ -64,7 +63,7 @@ function FloatingIconButton({
     <motion.button
       type="button"
       className={cn(
-        'fe-touch flex size-14 items-center justify-center rounded-full bg-fe-accent text-fe-bg shadow-lg shadow-fe-accent/25 ring-2 ring-white/10',
+        'fe-touch flex size-12 items-center justify-center rounded-full bg-fe-accent text-fe-bg shadow-lg shadow-fe-accent/25 ring-2 ring-white/10 md:size-14',
         className,
       )}
       whileHover={{ scale: 1.15 }}
@@ -76,17 +75,14 @@ function FloatingIconButton({
   );
 }
 
-function FloatingIconLink({
-  href,
-  label,
-  children,
-  className,
-}: {
+type FloatingIconLinkProps = {
   href: string;
   label: string;
   children: React.ReactNode;
   className?: string;
-}) {
+};
+
+function FloatingIconLink({ href, label, children, className }: FloatingIconLinkProps) {
   return (
     <motion.a
       href={href}
@@ -94,7 +90,7 @@ function FloatingIconLink({
       rel="noreferrer"
       aria-label={label}
       className={cn(
-        'fe-touch flex size-14 items-center justify-center rounded-full bg-fe-accent text-fe-bg shadow-lg shadow-fe-accent/25 ring-2 ring-white/10',
+        'fe-touch flex size-12 items-center justify-center rounded-full bg-fe-accent text-fe-bg shadow-lg shadow-fe-accent/25 ring-2 ring-white/10 md:size-14',
         className,
       )}
       whileHover={{ scale: 1.15 }}
@@ -107,12 +103,12 @@ function FloatingIconLink({
 
 function renderSocialIcon(platform: string) {
   if (platform === 'phone') {
-    return <Phone className="size-6" />;
+    return <Phone className="size-5 md:size-6" />;
   }
 
   const iconSrc = PLATFORM_ICONS[platform];
   if (iconSrc) {
-    return <img src={iconSrc} alt="" className="size-7" />;
+    return <img src={iconSrc} alt="" className="size-6 md:size-7" />;
   }
 
   return <span className="text-sm font-bold uppercase">{platform.slice(0, 2)}</span>;
@@ -123,23 +119,9 @@ function FloatingSocialItem({ link }: { link: FloatingSocialLink }) {
 
   if (link.platform === 'phone') {
     return (
-      <Popover>
-        <PopoverTrigger asChild>
-          <FloatingIconButton aria-label="Show phone number">
-            <Phone className="size-6" />
-          </FloatingIconButton>
-        </PopoverTrigger>
-        <PopoverContent side="right" align="end" className="w-auto max-w-xs p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Phone</p>
-          <p className="mt-1 text-lg font-semibold">{link.platform_value}</p>
-          <a
-            href={link.href}
-            className="mt-3 inline-flex text-sm font-medium text-primary hover:underline"
-          >
-            Call now
-          </a>
-        </PopoverContent>
-      </Popover>
+      <FloatingIconLink href={link.href} label={label}>
+        <Phone className="size-5 md:size-6" />
+      </FloatingIconLink>
     );
   }
 
@@ -166,7 +148,7 @@ export function FloatingActions() {
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-20 left-4 z-30 md:bottom-6 md:left-6">
+    <div className="pointer-events-none fixed bottom-6 left-3 z-30 hidden md:block">
       <div className="pointer-events-auto flex flex-col gap-3">
         {links.map((link) => (
           <FloatingSocialItem key={link.id} link={link} />

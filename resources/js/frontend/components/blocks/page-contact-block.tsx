@@ -228,10 +228,12 @@ export function PageContactBlock({ variant, className }: PageContactBlockProps) 
             </MarketingButton>
           </a>
         ) : null}
-        <MarketingButton variant="outline" className="w-full sm:w-auto" onClick={() => openHub('appointment')}>
-          <Calendar className="size-4" />
-          {translate({ en: 'Book a Demo', bn: 'ডেমো বুক' })}
-        </MarketingButton>
+        <Link href="/appointment" className="w-full sm:w-auto">
+          <MarketingButton variant="outline" className="w-full sm:w-auto">
+            <Calendar className="size-4" />
+            {translate({ en: 'Book a Demo', bn: 'ডেমো বুক' })}
+          </MarketingButton>
+        </Link>
       </AnimatedCtaStrip>
     );
   }
@@ -242,14 +244,16 @@ export function PageContactBlock({ variant, className }: PageContactBlockProps) 
         className={cn('fe-contact-strip border-t border-fe-border', className)}
         title={translate({ en: 'Found the perfect card?', bn: 'পছন্দের কার্ড পেয়েছেন?' })}
         subtitle={translate({
-          en: 'Order now and we will confirm your details shortly.',
-          bn: 'এখনই অর্ডার করুন — আমরা শীঘ্রই বিস্তারিত নিশ্চিত করব।',
+          en: 'Book a demo and we will confirm your details shortly.',
+          bn: 'এখনই ডেমো বুক করুন — আমরা শীঘ্রই বিস্তারিত নিশ্চিত করব।',
         })}
       >
-        <MarketingButton className="w-full sm:w-auto" onClick={() => openHub('order')}>
-          {translate({ en: 'Order Now', bn: 'অর্ডার করুন' })}
-          <ArrowRight className="size-4" />
-        </MarketingButton>
+        <Link href="/appointment" className="w-full sm:w-auto">
+          <MarketingButton className="w-full sm:w-auto">
+            {translate({ en: 'Book a Demo', bn: 'ডেমো বুক করুন' })}
+            <ArrowRight className="size-4" />
+          </MarketingButton>
+        </Link>
       </AnimatedCtaStrip>
     );
   }

@@ -52,7 +52,7 @@ export function MessageForm() {
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="msg-name">Full name</Label>
-        <Input id="msg-name" {...form.register('name')} className="bg-white/5 border-white/20" />
+        <Input id="msg-name" {...form.register('name')} className="border-fe-border bg-fe-bg/80 backdrop-blur-sm" />
       </div>
       <div className="space-y-2">
         <Label htmlFor="msg-phone">Mobile</Label>
@@ -60,7 +60,7 @@ export function MessageForm() {
           id="msg-phone"
           placeholder="01XXXXXXXXX"
           {...form.register('phone')}
-          className="bg-white/5 border-white/20"
+          className="border-fe-border bg-fe-bg/80 backdrop-blur-sm"
         />
       </div>
       <div className="space-y-2">
@@ -69,7 +69,7 @@ export function MessageForm() {
           id="msg-email"
           type="email"
           {...form.register('email')}
-          className="bg-white/5 border-white/20"
+          className="border-fe-border bg-fe-bg/80 backdrop-blur-sm"
         />
       </div>
       <div className="space-y-2">
@@ -78,7 +78,7 @@ export function MessageForm() {
           id="msg-body"
           rows={4}
           {...form.register('message')}
-          className="bg-white/5 border-white/20"
+          className="border-fe-border bg-fe-bg/80 backdrop-blur-sm"
         />
       </div>
       <MarketingButton type="submit" variant="solid" className="w-full" disabled={submitting}>
