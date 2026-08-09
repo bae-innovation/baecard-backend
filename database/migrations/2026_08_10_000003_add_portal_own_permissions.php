@@ -125,7 +125,14 @@ return new class extends Migration
                 }
             }
 
-            $userRole->syncPermissions(PermissionCatalog::customerRolePermissions());
+            // Only sync permissions that already exist — later migrations
+            // (e.g. profile.content.manage) create additional catalog entries.
+            $userRole->syncPermissions(
+                Permission::query()
+                    ->where('guard_name', $guard)
+                    ->whereIn('name', PermissionCatalog::customerRolePermissions())
+                    ->get()
+            );
         }
     }
 

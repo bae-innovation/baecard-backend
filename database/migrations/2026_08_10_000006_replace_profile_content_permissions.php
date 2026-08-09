@@ -22,8 +22,13 @@ return new class extends Migration
 
         $guard = PermissionCatalog::GUARD;
 
+        $ensureNames = array_values(array_unique(array_merge(
+            ['profile.content.manage'],
+            PermissionCatalog::customerRolePermissions(),
+        )));
+
         foreach (PermissionCatalog::definitions() as $definition) {
-            if ($definition['name'] !== 'profile.content.manage') {
+            if (! in_array($definition['name'], $ensureNames, true)) {
                 continue;
             }
 
