@@ -19,14 +19,14 @@ export function Navbar() {
   const { openHub } = useActionHub();
   const { content, translate } = useMarketingContent();
   const app = useAppSettings();
-  const { homeHref } = useAuth();
+  const { homeHref, isCustomer } = useAuth();
   const page = usePage<{ auth: { user: { name: string } | null } }>();
   const { auth } = page.props;
   const url = page.url;
   const whatsappNumber = app.whatsapp ?? app.support_phone;
-  const whatsappHref = whatsappNumber
-    ? `https://wa.me/${whatsappNumber.replace(/\D/g, '')}`
-    : null;
+  const portalLabel = isCustomer()
+    ? translate({ en: 'My Profile', bn: 'আমার প্রোফাইল' })
+    : translate({ en: 'Dashboard', bn: 'ড্যাশবোর্ড' });
 
   useBodyScrollLock(mobileOpen);
 
@@ -75,7 +75,7 @@ export function Navbar() {
           {auth.user ? (
             <Link href={homeHref}>
               <MarketingButton size="sm" variant="solid">
-                Dashboard
+                {portalLabel}
               </MarketingButton>
             </Link>
           ) : (
@@ -192,7 +192,7 @@ export function Navbar() {
                   {auth.user ? (
                     <Link href={homeHref} onClick={() => setMobileOpen(false)}>
                       <MarketingButton className="w-full" variant="outline">
-                        Dashboard
+                        {portalLabel}
                       </MarketingButton>
                     </Link>
                   ) : (

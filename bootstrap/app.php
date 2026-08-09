@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\InertiaErrorResponder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -7,6 +8,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Illuminate\Validation\ValidationException;
 
@@ -59,30 +61,26 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
-        $exceptions->render(function (AuthorizationException $e, $request) {
-            if ($request->expectsJson() || $request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Forbidden',
-                ], 403);
-            }
+        $exceptions->render(function (AuthorizationException $e, Request $request) {
+            return InertiaErrorResponder::forbidden($request, $e->getMessage());
         });
 
-        $exceptions->render(function (ModelNotFoundException $e, $request) {
+        $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
+            return InertiaErrorResponder::forbidden($request, $e->getMessage());
+        });
+
+        $exceptions->render(function (ModelNotFoundException $e, Request $request) {
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Resource not found',
                 ], 404);
             }
+
+            return InertiaErrorResponder::notFound($request);
         });
 
-        $exceptions->render(function (NotFoundHttpException $e, $request) {
-            if ($request->expectsJson() || $request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Route not found',
-                ], 404);
-            }
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            return InertiaErrorResponder::notFound($request, $e->getMessage());
         });
     })->create();

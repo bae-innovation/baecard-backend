@@ -62,7 +62,7 @@ type AccessControlUsersPageProps = {
 };
 
 export function AccessControlUsersPage({ users, roles }: AccessControlUsersPageProps) {
-  const { user, hasAbility } = useAuth();
+  const { user, hasPermission } = useAuth();
   const actorRoles = user?.roles ?? [];
   const actorRoleNames = actorRoles.map((role) => role.name);
   const canCreate = hasPermission('rbac.user.create');

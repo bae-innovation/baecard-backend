@@ -11,6 +11,19 @@ class PermissionCatalog
     public const PROTECTED_ROLES = ['SuperAdmin', 'User'];
 
     /**
+     * Permissions that grant access to the admin analytics dashboard.
+     *
+     * @return list<string>
+     */
+    public static function dashboardAccessPermissions(): array
+    {
+        return [
+            'dashboard.analytics.view',
+            'dashboard.*',
+        ];
+    }
+
+    /**
      * @return list<array{name: string, group: string, label: string, is_wildcard: bool}>
      */
     public static function definitions(): array

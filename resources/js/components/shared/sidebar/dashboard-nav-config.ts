@@ -1,4 +1,5 @@
 import type { NavItem } from '@/components/shared/sidebar/nav-main';
+import { DASHBOARD_ACCESS_PERMISSIONS } from '@/lib/permissions';
 import {
   BarChart3,
   Briefcase,
@@ -61,13 +62,13 @@ const TEMPLATE_NAV: NavItem[] = [
     url: '.',
     icon: LayoutDashboard,
     isActive: true,
-    requiredPermissions: ['dashboard.analytics.view'],
+    requiredPermissions: [...DASHBOARD_ACCESS_PERMISSIONS],
     items: [
       {
         title: 'Analytics',
         url: '/dashboard',
         icon: BarChart3,
-        requiredPermissions: ['dashboard.analytics.view'],
+        requiredPermissions: [...DASHBOARD_ACCESS_PERMISSIONS],
       },
     ],
   },
@@ -79,6 +80,12 @@ const TEMPLATE_NAV: NavItem[] = [
     requiredPermissions: ['rbac.role.view', 'rbac.user.view', 'rbac.permission.view'],
     items: [
       {
+        title: 'Permissions',
+        url: '/access-control/permissions',
+        icon: KeyRound,
+        requiredPermissions: ['rbac.permission.view'],
+      },
+      {
         title: 'Roles',
         url: '/access-control/roles',
         icon: ShieldCheck,
@@ -89,12 +96,6 @@ const TEMPLATE_NAV: NavItem[] = [
         url: '/access-control/users',
         icon: UserCog,
         requiredPermissions: ['rbac.user.view'],
-      },
-      {
-        title: 'Permissions',
-        url: '/access-control/permissions',
-        icon: KeyRound,
-        requiredPermissions: ['rbac.permission.view'],
       },
     ],
   },

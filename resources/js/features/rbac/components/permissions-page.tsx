@@ -24,7 +24,7 @@ export function PermissionsPage({ permissionGroups }: PermissionsPageProps) {
         description="View-only catalog of all permissions available in the system."
       />
 
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {groups.map(([group, permissions]) => (
           <section key={group} className="rounded-lg border bg-card">
             <div className="border-b px-4 py-3">

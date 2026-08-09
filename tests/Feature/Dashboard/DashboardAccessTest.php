@@ -102,6 +102,22 @@ it('blocks customers from viewing the dashboard', function () {
         ->assertForbidden();
 });
 
+it('allows dashboard access through the dashboard wildcard permission', function () {
+    $role = \App\Models\Role::query()->create([
+        'name' => 'DashboardOnly',
+        'guard_name' => 'sanctum',
+        'is_protected' => false,
+    ]);
+    $role->syncPermissions(['dashboard.*']);
+
+    $user = User::factory()->create(['email_verified_at' => now()]);
+    $user->assignRole($role);
+
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertOk();
+});
+
 it('redirects customers to their profile template after login', function () {
     $this->customer->update(['active_template' => 2]);
 
@@ -109,6 +125,16 @@ it('redirects customers to their profile template after login', function () {
         'email' => $this->customer->email,
         'password' => 'password',
     ])->assertRedirect('/profile/templates/2');
+});
+
+it('redirects customers to their active template even when extra permissions exist', function () {
+    $this->customer->update(['active_template' => 3]);
+    $this->customer->givePermissionTo('dashboard.analytics.view');
+
+    $this->post('/login', [
+        'email' => $this->customer->email,
+        'password' => 'password',
+    ])->assertRedirect('/profile/templates/3');
 });
 
 it('redirects admins to the dashboard after login', function () {

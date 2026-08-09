@@ -1,5 +1,56 @@
 import type { Permissions } from '@/schemas/auth.schema';
 
+export const DASHBOARD_ACCESS_PERMISSIONS = [
+  'dashboard.analytics.view',
+  'dashboard.*',
+] as const;
+
+export const CUSTOMER_ROLE_NAME = 'User';
+
+export function isCustomerRole(roleNames: readonly string[] | undefined): boolean {
+  return roleNames?.includes(CUSTOMER_ROLE_NAME) ?? false;
+}
+
+export function resolveCustomerHomeHref(activeTemplate?: number | null): string {
+  const template = Math.min(4, Math.max(1, activeTemplate ?? 1));
+
+  return `/profile/templates/${template}`;
+}
+
+export function resolveHomeHref(
+  permissions: readonly string[],
+  activeTemplate: number | null | undefined,
+  roleNames: readonly string[] | undefined,
+): string {
+  if (isCustomerRole(roleNames)) {
+    return resolveCustomerHomeHref(activeTemplate);
+  }
+
+  if (
+    DASHBOARD_ACCESS_PERMISSIONS.some((permission) =>
+      matchesPermission(permissions, permission),
+    )
+  ) {
+    return '/dashboard';
+  }
+
+  if (matchesPermission(permissions, 'order.order.view')) {
+    return '/orders';
+  }
+
+  if (matchesPermission(permissions, 'profile.template.manage')) {
+    return resolveCustomerHomeHref(activeTemplate);
+  }
+
+  return '/user/account';
+}
+
+export function canViewDashboard(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasAnyPermission(permissions, DASHBOARD_ACCESS_PERMISSIONS);
+}
+
 export function hasPermission(
   permissions: readonly { name: string }[],
   permission: string,

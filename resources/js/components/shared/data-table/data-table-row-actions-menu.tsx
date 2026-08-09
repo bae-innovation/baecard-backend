@@ -19,19 +19,24 @@ export function DataTableRowActionsMenu({
   children,
 }: DataTableRowActionsMenuProps) {
   return (
-    <div className="flex justify-center">
-      <DropdownMenu>
+    <div
+      className="flex justify-center"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             className="size-8"
             aria-label={label}
+            onClick={(event) => event.stopPropagation()}
           >
             <MoreHorizontal className="size-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuContent align="end" className="z-50 w-52">
           {children}
         </DropdownMenuContent>
       </DropdownMenu>

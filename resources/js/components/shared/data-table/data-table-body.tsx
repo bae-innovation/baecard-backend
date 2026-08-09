@@ -52,7 +52,7 @@ export function DataTableBody<TData>({
                     const target = event.target as HTMLElement | null;
                     if (
                       target?.closest(
-                        'button, a, input, textarea, select, label, [role="checkbox"], [data-review-editable-cell]',
+                        'button, a, input, textarea, select, label, [role="checkbox"], [role="menuitem"], [data-radix-collection-item], [data-review-editable-cell]',
                       )
                     ) {
                       return;

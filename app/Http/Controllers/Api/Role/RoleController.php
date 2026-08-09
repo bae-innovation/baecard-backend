@@ -29,6 +29,7 @@ class RoleController extends Controller
             'roles' => InertiaData::paginate(
                 Role::query()
                     ->where('guard_name', PermissionCatalog::GUARD)
+                    ->with('permissions:id,name')
                     ->withCount('permissions')
                     ->latest()
                     ->paginate($request->integer('per_page', 10)),

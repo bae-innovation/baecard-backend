@@ -25,6 +25,11 @@ class PermissionResolver
         return false;
     }
 
+    public static function canViewDashboard(User $user): bool
+    {
+        return self::allowsAny($user, PermissionCatalog::dashboardAccessPermissions());
+    }
+
     /**
      * @return list<array{id: int, name: string}>
      */

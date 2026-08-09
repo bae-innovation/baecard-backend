@@ -117,7 +117,7 @@ class AuthService
             return $this->homeRouteFor($user);
         }
 
-        return route('dashboard');
+        return route('home');
     }
 
     /**
@@ -125,7 +125,11 @@ class AuthService
      */
     public function homeRouteFor(User $user): string
     {
-        if (PermissionResolver::allows($user, 'dashboard.analytics.view')) {
+        if ($user->hasRole(UserRole::User->value)) {
+            return $this->customerHomeRouteFor($user);
+        }
+
+        if (PermissionResolver::canViewDashboard($user)) {
             return route('dashboard');
         }
 
@@ -134,12 +138,17 @@ class AuthService
         }
 
         if (PermissionResolver::allows($user, 'profile.template.manage')) {
-            $template = max(1, min(4, (int) ($user->active_template ?? 1)));
-
-            return route('profile.template.show', ['template' => $template]);
+            return $this->customerHomeRouteFor($user);
         }
 
         return route('user.account');
+    }
+
+    public function customerHomeRouteFor(User $user): string
+    {
+        $template = max(1, min(4, (int) ($user->active_template ?? 1)));
+
+        return route('profile.template.show', ['template' => $template]);
     }
 
     /**
