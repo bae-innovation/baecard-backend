@@ -62,24 +62,42 @@ export function StructuredPageBody({ page, translate, variant = 'default' }: Str
       />
 
       <div className="relative mx-auto max-w-3xl">
-        <div className="space-y-5">
-          {page.paragraphs.map((p, index) => (
-            <motion.p
-              key={translate(p).slice(0, 32)}
-              initial={reducedMotion ? false : { opacity: 0, y: 16 }}
-              whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              className={cn(
-                'leading-relaxed text-fe-muted',
-                index === 0
-                  ? 'rounded-2xl border border-fe-border/70 bg-fe-surface/80 p-6 text-base backdrop-blur-sm sm:p-7 sm:text-lg'
-                  : 'text-base sm:text-lg',
-              )}
-            >
-              {translate(p)}
-            </motion.p>
-          ))}
+        <div className="space-y-8">
+          {page.sections && page.sections.length > 0
+            ? page.sections.map((section, index) => (
+                <motion.article
+                  key={translate(section.title).slice(0, 32)}
+                  initial={reducedMotion ? false : { opacity: 0, y: 16 }}
+                  whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ delay: index * 0.05, duration: 0.45 }}
+                  className="space-y-3"
+                >
+                  <h2 className="text-lg font-semibold text-fe-text sm:text-xl">
+                    {translate(section.title)}
+                  </h2>
+                  <p className="text-base leading-relaxed text-fe-muted sm:text-lg">
+                    {translate(section.body)}
+                  </p>
+                </motion.article>
+              ))
+            : page.paragraphs.map((p, index) => (
+                <motion.p
+                  key={translate(p).slice(0, 32)}
+                  initial={reducedMotion ? false : { opacity: 0, y: 16 }}
+                  whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-40px' }}
+                  transition={{ delay: index * 0.1, duration: 0.5 }}
+                  className={cn(
+                    'leading-relaxed text-fe-muted',
+                    index === 0
+                      ? 'rounded-2xl border border-fe-border/70 bg-fe-surface/80 p-6 text-base backdrop-blur-sm sm:p-7 sm:text-lg'
+                      : 'text-base sm:text-lg',
+                  )}
+                >
+                  {translate(p)}
+                </motion.p>
+              ))}
         </div>
       </div>
 

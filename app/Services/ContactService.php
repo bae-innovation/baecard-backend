@@ -83,7 +83,10 @@ class ContactService
         $user = request()->user();
 
         if ($user && ! RoleAbility::allows($user, 'contacts.view')) {
-            $query->where('user_id', $user->id);
+            $query->where(function (Builder $inner) use ($user) {
+                $inner->where('user_id', $user->id)
+                    ->orWhere('email', $user->email);
+            });
         }
 
         return $query;

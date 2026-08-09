@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Mail\ResetPasswordMail;
 use App\Models\User;
 use App\Support\CardCodePath;
+use App\Support\RoleAbility;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
@@ -104,13 +105,41 @@ class AuthService
     /**
      * Resolve post-auth redirect for card scan claim flow.
      */
-    public function resolveWebRedirect(?string $redirect): string
+    public function resolveWebRedirect(?string $redirect, ?User $user = null): string
     {
         if ($redirect && CardCodePath::isCardCodePath($redirect)) {
             return $redirect;
         }
 
+        $user ??= Auth::user();
+
+        if ($user instanceof User) {
+            return $this->homeRouteFor($user);
+        }
+
         return route('dashboard');
+    }
+
+    /**
+     * Default authenticated home route based on role abilities.
+     */
+    public function homeRouteFor(User $user): string
+    {
+        if (RoleAbility::allows($user, 'dashboard.view')) {
+            return route('dashboard');
+        }
+
+        if (RoleAbility::allows($user, 'orders.view')) {
+            return route('orders.index');
+        }
+
+        if (RoleAbility::allows($user, 'profile.manage')) {
+            $template = max(1, min(4, (int) ($user->active_template ?? 1)));
+
+            return route('profile.template.show', ['template' => $template]);
+        }
+
+        return route('user.account');
     }
 
     /**

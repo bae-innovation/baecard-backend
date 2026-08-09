@@ -51,6 +51,26 @@ function buildFallbackLinks(app: ReturnType<typeof useAppSettings>): FloatingSoc
     });
   }
 
+  if (app.instagram) {
+    links.push({
+      id: 'fallback-instagram',
+      platform: 'instagram',
+      platform_value: app.instagram,
+      href: app.instagram,
+      show_in_floating: true,
+    });
+  }
+
+  if (app.linkedin) {
+    links.push({
+      id: 'fallback-linkedin',
+      platform: 'linkedin',
+      platform_value: app.linkedin,
+      href: app.linkedin,
+      show_in_floating: true,
+    });
+  }
+
   return links;
 }
 

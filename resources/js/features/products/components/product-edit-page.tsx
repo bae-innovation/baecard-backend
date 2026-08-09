@@ -34,11 +34,14 @@ export function ProductEditPage({ product }: ProductEditPageProps) {
         product={product}
         isSubmitting={processing}
         onCancel={() => router.visit('/admin/products')}
-        onSubmit={async (values: ProductFormValues, image?: File | null) => {
+        onSubmit={async (values: ProductFormValues, image?: File | null, galleryImages?: File[]) => {
           setProcessing(true);
           router.post(
             `/admin/products/${product.id}`,
-            objectToFormData(values as Record<string, unknown>, { image }, 'PUT'),
+            objectToFormData(values as Record<string, unknown>, {
+              image,
+              gallery_images: galleryImages ?? [],
+            }, 'PUT'),
             {
               forceFormData: true,
               onSuccess: () => showMutationSuccess('Product updated'),

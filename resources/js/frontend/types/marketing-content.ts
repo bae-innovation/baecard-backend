@@ -50,10 +50,16 @@ export type FaqItem = {
   answer: LocalizedString;
 };
 
+export type PageSection = {
+  title: LocalizedString;
+  body: LocalizedString;
+};
+
 export type PageContent = {
   title: LocalizedString;
   subtitle?: LocalizedString;
   paragraphs: LocalizedString[];
+  sections?: PageSection[];
 };
 
 export type SeoMeta = {

@@ -39,7 +39,11 @@ export type ProductFormProps = {
   mode: 'create' | 'edit';
   variant?: 'dialog' | 'page';
   product?: Product | null;
-  onSubmit: (values: ProductFormValues, image?: File | null) => Promise<void>;
+  onSubmit: (
+    values: ProductFormValues,
+    image?: File | null,
+    galleryImages?: File[],
+  ) => Promise<void>;
   isSubmitting?: boolean;
   onCancel?: () => void;
   submitLabel?: string;
@@ -112,6 +116,8 @@ export function ProductForm({
   submitLabel,
 }: ProductFormProps) {
   const [imageFile, setImageFile] = React.useState<File | null>(null);
+  const [galleryFiles, setGalleryFiles] = React.useState<File[]>([]);
+  const [isConvertingGallery, setIsConvertingGallery] = React.useState(false);
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
   const [isConvertingImage, setIsConvertingImage] = React.useState(false);
   const isPage = variant === 'page';
@@ -160,6 +166,7 @@ export function ProductForm({
       form.reset();
       setImageFile(null);
       setImagePreview(null);
+      setGalleryFiles([]);
     }
   }, [form, mode, product]);
 
@@ -444,6 +451,69 @@ export function ProductForm({
     </FormItem>
   );
 
+  const existingGallery = product?.images ?? [];
+
+  const galleryField = (
+    <FormItem>
+      <Label>Gallery images</Label>
+      <p className="mb-2 text-xs text-muted-foreground">
+        Optional additional photos (up to 5). Converted to WebP before upload.
+      </p>
+      {existingGallery.length > 0 ? (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {existingGallery.map((path, index) => (
+            <img
+              key={`${path}-${index}`}
+              src={path.startsWith('http') ? path : `/${path}`}
+              alt=""
+              className="size-16 rounded-lg border object-cover"
+            />
+          ))}
+        </div>
+      ) : null}
+      {galleryFiles.length > 0 ? (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {galleryFiles.map((file, index) => (
+            <img
+              key={`${file.name}-${index}`}
+              src={URL.createObjectURL(file)}
+              alt=""
+              className="size-16 rounded-lg border object-cover"
+            />
+          ))}
+        </div>
+      ) : null}
+      <Input
+        type="file"
+        accept={UPLOAD_CONVERTIBLE_IMAGE_ACCEPT}
+        multiple
+        disabled={isSubmitting || isConvertingGallery || galleryFiles.length >= 5}
+        className="cursor-pointer"
+        onChange={async (event) => {
+          const files = Array.from(event.target.files ?? []);
+          if (files.length === 0) return;
+
+          setIsConvertingGallery(true);
+          try {
+            const converted = await Promise.all(files.map((file) => convertImageToWebp(file)));
+            setGalleryFiles((prev) => [...prev, ...converted].slice(0, 5));
+          } catch (error) {
+            showMutationError(error, 'Failed to convert gallery images');
+          } finally {
+            setIsConvertingGallery(false);
+            event.target.value = '';
+          }
+        }}
+      />
+      {isConvertingGallery ? (
+        <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="size-3 animate-spin" />
+          Converting gallery images…
+        </p>
+      ) : null}
+    </FormItem>
+  );
+
   const visibilityFields = (
     <div className="space-y-4">
       <FormField
@@ -484,7 +554,7 @@ export function ProductForm({
       <form
         className={cn(isPage ? 'space-y-6 pb-6' : 'space-y-6')}
         onSubmit={form.handleSubmit(async (values) => {
-          await onSubmit(values, imageFile);
+          await onSubmit(values, imageFile, galleryFiles);
         })}
       >
         {isPage ? (
@@ -505,6 +575,7 @@ export function ProductForm({
               <div className="space-y-6 md:sticky md:top-4">
                 <FormSection title="Product Image" description="Upload a catalog photo">
                   {imageField}
+                  {galleryField}
                 </FormSection>
                 <FormSection title="Visibility" description="Catalog display options">
                   {visibilityFields}

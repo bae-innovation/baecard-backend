@@ -38,6 +38,8 @@ class StoreProductRequest extends FormRequest
             'discount_value' => ['nullable', 'numeric', 'min:0'],
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
             'image' => ['nullable', 'file', 'mimes:'.implode(',', self::ALLOWED_IMAGE_MIMES)],
+            'gallery_images' => ['nullable', 'array', 'max:5'],
+            'gallery_images.*' => ['file', 'mimes:'.implode(',', self::ALLOWED_IMAGE_MIMES)],
             'images' => ['nullable', 'array'],
             'nfc_type' => ['nullable', 'string', 'max:100'],
             'weight' => ['nullable', 'numeric', 'min:0'],

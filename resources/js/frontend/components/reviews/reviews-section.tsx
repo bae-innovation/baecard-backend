@@ -1,5 +1,6 @@
 import { BadgeCheck, Star } from 'lucide-react';
 
+import { PublicReviewForm } from '@frontend/components/reviews/public-review-form';
 import { SectionShell } from '@frontend/components/blocks/section-shell';
 import { MarketingCard } from '@frontend/components/ui/marketing-card';
 import { StaggerContainer, StaggerItem } from '@frontend/components/ui/motion-section';
@@ -91,6 +92,9 @@ export function ReviewsSection({ reviews }: ReviewsSectionProps) {
           </StaggerContainer>
         </>
       )}
+      <div className="mt-10 sm:mt-12">
+        <PublicReviewForm />
+      </div>
     </SectionShell>
   );
 }

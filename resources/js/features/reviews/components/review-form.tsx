@@ -19,6 +19,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useFilePreviewUrl } from '@/hooks/use-file-preview-url';
+import {
+  convertImageToWebp,
+  UPLOAD_CONVERTIBLE_IMAGE_ACCEPT,
+} from '@/lib/convert-image-to-webp';
+import { showMutationError } from '@/lib/mutation-toast';
 import { cn } from '@/lib/utils';
 import {
   reviewFormSchema,
@@ -80,6 +85,7 @@ export function ReviewForm({
   const isPage = variant === 'page';
   const [imageFile, setImageFile] = React.useState<File | null>(null);
   const [existingPreview, setExistingPreview] = React.useState<string | null>(null);
+  const [isConvertingImage, setIsConvertingImage] = React.useState(false);
   const filePreview = useFilePreviewUrl(imageFile);
   const avatarPreview = filePreview ?? existingPreview;
 
@@ -135,11 +141,25 @@ export function ReviewForm({
         <div className="flex-1 space-y-2">
           <Input
             type="file"
-            accept="image/png,image/jpeg,image/jpg,image/webp,image/avif,.png,.jpg,.jpeg,.webp,.avif"
-            disabled={isSubmitting}
-            onChange={(event) => {
+            accept={UPLOAD_CONVERTIBLE_IMAGE_ACCEPT}
+            disabled={isSubmitting || isConvertingImage}
+            onChange={async (event) => {
               const file = event.target.files?.[0] ?? null;
-              setImageFile(file);
+              if (!file) {
+                setImageFile(null);
+                return;
+              }
+
+              setIsConvertingImage(true);
+              try {
+                setImageFile(await convertImageToWebp(file));
+              } catch (error) {
+                setImageFile(null);
+                event.target.value = '';
+                showMutationError(error, 'Failed to convert image to WebP');
+              } finally {
+                setIsConvertingImage(false);
+              }
             }}
           />
           <p className="text-xs text-muted-foreground">

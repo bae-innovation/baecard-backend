@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\CardCode;
 use App\Models\User;
+use App\Services\AuthService;
 use App\Services\CardCodeService;
 use App\Support\CardCodePath;
 use App\Traits\ApiResponseTrait;
@@ -21,7 +22,8 @@ class EmailVerificationController extends Controller
     use ApiResponseTrait;
 
     public function __construct(
-        protected CardCodeService $cardCodeService
+        protected CardCodeService $cardCodeService,
+        protected AuthService $authService,
     ) {}
 
     /**
@@ -159,6 +161,6 @@ class EmailVerificationController extends Controller
             return CardCodePath::pathForCode($pendingCode);
         }
 
-        return route('dashboard');
+        return $this->authService->homeRouteFor($request->user());
     }
 }

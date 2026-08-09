@@ -11,6 +11,7 @@ import { useBodyScrollLock } from '@frontend/hooks/use-body-scroll-lock';
 import { frontendAsset } from '@frontend/lib/brand';
 import { useMarketingContent } from '@frontend/providers/marketing-content-provider';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 export function Navbar() {
@@ -18,6 +19,7 @@ export function Navbar() {
   const { openHub } = useActionHub();
   const { content, translate } = useMarketingContent();
   const app = useAppSettings();
+  const { homeHref } = useAuth();
   const page = usePage<{ auth: { user: { name: string } | null } }>();
   const { auth } = page.props;
   const url = page.url;
@@ -71,7 +73,7 @@ export function Navbar() {
           <LanguageToggle />
           <ThemeToggle />
           {auth.user ? (
-            <Link href="/dashboard">
+            <Link href={homeHref}>
               <MarketingButton size="sm" variant="solid">
                 Dashboard
               </MarketingButton>
@@ -188,7 +190,7 @@ export function Navbar() {
                     </MarketingButton>
                   </Link>
                   {auth.user ? (
-                    <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
+                    <Link href={homeHref} onClick={() => setMobileOpen(false)}>
                       <MarketingButton className="w-full" variant="outline">
                         Dashboard
                       </MarketingButton>

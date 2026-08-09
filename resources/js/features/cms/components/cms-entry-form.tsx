@@ -40,6 +40,8 @@ const SEO_PAGE_KEYS = [
   'contact',
   'faq',
   'about',
+  'terms',
+  'policy',
 ] as const;
 
 function RepeaterItemShell({
@@ -303,8 +305,14 @@ export function CmsEntryForm({
   }
 
   if (schema.type === 'page') {
-    const page = content as { title?: LocalizedField; subtitle?: LocalizedField; paragraphs?: LocalizedField[] };
+    const page = content as {
+      title?: LocalizedField;
+      subtitle?: LocalizedField;
+      paragraphs?: LocalizedField[];
+      sections?: { title?: LocalizedField; body?: LocalizedField }[];
+    };
     const paragraphs = page.paragraphs ?? [];
+    const sections = page.sections ?? [];
 
     return (
       <FormShell
@@ -326,48 +334,111 @@ export function CmsEntryForm({
           value={asLocalized(page.subtitle)}
           onChange={(v) => onChange({ ...content, subtitle: v })}
         />
-        {paragraphs.map((p, index) => (
-          <div key={index} className="flex gap-2">
-            <div className="flex-1">
-              <CmsLocalizedField
-                label={`Paragraph ${index + 1}`}
-                disabled={readOnly}
-                value={asLocalized(p)}
-                onChange={(v) => {
-                  const next = [...paragraphs];
-                  next[index] = v;
-                  onChange({ ...content, paragraphs: next });
-                }}
-              />
-            </div>
+        {sections.length > 0 ? (
+          <div className="space-y-4">
+            <Label>Sections</Label>
+            {sections.map((section, index) => (
+              <div key={index} className="space-y-3 rounded-lg border p-4">
+                <CmsLocalizedField
+                  label={`Section ${index + 1} title`}
+                  disabled={readOnly}
+                  value={asLocalized(section.title)}
+                  onChange={(v) => {
+                    const next = [...sections];
+                    next[index] = { ...next[index], title: v };
+                    onChange({ ...content, sections: next });
+                  }}
+                />
+                <CmsLocalizedField
+                  label={`Section ${index + 1} body`}
+                  disabled={readOnly}
+                  value={asLocalized(section.body)}
+                  onChange={(v) => {
+                    const next = [...sections];
+                    next[index] = { ...next[index], body: v };
+                    onChange({ ...content, sections: next });
+                  }}
+                />
+                {!readOnly ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      onChange({
+                        ...content,
+                        sections: sections.filter((_, i) => i !== index),
+                      })
+                    }
+                  >
+                    <Trash2 className="mr-2 size-4" />
+                    Remove section
+                  </Button>
+                ) : null}
+              </div>
+            ))}
             {!readOnly ? (
               <Button
                 type="button"
-                variant="ghost"
-                size="icon"
-                className="mt-8"
+                variant="outline"
                 onClick={() =>
                   onChange({
                     ...content,
-                    paragraphs: paragraphs.filter((_, i) => i !== index),
+                    sections: [...sections, { title: { en: '', bn: '' }, body: { en: '', bn: '' } }],
                   })
                 }
               >
-                <Trash2 className="size-4" />
+                <Plus className="mr-2 size-4" />
+                Add section
               </Button>
             ) : null}
           </div>
-        ))}
-        {!readOnly ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onChange({ ...content, paragraphs: [...paragraphs, { en: '', bn: '' }] })}
-          >
-            <Plus className="mr-2 size-4" />
-            Add paragraph
-          </Button>
-        ) : null}
+        ) : (
+          <>
+            {paragraphs.map((p, index) => (
+              <div key={index} className="flex gap-2">
+                <div className="flex-1">
+                  <CmsLocalizedField
+                    label={`Paragraph ${index + 1}`}
+                    disabled={readOnly}
+                    value={asLocalized(p)}
+                    onChange={(v) => {
+                      const next = [...paragraphs];
+                      next[index] = v;
+                      onChange({ ...content, paragraphs: next });
+                    }}
+                  />
+                </div>
+                {!readOnly ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="mt-8"
+                    onClick={() =>
+                      onChange({
+                        ...content,
+                        paragraphs: paragraphs.filter((_, i) => i !== index),
+                      })
+                    }
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                ) : null}
+              </div>
+            ))}
+            {!readOnly ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onChange({ ...content, paragraphs: [...paragraphs, { en: '', bn: '' }] })}
+              >
+                <Plus className="mr-2 size-4" />
+                Add paragraph
+              </Button>
+            ) : null}
+          </>
+        )}
       </FormShell>
     );
   }

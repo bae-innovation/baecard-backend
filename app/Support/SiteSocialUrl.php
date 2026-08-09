@@ -40,6 +40,10 @@ class SiteSocialUrl
 
         $value = trim($platformValue);
 
+        if ($platform === 'instagram' && str_starts_with($value, '@')) {
+            $value = ltrim($value, '@');
+        }
+
         if ($platform === 'whatsapp') {
             return 'https://wa.me/'.preg_replace('/\D+/', '', $value);
         }

@@ -138,6 +138,7 @@ class MarketingController extends Controller
             'discount_type' => $product->discount_type,
             'discount_value' => $product->discount_value,
             'image_url' => $product->image_url,
+            'gallery_urls' => $product->gallery_urls,
         ];
     }
 

@@ -41,6 +41,8 @@ class ProductService
             $imagePath = $this->imageUploadService->store(request()->file('image'), 'product');
         }
 
+        $galleryPaths = $this->storeGalleryImages();
+
         $product = Product::create([
             'name' => $data['name'],
             'slug' => $this->resolveUniqueSlug($data['slug'] ?? null, $data['name']),
@@ -52,7 +54,7 @@ class ProductService
             'discount_value' => $data['discount_value'] ?? null,
             'stock_quantity' => $data['stock_quantity'] ?? null,
             'image' => $imagePath,
-            'images' => $data['images'] ?? null,
+            'images' => $galleryPaths !== [] ? $galleryPaths : ($data['images'] ?? null),
             'nfc_type' => $data['nfc_type'] ?? null,
             'weight' => $data['weight'] ?? null,
             'is_active' => $data['is_active'] ?? true,
@@ -82,6 +84,11 @@ class ProductService
             );
         }
 
+        $galleryPaths = $this->storeGalleryImages();
+        if ($galleryPaths !== []) {
+            $fields['images'] = array_merge($product->images ?? [], $galleryPaths);
+        }
+
         $product->update($fields);
 
         return $this->successResponse($product->fresh(), 'Product updated successfully.');
@@ -96,6 +103,9 @@ class ProductService
         }
 
         $this->imageUploadService->delete($product->image);
+        foreach ($product->images ?? [] as $galleryPath) {
+            $this->imageUploadService->delete($galleryPath);
+        }
         $product->delete();
 
         return $this->successResponse(null, 'Product deleted successfully.');
@@ -121,5 +131,25 @@ class ProductService
         }
 
         return $candidate;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function storeGalleryImages(): array
+    {
+        if (! request()->hasFile('gallery_images')) {
+            return [];
+        }
+
+        $paths = [];
+
+        foreach (request()->file('gallery_images') as $file) {
+            if ($file) {
+                $paths[] = $this->imageUploadService->store($file, 'product');
+            }
+        }
+
+        return $paths;
     }
 }

@@ -1,4 +1,5 @@
 import { frontendAsset } from '@frontend/lib/brand';
+import { POLICY_PAGE, TERMS_PAGE } from '@frontend/config/legal-content';
 import { ls } from '@frontend/lib/localized';
 import type { MarketingContent } from '@frontend/types/marketing-content';
 
@@ -218,32 +219,8 @@ export const DEFAULT_MARKETING_CONTENT: MarketingContent = {
         ),
       ],
     },
-    terms: {
-      title: ls('Terms of Service', 'সেবার শর্তাবলী'),
-      paragraphs: [
-        ls(
-          'By using BAE Card services you agree to our terms regarding product use, data handling, and acceptable use of NFC sharing features.',
-          'BAE Card সেবা ব্যবহারের মাধ্যমে আপনি আমাদের শর্তাবলীতে সম্মত হচ্ছেন।',
-        ),
-        ls(
-          'Orders are subject to confirmation. Custom designs require approval before production.',
-          'অর্ডার নিশ্চিতকরণের subject। কাস্টম ডিজাইন প্রোডাকশনের আগে অনুমোদন প্রয়োজন।',
-        ),
-      ],
-    },
-    policy: {
-      title: ls('Privacy Policy', 'গোপনীয়তা নীতি'),
-      paragraphs: [
-        ls(
-          'We collect only the information necessary to provide NFC profile services and process orders.',
-          'NFC প্রোফাইল সেবা ও অর্ডার প্রক্রিয়াকরণের জন্য প্রয়োজনীয় তথ্যই সংগ্রহ করি।',
-        ),
-        ls(
-          'Your profile data is encrypted at rest and transmitted over SSL. We do not sell personal data to third parties.',
-          'প্রোফাইল ডেটা এনক্রিপ্টেড এবং SSL-এ ট্রান্সফার হয়। তৃতীয় পক্ষে বিক্রি করি না।',
-        ),
-      ],
-    },
+    terms: TERMS_PAGE,
+    policy: POLICY_PAGE,
     corporate: {
       title: ls('Corporate Solutions', 'কর্পোরেট সমাধান'),
       subtitle: ls(
@@ -296,6 +273,8 @@ export const DEFAULT_MARKETING_CONTENT: MarketingContent = {
     { label: ls('About Us', 'আমাদের সম্পর্কে'), href: '/about', route: '/about' },
     { label: ls('Contact', 'যোগাযোগ'), href: '/contact', route: '/contact' },
     { label: ls('FAQ', 'FAQ'), href: '/faq', route: '/faq' },
+    { label: ls('Terms & Condition', 'শর্তাবলী'), href: '/terms', route: '/terms' },
+    { label: ls('Privacy & Policy', 'গোপনীয়তা নীতি'), href: '/policy', route: '/policy' },
   ],
   contact: {
     heading: ls('Get in Touch', 'যোগাযোগ করুন'),
@@ -341,6 +320,20 @@ export const DEFAULT_MARKETING_CONTENT: MarketingContent = {
     about: {
       title: ls('About Us — BAE Card', 'আমাদের সম্পর্কে — BAE Card'),
       description: ls('Learn about Bae Innovation and BAE Card.', 'Bae Innovation ও BAE Card সম্পর্কে জানুন।'),
+    },
+    terms: {
+      title: ls('Terms of Service — BAE Card', 'সেবার শর্তাবলী — BAE Card'),
+      description: ls(
+        'Terms of Service for BAE Card Ltd. and www.baecard.info.',
+        'BAE Card Ltd. ও www.baecard.info-এর সেবার শর্তাবলী।',
+      ),
+    },
+    policy: {
+      title: ls('Privacy Policy — BAE Card', 'গোপনীয়তা নীতি — BAE Card'),
+      description: ls(
+        'Privacy Policy for BAE Card — how we collect, use, and protect your data.',
+        'BAE Card গোপনীয়তা নীতি — আমরা কীভাবে ডেটা সংগ্রহ, ব্যবহার ও সুরক্ষা করি।',
+      ),
     },
   },
   sectionHeadings: {

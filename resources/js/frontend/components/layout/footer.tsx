@@ -62,10 +62,10 @@ export function Footer() {
             </h5>
             <div className="flex flex-col gap-2">
               <Link href="/terms" className="text-sm text-fe-muted transition-colors hover:text-fe-accent">
-                {translate({ en: 'Terms', bn: 'শর্তাবলী' })}
+                {translate({ en: 'Terms & Condition', bn: 'শর্তাবলী' })}
               </Link>
               <Link href="/policy" className="text-sm text-fe-muted transition-colors hover:text-fe-accent">
-                {translate({ en: 'Privacy', bn: 'গোপনীয়তা' })}
+                {translate({ en: 'Privacy & Policy', bn: 'গোপনীয়তা নীতি' })}
               </Link>
             </div>
           </div>

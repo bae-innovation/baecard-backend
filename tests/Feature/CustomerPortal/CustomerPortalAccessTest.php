@@ -39,6 +39,7 @@ it('derives customer portal abilities for the User role', function () {
         ->not->toContain('users.view')
         ->not->toContain('vendors.view')
         ->not->toContain('orders.view')
+        ->not->toContain('dashboard.view')
         ->not->toContain('dashboard.card.view')
         ->not->toContain('settings.manage');
 });
@@ -62,6 +63,7 @@ it('serves the public product catalog without authentication', function () {
 });
 
 it('blocks customers from staff-only modules', function () {
+    $this->actingAs($this->customer)->get('/dashboard')->assertForbidden();
     $this->actingAs($this->customer)->get('/access-control/users')->assertForbidden();
     $this->actingAs($this->customer)->get('/customers')->assertForbidden();
     $this->actingAs($this->customer)->get('/vendors')->assertForbidden();
@@ -142,6 +144,7 @@ it('scopes contacts to the logged-in customer and allows create only', function 
     $this->actingAs($this->customer)
         ->post('/contacts', [
             'name' => $this->customer->name,
+            'phone' => '01700000001',
             'email' => $this->customer->email,
             'message' => 'Another message',
         ])

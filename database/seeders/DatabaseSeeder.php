@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class,
             SettingsSeeder::class,
             CmsSeeder::class,
+            CmsLegalPagesSeeder::class,
             OfferTickerSeeder::class,
             SiteSocialSeeder::class,
         ]);

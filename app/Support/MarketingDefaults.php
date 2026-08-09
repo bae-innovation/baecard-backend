@@ -39,8 +39,8 @@ class MarketingDefaults
             ],
             'pages' => [
                 'about' => ['title' => self::ls('About Us', 'আমাদের সম্পর্কে'), 'paragraphs' => [self::ls('At Bae Innovation, we build smart connection tools.', 'Bae Innovation-এ আমরা স্মার্ট সংযোগের টুল তৈরি করি।')]],
-                'terms' => ['title' => self::ls('Terms of Service', 'সেবার শর্তাবলী'), 'paragraphs' => [self::ls('By using BAE Card you agree to our terms.', 'BAE Card ব্যবহারের মাধ্যমে আপনি শর্তাবলীতে সম্মত।')]],
-                'policy' => ['title' => self::ls('Privacy Policy', 'গোপনীয়তা নীতি'), 'paragraphs' => [self::ls('We protect your personal data.', 'আমরা আপনার ব্যক্তিগত তথ্য সুরক্ষিত রাখি।')]],
+                'terms' => LegalContent::termsPage(),
+                'policy' => LegalContent::policyPage(),
                 'corporate' => ['title' => self::ls('Corporate Solutions', 'কর্পোরেট সমাধান'), 'subtitle' => self::ls('Team NFC cards', 'টিম NFC কার্ড'), 'paragraphs' => []],
                 'contact' => ['title' => self::ls('Contact Us', 'যোগাযোগ'), 'subtitle' => self::ls('We are here to help.', 'আমরা সাহায্যের জন্য আছি।'), 'paragraphs' => []],
                 'products' => ['title' => self::ls('Products', 'পণ্যসমূহ'), 'subtitle' => self::ls('Match your style', 'আপনার স্টাইল'), 'paragraphs' => []],
@@ -55,6 +55,8 @@ class MarketingDefaults
                 ['label' => self::ls('About Us', 'আমাদের সম্পর্কে'), 'href' => '/about', 'route' => '/about'],
                 ['label' => self::ls('Contact', 'যোগাযোগ'), 'href' => '/contact', 'route' => '/contact'],
                 ['label' => self::ls('FAQ', 'FAQ'), 'href' => '/faq', 'route' => '/faq'],
+                ['label' => self::ls('Terms & Condition', 'শর্তাবলী'), 'href' => '/terms', 'route' => '/terms'],
+                ['label' => self::ls('Privacy & Policy', 'গোপনীয়তা নীতি'), 'href' => '/policy', 'route' => '/policy'],
             ],
             'contact' => [
                 'heading' => self::ls('Get in Touch', 'যোগাযোগ করুন'),
@@ -67,6 +69,14 @@ class MarketingDefaults
             ],
             'seo' => [
                 'home' => ['title' => self::ls('BAE Card', 'BAE Card'), 'description' => self::ls('Smart NFC cards', 'স্মার্ট NFC কার্ড')],
+                'terms' => [
+                    'title' => self::ls('Terms of Service — BAE Card', 'সেবার শর্তাবলী — BAE Card'),
+                    'description' => self::ls('Terms of Service for BAE Card Ltd.', 'BAE Card Ltd. সেবার শর্তাবলী।'),
+                ],
+                'policy' => [
+                    'title' => self::ls('Privacy Policy — BAE Card', 'গোপনীয়তা নীতি — BAE Card'),
+                    'description' => self::ls('Privacy Policy for BAE Card.', 'BAE Card গোপনীয়তা নীতি।'),
+                ],
             ],
             'sectionHeadings' => [
                 'catalog' => ['title' => self::ls('CATALOG', 'ক্যাটালগ'), 'subtitle' => self::ls('Match your style', 'আপনার স্টাইল')],

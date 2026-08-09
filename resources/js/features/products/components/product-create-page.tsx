@@ -27,11 +27,14 @@ export function ProductCreatePage() {
         variant="page"
         isSubmitting={processing}
         onCancel={() => router.visit('/admin/products')}
-        onSubmit={async (values: ProductFormValues, image?: File | null) => {
+        onSubmit={async (values: ProductFormValues, image?: File | null, galleryImages?: File[]) => {
           setProcessing(true);
           router.post(
             '/admin/products',
-            objectToFormData(values as Record<string, unknown>, { image }),
+            objectToFormData(values as Record<string, unknown>, {
+              image,
+              gallery_images: galleryImages ?? [],
+            }),
             {
               forceFormData: true,
               onSuccess: () => showMutationSuccess('Product created'),

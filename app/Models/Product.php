@@ -75,4 +75,16 @@ class Product extends Model
 
         return asset($this->image);
     }
+
+    /**
+     * @return list<string>
+     */
+    public function getGalleryUrlsAttribute(): array
+    {
+        return collect($this->images ?? [])
+            ->filter()
+            ->map(fn (string $path) => asset($path))
+            ->values()
+            ->all();
+    }
 }

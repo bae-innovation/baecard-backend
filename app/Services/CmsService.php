@@ -143,7 +143,18 @@ class CmsService
     {
         if (str_starts_with($key, 'page.')) {
             $slug = substr($key, 5);
-            $base['pages'][$slug] = array_merge($base['pages'][$slug] ?? [], $content);
+            $existing = $base['pages'][$slug] ?? [];
+            $filtered = $content;
+
+            if (isset($filtered['paragraphs']) && empty($filtered['paragraphs'])) {
+                unset($filtered['paragraphs']);
+            }
+
+            if (isset($filtered['sections']) && empty($filtered['sections'])) {
+                unset($filtered['sections']);
+            }
+
+            $base['pages'][$slug] = array_merge($existing, $filtered);
         }
     }
 

@@ -271,12 +271,12 @@ export function ProductDetailDialog({
                   product.images?.length ? (
                     <div className="flex flex-wrap gap-2 pt-1">
                       {product.images.map((image, index) => (
-                        <span
+                        <img
                           key={`${image}-${index}`}
-                          className="rounded-md border bg-muted/40 px-2 py-1 font-mono text-xs"
-                        >
-                          {image}
-                        </span>
+                          src={image.startsWith('http') ? image : `/${image.replace(/^\//, '')}`}
+                          alt={`Gallery ${index + 1}`}
+                          className="size-16 rounded-md border object-cover"
+                        />
                       ))}
                     </div>
                   ) : (

@@ -14,6 +14,9 @@ export function deepMergeMarketingContent<T extends Record<string, unknown>>(
     const baseVal = base[key];
 
     if (Array.isArray(overrideVal)) {
+      if (overrideVal.length === 0 && (key === 'paragraphs' || key === 'sections')) {
+        continue;
+      }
       result[key] = overrideVal as T[keyof T];
     } else if (
       overrideVal &&

@@ -83,7 +83,7 @@ class AuthController extends Controller
             );
         }
 
-        return redirect()->route('dashboard')->with(
+        return redirect($this->authService->homeRouteFor($request->user()))->with(
             'success',
             'Account created successfully.',
         );
@@ -122,7 +122,7 @@ class AuthController extends Controller
             return redirect($redirect);
         }
 
-        return redirect()->route('dashboard');
+        return redirect($this->authService->homeRouteFor($request->user()));
     }
 
     /**

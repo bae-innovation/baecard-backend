@@ -389,6 +389,10 @@
         padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
+    .pb-safe {
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
+    }
+
     .fe-touch {
         touch-action: manipulation;
         -webkit-touch-callout: none;

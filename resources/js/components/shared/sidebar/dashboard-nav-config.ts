@@ -4,6 +4,7 @@ import {
   Calendar,
   CreditCard,
   Globe,
+  LayoutDashboard,
   LayoutTemplate,
   Megaphone,
   MessageSquare,
@@ -53,6 +54,12 @@ const buildTemplateNav = (activeTemplate?: number): NavItem[] => [
 ];
 
 const TEMPLATE_NAV: NavItem[] = [
+  {
+    title: 'Dashboard',
+    url: '/dashboard',
+    icon: LayoutDashboard,
+    requiredAbilities: ['dashboard.view'],
+  },
   {
     title: 'Access Control',
     url: '.',

@@ -7,10 +7,12 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 export function TeamSwitcher() {
   const app = useAppSettings();
+  const { homeHref } = useAuth();
   const hasLogo = Boolean(
     app.admin_logo_url || app.logo_black_url || app.logo_white_url,
   );
@@ -25,7 +27,7 @@ export function TeamSwitcher() {
           asChild
         >
           <Link
-            href="/dashboard"
+            href={homeHref}
             className="flex w-full items-center justify-start gap-2 group-data-[collapsible=icon]:justify-center"
           >
             <span

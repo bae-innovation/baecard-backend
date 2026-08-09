@@ -68,6 +68,7 @@ class ReviewService
             'rating' => $data['rating'],
             'title' => $data['title'] ?? null,
             'body' => $data['body'],
+            'is_visible' => $this->defaultVisibilityForCreate($user, $data),
         ]);
 
         return $this->successResponse(
@@ -144,5 +145,14 @@ class ReviewService
         $review->delete();
 
         return $this->successResponse(null, 'Review deleted successfully.');
+    }
+
+    private function defaultVisibilityForCreate(?\App\Models\User $user, array $data): bool
+    {
+        if ($user && RoleAbility::allows($user, 'reviews.manage')) {
+            return (bool) ($data['is_visible'] ?? true);
+        }
+
+        return false;
     }
 }

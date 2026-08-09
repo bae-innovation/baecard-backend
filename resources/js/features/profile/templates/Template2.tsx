@@ -9,6 +9,11 @@ import {
   ProfileSocialGrid,
   useProfileSections,
 } from '@/features/profile/templates/profile-template-sections';
+import {
+  profileAvatarBorderClass,
+  profileAvatarOverlapClass,
+  ProfilePageShell,
+} from '@/features/profile/templates/profile-page-shell';
 import type { ProfileTemplateProps } from '@/features/profile/templates/profile-template-types';
 
 export function Template2({
@@ -19,18 +24,23 @@ export function Template2({
   isPreview,
 }: ProfileTemplateProps) {
   const sections = useProfileSections({ card, user, social_links, services });
+  const avatarBorder = profileAvatarBorderClass('dark');
 
   return (
     <div
       className={cn(
-        'min-h-svh bg-stone-950 text-white',
-        isPreview && 'min-h-0 rounded-[2rem] border border-white/10 shadow-xl',
+        isPreview && 'min-h-0 rounded-[2rem] border border-white/10 shadow-xl overflow-hidden',
       )}
     >
       <ProfileCover coverUrl={user.cover_image_url} show={sections.showCover} />
-      <div className="mx-auto max-w-lg px-4 pb-10 pt-6">
+      <ProfilePageShell hasCover={sections.showCover} variant="dark" className={cn(isPreview && 'min-h-0')}>
         <div className="mb-6 flex items-end gap-4">
-          <ProfileAvatar name={user.name} avatarUrl={user.avatar_url} className="-mt-12" />
+          <ProfileAvatar
+            name={user.name}
+            avatarUrl={user.avatar_url}
+            borderClassName={avatarBorder}
+            className={profileAvatarOverlapClass(sections.showCover)}
+          />
           <div>
             <h1 className="text-2xl font-bold">{user.name}</h1>
             {user.job_title ? (
@@ -60,7 +70,7 @@ export function Template2({
         </div>
 
         <p className="mt-10 text-center text-xs text-white/50">Made By BAE Card™</p>
-      </div>
+      </ProfilePageShell>
     </div>
   );
 }

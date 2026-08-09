@@ -30,7 +30,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ContactFormDialog } from '@/features/contacts/components/contact-form-dialog';
 import { DeleteContactDialog } from '@/features/contacts/components/delete-contact-dialog';
-import type { Contact } from '@/features/contacts/schemas/contact.schema';
+import type { Contact, ContactMetadata } from '@/features/contacts/schemas/contact.schema';
 import { useAuth } from '@/hooks/useAuth';
 import { useInertiaPagination } from '@/hooks/useInertiaPagination';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
@@ -41,6 +41,36 @@ const columnHelper = createColumnHelper<Contact>();
 function formatDate(value: string | undefined) {
   if (!value) return '—';
   return new Date(value).toLocaleString();
+}
+
+function subjectLabel(subject: Contact['subject']) {
+  switch (subject) {
+    case 'corporate':
+      return 'Corporate';
+    case 'order':
+      return 'Order';
+    case 'message':
+      return 'Message';
+    default:
+      return 'Message';
+  }
+}
+
+function formatMetadata(metadata: ContactMetadata | null | undefined) {
+  if (!metadata || typeof metadata !== 'object') return null;
+
+  const entries: { label: string; value: string }[] = [];
+
+  if (metadata.company) entries.push({ label: 'Company', value: metadata.company });
+  if (metadata.job_title) entries.push({ label: 'Job title', value: metadata.job_title });
+  if (metadata.product_name) entries.push({ label: 'Product', value: metadata.product_name });
+  if (metadata.card_amount) entries.push({ label: 'Card amount', value: metadata.card_amount });
+  if (metadata.vendor_slug) entries.push({ label: 'Vendor', value: metadata.vendor_slug });
+  if (metadata.product_id != null) {
+    entries.push({ label: 'Product ID', value: String(metadata.product_id) });
+  }
+
+  return entries.length > 0 ? entries : null;
 }
 
 type ContactsPageProps = {
@@ -85,8 +115,24 @@ export function ContactsPage({ contacts }: ContactsPageProps) {
         cell: ({ row }) => (
           <div className="min-w-[160px]">
             <p className="font-medium">{row.original.name}</p>
-            <p className="text-sm text-muted-foreground">{row.original.email}</p>
+            <p className="text-sm text-muted-foreground">{row.original.email ?? '—'}</p>
           </div>
+        ),
+      }),
+      ...(isStaff
+        ? [
+            columnHelper.accessor('subject', {
+              header: 'Subject',
+              cell: ({ getValue }) => (
+                <Badge variant="outline">{subjectLabel(getValue())}</Badge>
+              ),
+            }),
+          ]
+        : []),
+      columnHelper.accessor('phone', {
+        header: 'Phone',
+        cell: ({ getValue }) => (
+          <span className="whitespace-nowrap text-sm">{getValue() ?? '—'}</span>
         ),
       }),
       columnHelper.accessor('message', {
@@ -221,8 +267,17 @@ export function ContactsPage({ contacts }: ContactsPageProps) {
           {selected ? (
             <div className="space-y-3 text-sm">
               <p>
-                <span className="font-medium">Email:</span> {selected.email}
+                <span className="font-medium">Email:</span> {selected.email ?? '—'}
               </p>
+              <p>
+                <span className="font-medium">Phone:</span> {selected.phone ?? '—'}
+              </p>
+              {isStaff ? (
+                <p>
+                  <span className="font-medium">Subject:</span>{' '}
+                  {subjectLabel(selected.subject)}
+                </p>
+              ) : null}
               <p>
                 <span className="font-medium">Received:</span>{' '}
                 {formatDate(selected.created_at)}
@@ -238,7 +293,19 @@ export function ContactsPage({ contacts }: ContactsPageProps) {
                   {selected.is_read ? 'Read' : 'Unread'}
                 </p>
               ) : null}
-              <p className="whitespace-pre-wrap">{selected.message}</p>
+              {formatMetadata(selected.metadata) ? (
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="mb-2 font-medium">Additional details</p>
+                  <ul className="space-y-1">
+                    {formatMetadata(selected.metadata)?.map((item) => (
+                      <li key={item.label}>
+                        <span className="font-medium">{item.label}:</span> {item.value}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              <p className="whitespace-pre-wrap">{selected.message ?? '—'}</p>
               {canDelete ? (
                 <Button
                   variant="destructive"

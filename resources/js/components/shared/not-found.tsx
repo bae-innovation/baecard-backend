@@ -9,8 +9,10 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
 export function NotFound() {
+  const { homeHref, hasAbility } = useAuth();
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
       <div className="mx-auto max-w-2xl px-4 py-8 text-center">
@@ -30,39 +32,47 @@ export function NotFound() {
             Quick access to main sections:
           </p>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <Link
-              href="/dashboard"
-              className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
-            >
-              <LayoutDashboard className="mb-2 size-6 text-blue-500" />
-              <span className="text-sm font-medium">Dashboard</span>
-            </Link>
-            <Link
-              href="/access-control/users"
-              className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
-            >
-              <Users className="mb-2 size-6 text-green-500" />
-              <span className="text-sm font-medium">Users</span>
-            </Link>
-            <Link
-              href="/settings/general"
-              className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
-            >
-              <Settings className="mb-2 size-6 text-purple-500" />
-              <span className="text-sm font-medium">Settings</span>
-            </Link>
-            <Link
-              href="/dashboard"
-              className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
-            >
-              <BarChart3 className="mb-2 size-6 text-red-500" />
-              <span className="text-sm font-medium">Reports</span>
-            </Link>
+            {hasAbility('dashboard.view') ? (
+              <Link
+                href="/dashboard"
+                className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+              >
+                <LayoutDashboard className="mb-2 size-6 text-blue-500" />
+                <span className="text-sm font-medium">Dashboard</span>
+              </Link>
+            ) : null}
+            {hasAbility('users.view') ? (
+              <Link
+                href="/access-control/users"
+                className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+              >
+                <Users className="mb-2 size-6 text-green-500" />
+                <span className="text-sm font-medium">Users</span>
+              </Link>
+            ) : null}
+            {hasAbility('settings.manage') ? (
+              <Link
+                href="/settings/general"
+                className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+              >
+                <Settings className="mb-2 size-6 text-purple-500" />
+                <span className="text-sm font-medium">Settings</span>
+              </Link>
+            ) : null}
+            {hasAbility('orders.view') ? (
+              <Link
+                href="/orders"
+                className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+              >
+                <BarChart3 className="mb-2 size-6 text-red-500" />
+                <span className="text-sm font-medium">Orders</span>
+              </Link>
+            ) : null}
           </div>
           <Button asChild className="mt-8">
-            <Link href="/dashboard" className="inline-flex items-center">
+            <Link href={homeHref} className="inline-flex items-center">
               <ArrowLeft className="mr-2 size-4" />
-              Back to Dashboard
+              Back to Home
             </Link>
           </Button>
         </div>

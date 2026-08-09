@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\User\UserController;
 use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\MarketingController;
+use App\Services\AuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -172,7 +173,9 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'indexPage'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'indexPage'])
+        ->middleware('ability:dashboard.view')
+        ->name('dashboard');
 
     // Products (admin — public catalog lives at GET /products)
     Route::prefix('admin/products')->name('products.')->group(function () {
@@ -498,7 +501,7 @@ Route::get('{code}', [ScanController::class, 'show'])
 
 Route::fallback(function (Request $request) {
     if ($request->user()) {
-        return Inertia::render('Dashboard/Index');
+        return redirect(app(AuthService::class)->homeRouteFor($request->user()));
     }
 
     return redirect()->route('home');

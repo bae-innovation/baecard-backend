@@ -47,17 +47,23 @@ export function ProfileAvatar({
   name,
   avatarUrl,
   className,
+  borderClassName = 'border-background',
 }: {
   name: string;
   avatarUrl?: string | null;
   className?: string;
+  borderClassName?: string;
 }) {
   if (avatarUrl) {
     return (
       <img
         src={avatarUrl}
         alt={name}
-        className={cn('size-24 rounded-full border-4 border-background object-cover', className)}
+        className={cn(
+          'size-24 rounded-full border-4 object-cover',
+          borderClassName,
+          className,
+        )}
       />
     );
   }
@@ -65,7 +71,8 @@ export function ProfileAvatar({
   return (
     <div
       className={cn(
-        'flex size-24 items-center justify-center rounded-full border-4 border-background bg-primary text-3xl font-bold text-primary-foreground',
+        'flex size-24 items-center justify-center rounded-full border-4 bg-primary text-3xl font-bold text-primary-foreground',
+        borderClassName,
         className,
       )}
     >
@@ -262,7 +269,7 @@ export function ProfileQrSection({
       <div className="mx-auto inline-flex rounded-2xl bg-white p-4">
         <QRCode value={scanUrl} size={160} />
       </div>
-      <p className={cn('break-all text-xs', variant === 'dark' ? 'text-white/70' : 'text-muted-foreground')}>
+      <p className={cn('break-all text-xs', variant === 'dark' ? 'text-white/70' : 'text-stone-600')}>
         {scanUrl}
       </p>
     </div>

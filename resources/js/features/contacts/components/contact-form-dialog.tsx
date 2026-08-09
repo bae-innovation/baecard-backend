@@ -26,6 +26,10 @@ import { Textarea } from '@/components/ui/textarea';
 
 const contactFormSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
+  phone: z
+    .string()
+    .length(11, 'Invalid mobile number')
+    .regex(/^01[0-9]{9}$/, 'Invalid mobile number'),
   email: z.string().min(1, 'Email is required').email('Enter a valid email'),
   message: z.string().min(1, 'Message is required').max(5000),
 });
@@ -51,6 +55,7 @@ export function ContactFormDialog({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
       name: defaultValues?.name ?? '',
+      phone: defaultValues?.phone ?? '',
       email: defaultValues?.email ?? '',
       message: '',
     },
@@ -60,11 +65,12 @@ export function ContactFormDialog({
     if (open) {
       form.reset({
         name: defaultValues?.name ?? '',
+        phone: defaultValues?.phone ?? '',
         email: defaultValues?.email ?? '',
         message: '',
       });
     }
-  }, [open, defaultValues?.email, defaultValues?.name, form]);
+  }, [open, defaultValues?.email, defaultValues?.name, defaultValues?.phone, form]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -89,6 +95,23 @@ export function ContactFormDialog({
                   <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input {...field} disabled={isSubmitting} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mobile</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="01XXXXXXXXX"
+                      {...field}
+                      disabled={isSubmitting}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

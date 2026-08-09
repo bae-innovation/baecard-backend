@@ -75,3 +75,15 @@ export type PublicOrderResponse = {
 export function submitPublicOrder(payload: PublicOrderPayload) {
   return postJson<PublicOrderResponse>('/api/order/create', payload);
 }
+
+export type PublicReviewPayload = {
+  name: string;
+  email: string;
+  rating: number;
+  body: string;
+  title?: string;
+};
+
+export function submitReview(payload: PublicReviewPayload) {
+  return postJson<{ success: boolean; message: string }>('/api/review/create', payload);
+}

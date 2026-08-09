@@ -8,6 +8,7 @@
  * omitted — they are permission-free for every authenticated user.
  */
 return [
+    'dashboard.view' => ['SuperAdmin', 'Admin'],
     'users.view' => ['SuperAdmin', 'Admin', 'Marketing'],
     'users.create' => ['SuperAdmin', 'Admin'],
     'users.update' => ['SuperAdmin', 'Admin'],

@@ -22,5 +22,30 @@ export function useAuth() {
                 auth.user?.roles?.map((role) => role.name),
                 abilities,
             ),
+        homeHref: resolveHomeHref(
+            auth.permissions,
+            auth.user?.roles?.map((role) => role.name),
+            auth.user?.active_template,
+        ),
     };
+}
+
+function resolveHomeHref(
+    permissions: readonly { name: string }[],
+    roleNames: readonly string[] | undefined,
+    activeTemplate: number | null | undefined,
+): string {
+    if (hasAbilityForUser(permissions, roleNames, 'dashboard.view')) {
+        return '/dashboard';
+    }
+
+    if (hasAbilityForUser(permissions, roleNames, 'orders.view')) {
+        return '/orders';
+    }
+
+    if (hasAbilityForUser(permissions, roleNames, 'profile.manage')) {
+        return `/profile/templates/${activeTemplate ?? 1}`;
+    }
+
+    return '/user/account';
 }

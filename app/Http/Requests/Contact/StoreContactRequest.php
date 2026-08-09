@@ -15,10 +15,17 @@ class StoreContactRequest extends FormRequest
     public function rules(): array
     {
         $subject = $this->input('subject', 'message');
+        $isDashboardCreate = $this->user() !== null && ! $this->is('api/*');
 
         return [
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'size:11', 'regex:/^01[0-9]{9}$/'],
+            'phone' => [
+                Rule::requiredIf(! $isDashboardCreate),
+                'nullable',
+                'string',
+                'size:11',
+                'regex:/^01[0-9]{9}$/',
+            ],
             'email' => [
                 Rule::requiredIf(in_array($subject, ['message', 'corporate'], true)),
                 'nullable',

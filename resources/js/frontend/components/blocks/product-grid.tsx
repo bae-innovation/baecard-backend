@@ -56,6 +56,19 @@ function ProductCard({
       ) : (
         <div className="mb-4 aspect-square w-full rounded-xl bg-fe-border/30" />
       )}
+      {product.gallery_urls && product.gallery_urls.length > 0 ? (
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+          {product.gallery_urls.map((url) => (
+            <img
+              key={url}
+              src={url}
+              alt=""
+              className="size-14 shrink-0 rounded-lg border border-fe-border object-cover"
+              loading="lazy"
+            />
+          ))}
+        </div>
+      ) : null}
       <div className="mb-2 text-center">
         {hasDiscount ? (
           <>

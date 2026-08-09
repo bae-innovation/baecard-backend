@@ -29,6 +29,7 @@ it('stores a review from the admin panel', function () {
         'name' => 'Jane Doe',
         'email' => 'jane@example.com',
         'rating' => 5,
+        'is_visible' => true,
     ]);
 });
 
@@ -90,5 +91,21 @@ it('uses the logged-in customer name when a user submits a review', function () 
         'name' => 'Real Customer',
         'email' => 'real@example.com',
         'body' => 'Great service',
+        'is_visible' => false,
+    ]);
+});
+
+it('stores a public api review as hidden until approved', function () {
+    $response = $this->postJson('/api/review/create', [
+        'name' => 'Public User',
+        'email' => 'public@example.com',
+        'rating' => 5,
+        'body' => 'Great product',
+    ]);
+
+    $response->assertCreated();
+    $this->assertDatabaseHas('reviews', [
+        'email' => 'public@example.com',
+        'is_visible' => false,
     ]);
 });

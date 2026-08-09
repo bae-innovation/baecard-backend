@@ -8,6 +8,7 @@ export type MarketingProduct = {
   discount_type: string | null;
   discount_value: string | number | null;
   image_url: string | null;
+  gallery_urls?: string[];
 };
 
 export type MarketingReview = {

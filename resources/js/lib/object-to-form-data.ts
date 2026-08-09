@@ -17,7 +17,14 @@ export function objectToFormData(
 
   if (files) {
     Object.entries(files).forEach(([key, file]) => {
-      if (file) formData.append(key, file);
+      if (!file) return;
+      if (Array.isArray(file)) {
+        file.forEach((entry) => {
+          if (entry) formData.append(`${key}[]`, entry);
+        });
+        return;
+      }
+      formData.append(key, file);
     });
   }
 

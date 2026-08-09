@@ -2,6 +2,7 @@ import type { Permissions } from '@/schemas/auth.schema';
 
 /** Mirrors baecard-backend/config/role_abilities.php */
 const ROLE_ABILITIES: Record<string, readonly string[]> = {
+  'dashboard.view': ['SuperAdmin', 'Admin'],
   'users.view': ['SuperAdmin', 'Admin', 'Marketing'],
   'users.create': ['SuperAdmin', 'Admin'],
   'users.update': ['SuperAdmin', 'Admin'],
