@@ -29,7 +29,7 @@ class AppointmentController extends Controller
         $query = Appointment::with(['customer:id,name,email', 'creator:id,name']);
 
         if ($user && ! PermissionResolver::allows($user, 'appointment.appointment.view')) {
-            $query->where('customer_id', $user->id);
+            $query->where('created_by', $user->id);
         }
 
         return Inertia::render('Appointments/Index', [
@@ -41,27 +41,40 @@ class AppointmentController extends Controller
 
     public function createPage(Request $request)
     {
-        $canManage = PermissionResolver::allows($request->user(), 'appointment.appointment.manage');
+        $user = $request->user();
+        $canAssignCustomer = PermissionResolver::allowsAny($user, [
+            'appointment.appointment.create',
+            'appointment.appointment.update',
+        ]);
 
         return Inertia::render('Appointments/Create', [
-            'customers' => $canManage
+            'customers' => $canAssignCustomer
                 ? Customer::query()->select('id', 'name', 'email')->orderBy('name')->get()
                 : [],
-            'canManage' => $canManage,
+            'canManage' => $canAssignCustomer,
         ]);
     }
 
     public function editPage(Request $request, Appointment $appointment)
     {
         $appointment->load(['customer:id,name,email', 'creator:id,name']);
-        $canManage = PermissionResolver::allows($request->user(), 'appointment.appointment.manage');
+        $user = $request->user();
+
+        if ($user && ! $this->appointmentService->canUpdate($user, $appointment)) {
+            abort(403);
+        }
+
+        $canAssignCustomer = PermissionResolver::allowsAny($user, [
+            'appointment.appointment.create',
+            'appointment.appointment.update',
+        ]);
 
         return Inertia::render('Appointments/Edit', [
             'appointment' => $appointment,
-            'customers' => $canManage
+            'customers' => $canAssignCustomer
                 ? Customer::query()->select('id', 'name', 'email')->orderBy('name')->get()
                 : [],
-            'canManage' => $canManage,
+            'canManage' => $canAssignCustomer,
         ]);
     }
 

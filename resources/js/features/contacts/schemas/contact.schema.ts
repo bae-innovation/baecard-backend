@@ -14,6 +14,8 @@ export const contactMetadataSchema = z
 
 export const contactSchema = z.object({
   id: z.number(),
+  user_id: z.number().nullable().optional(),
+  created_by: z.number().nullable().optional(),
   name: z.string(),
   email: z.string().email().nullable().optional(),
   phone: z.string().nullable().optional(),

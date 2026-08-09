@@ -53,15 +53,24 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   cardCodeFormSchema,
+  cardDisplayName,
   generateCodeResponseSchema,
   type CardCode,
-  type CardCodeAssignableUser,
+  type CardCustomerOption,
   type CardCodeFormValues,
 } from '@/features/cards/schemas/card-code.schema';
+import { fetchAvailableOrders } from '@/features/cards/api/card-codes.api';
 import { CardCodeDetailDialog } from '@/features/cards/components/card-code-detail-dialog';
 import { CardCodeAssignUserDialog } from '@/features/cards/components/card-code-assign-user-dialog';
-import { CardCodeUserSearchPicker } from '@/features/cards/components/card-code-user-search-picker';
+import type { AvailableOrderOption } from '@/features/orders/schemas/order.schema';
 import { useAuth } from '@/hooks/useAuth';
 import { useCopyToClipboardWithStatus } from '@/hooks/useCopyToClipboardWithStatus';
 import { useInertiaPagination } from '@/hooks/useInertiaPagination';
@@ -73,6 +82,7 @@ const columnHelper = createColumnHelper<CardCode>();
 
 type CodesPageProps = {
   codes: LaravelPaginator<CardCode>;
+  customers: CardCustomerOption[];
 };
 
 type CardWorkflowStatus = 'verified' | 'awaiting_verification' | 'unassigned';
@@ -99,9 +109,18 @@ function WorkflowBadge({ card }: { card: CardCode }) {
   return <Badge variant="outline">Unassigned</Badge>;
 }
 
-export function CodesPage({ codes }: CodesPageProps) {
-  const { hasAbility } = useAuth();
-  const canManage = hasPermission('card.card.manage');
+export function CodesPage({ codes, customers }: CodesPageProps) {
+  const {
+    canViewCards,
+    canCreateCards,
+    canUpdateCards,
+    canDeleteCards,
+  } = useAuth();
+  const canView = canViewCards();
+  const canCreate = canCreateCards();
+  const canUpdate = canUpdateCards();
+  const canDelete = canDeleteCards();
+  const showActionsColumn = canView || canUpdate || canDelete;
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(codes, ['codes']);
   const { copy, isCopied } = useCopyToClipboardWithStatus();
@@ -115,24 +134,62 @@ export function CodesPage({ codes }: CodesPageProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [pendingDeleteId, setPendingDeleteId] = React.useState<number | null>(null);
-  const [selectedAssignUser, setSelectedAssignUser] =
-    React.useState<CardCodeAssignableUser | null>(null);
+  const [availableOrders, setAvailableOrders] = React.useState<AvailableOrderOption[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = React.useState(false);
 
   const form = useForm<CardCodeFormValues>({
     resolver: zodResolver(cardCodeFormSchema),
     defaultValues: {
+      customer_id: 0,
+      order_id: 0,
       code: '',
-      name: '',
-      phone: '',
     },
   });
 
+  const selectedCustomerId = form.watch('customer_id');
+
   React.useEffect(() => {
     if (createOpen) {
-      form.reset({ code: '', name: '', phone: '' });
-      setSelectedAssignUser(null);
+      form.reset({ customer_id: 0, order_id: 0, code: '' });
+      setAvailableOrders([]);
     }
   }, [createOpen, form]);
+
+  React.useEffect(() => {
+    if (!createOpen || !selectedCustomerId || selectedCustomerId <= 0) {
+      setAvailableOrders([]);
+      form.setValue('order_id', 0);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoadingOrders(true);
+
+    fetchAvailableOrders(selectedCustomerId)
+      .then((orders) => {
+        if (!cancelled) {
+          setAvailableOrders(orders);
+          if (!orders.some((order) => order.id === form.getValues('order_id'))) {
+            form.setValue('order_id', orders[0]?.id ?? 0);
+          }
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAvailableOrders([]);
+          toast.error('Unable to load orders for this customer');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingOrders(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [createOpen, form, selectedCustomerId]);
 
   const generateCode = React.useCallback(async () => {
     setIsGenerating(true);
@@ -170,9 +227,9 @@ export function CodesPage({ codes }: CodesPageProps) {
     setDetailOpen(true);
   }, []);
 
-  const columns = React.useMemo(
-    () => [
-      createDataTableSelectionColumn<CardCode>(),
+  const columns = React.useMemo(() => {
+    const baseColumns = [
+      ...(canDelete ? [createDataTableSelectionColumn<CardCode>()] : []),
       columnHelper.accessor('code', {
         header: 'Code',
         cell: ({ getValue }) => (
@@ -181,13 +238,20 @@ export function CodesPage({ codes }: CodesPageProps) {
           </Badge>
         ),
       }),
-      columnHelper.accessor('name', {
-        header: 'Name',
+      columnHelper.accessor((row) => cardDisplayName(row), {
+        id: 'name',
+        header: 'Customer',
         cell: ({ getValue }) => getValue(),
       }),
-      columnHelper.accessor('phone', {
+      columnHelper.accessor((row) => row.user?.phone ?? row.phone, {
+        id: 'phone',
         header: 'Mobile',
         cell: ({ getValue }) => getValue() ?? '—',
+      }),
+      columnHelper.accessor('order.order_number', {
+        id: 'order',
+        header: 'Order',
+        cell: ({ row }) => row.original.order?.order_number ?? '—',
       }),
       columnHelper.accessor('scan_url', {
         header: 'Link',
@@ -233,50 +297,77 @@ export function CodesPage({ codes }: CodesPageProps) {
         header: 'Workflow',
         cell: ({ row }) => <WorkflowBadge card={row.original} />,
       }),
+    ];
+
+    if (!showActionsColumn) {
+      return baseColumns;
+    }
+
+    return [
+      ...baseColumns,
       createDataTableActionsColumn<CardCode>({
-        cell: ({ row }) => (
-          <DataTableRowActionsMenu label={`Actions for ${row.original.code}`}>
-            <TableDropdownAction
-              icon={Eye}
-              onClick={() => openDetails(row.original)}
-            >
-              View details
-            </TableDropdownAction>
-            <TableDropdownAction
-              icon={Copy}
-              onClick={() => copy(row.original.scan_url)}
-            >
-              {isCopied ? 'Copied' : 'Copy link'}
-            </TableDropdownAction>
-            <TableDropdownAction
-              icon={QrCode}
-              onClick={() => {
-                setSelectedCode(row.original);
-                setQrOpen(true);
-              }}
-            >
-              Show QR
-            </TableDropdownAction>
-            {row.original.profile_url ? (
-              <TableDropdownAction icon={ExternalLink} asChild>
-                <a href={row.original.profile_url} target="_blank" rel="noreferrer">
-                  Open profile
-                </a>
-              </TableDropdownAction>
-            ) : null}
-            {canManage ? (
-              <>
-                <TableDropdownAction
-                  icon={UserRoundPlus}
-                  onClick={() => openAssign(row.original)}
-                >
-                  Assign user
-                </TableDropdownAction>
-                <TableDropdownAction
-                  icon={Trash2}
-                  className="text-destructive focus:text-destructive"
-                  disabled={pendingDeleteId === row.original.id}
-                  onClick={() => {
+        cell: ({ row }) => {
+          const menuItems: React.ReactNode[] = [];
+
+          if (canView) {
+            menuItems.push(
+              <TableDropdownAction
+                key="view"
+                icon={Eye}
+                onClick={() => openDetails(row.original)}
+              >
+                View details
+              </TableDropdownAction>,
+              <TableDropdownAction
+                key="copy"
+                icon={Copy}
+                onClick={() => copy(row.original.scan_url)}
+              >
+                {isCopied ? 'Copied' : 'Copy link'}
+              </TableDropdownAction>,
+              <TableDropdownAction
+                key="qr"
+                icon={QrCode}
+                onClick={() => {
+                  setSelectedCode(row.original);
+                  setQrOpen(true);
+                }}
+              >
+                Show QR
+              </TableDropdownAction>,
+            );
+
+            if (row.original.profile_url) {
+              menuItems.push(
+                <TableDropdownAction key="profile" icon={ExternalLink} asChild>
+                  <a href={row.original.profile_url} target="_blank" rel="noreferrer">
+                    Open profile
+                  </a>
+                </TableDropdownAction>,
+              );
+            }
+          }
+
+          if (canUpdate && row.original.order_id == null) {
+            menuItems.push(
+              <TableDropdownAction
+                key="assign"
+                icon={UserRoundPlus}
+                onClick={() => openAssign(row.original)}
+              >
+                Assign user
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canDelete) {
+            menuItems.push(
+              <TableDropdownAction
+                key="delete"
+                icon={Trash2}
+                className="text-destructive focus:text-destructive"
+                disabled={pendingDeleteId === row.original.id}
+                onClick={() => {
                   setPendingDeleteId(row.original.id);
                   router.delete(`/cards/${row.original.id}`, {
                     preserveScroll: true,
@@ -288,15 +379,33 @@ export function CodesPage({ codes }: CodesPageProps) {
                 }}
               >
                 Delete
-              </TableDropdownAction>
-              </>
-            ) : null}
-          </DataTableRowActionsMenu>
-        ),
+              </TableDropdownAction>,
+            );
+          }
+
+          if (menuItems.length === 0) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+
+          return (
+            <DataTableRowActionsMenu label={`Actions for ${row.original.code}`}>
+              {menuItems}
+            </DataTableRowActionsMenu>
+          );
+        },
       }),
-    ],
-    [canManage, copy, isCopied, openAssign, openDetails, pendingDeleteId],
-  );
+    ];
+  }, [
+    canDelete,
+    canUpdate,
+    canView,
+    copy,
+    isCopied,
+    openAssign,
+    openDetails,
+    pendingDeleteId,
+    showActionsColumn,
+  ]);
 
   const table = useReactTable({
     data,
@@ -307,7 +416,7 @@ export function CodesPage({ codes }: CodesPageProps) {
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     manualPagination: true,
-    enableRowSelection: true,
+    enableRowSelection: canDelete,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
@@ -318,9 +427,7 @@ export function CodesPage({ codes }: CodesPageProps) {
       '/cards',
       {
         code: values.code.toUpperCase(),
-        name: values.name,
-        phone: values.phone || null,
-        user_id: selectedAssignUser?.id ?? null,
+        order_id: values.order_id,
       },
       {
         preserveScroll: true,
@@ -344,11 +451,11 @@ export function CodesPage({ codes }: CodesPageProps) {
       <div className="flex items-center justify-between gap-4">
         <PageTitle
           title="Cards"
-          description="Generate a code and QR, assign a customer, then the user verifies to activate their public profile link."
+          description="Link each card to a customer order, generate a code and QR, then the customer verifies to activate their profile."
           icon={QrCode}
           color="teal"
         />
-        {canManage ? (
+        {canCreate ? (
           <Button type="button" onClick={() => setCreateOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create card
@@ -358,8 +465,12 @@ export function CodesPage({ codes }: CodesPageProps) {
 
       <DataTableLayout
         table={table}
-        colSpan={table.getAllColumns().length}
-        bodyProps={{ emptyMessage: 'No card codes yet.' }}
+        colSpan={columns.length}
+        bodyProps={{
+          emptyMessage: canCreate
+            ? 'No card codes yet. Create the first card to get started.'
+            : 'No card codes found.',
+        }}
         toolbar={
           <DataTableToolbar
             start={
@@ -383,18 +494,92 @@ export function CodesPage({ codes }: CodesPageProps) {
         footer={<DataTableFooter table={table} />}
       />
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      {canCreate ? (
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create card</DialogTitle>
             <DialogDescription>
-              Generate a unique code and QR link. Optionally assign a customer now, or leave
-              unassigned for the recipient to register when they scan the card.
+              Select the customer and an order without a card yet, then generate a unique code.
             </DialogDescription>
           </DialogHeader>
 
           <Form {...form}>
             <form onSubmit={handleCreate} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="customer_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Customer *</FormLabel>
+                    <Select
+                      value={field.value > 0 ? String(field.value) : undefined}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      disabled={isSubmitting}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select customer" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {customers.map((customer) => (
+                          <SelectItem key={customer.id} value={String(customer.id)}>
+                            {customer.name} ({customer.email})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="order_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Order *</FormLabel>
+                    <Select
+                      value={field.value > 0 ? String(field.value) : undefined}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      disabled={
+                        isSubmitting || isLoadingOrders || selectedCustomerId <= 0
+                      }
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              isLoadingOrders
+                                ? 'Loading orders...'
+                                : 'Select an order without a card'
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableOrders.map((order) => (
+                          <SelectItem key={order.id} value={String(order.id)}>
+                            {order.order_number} — {order.product_name}
+                            {order.source ? ` (${order.source})` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedCustomerId > 0 &&
+                    !isLoadingOrders &&
+                    availableOrders.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        This customer has no orders without a card. Create an order first.
+                      </p>
+                    ) : null}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="code"
@@ -435,51 +620,6 @@ export function CodesPage({ codes }: CodesPageProps) {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Recipient name" disabled={isSubmitting} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mobile</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="+880..." disabled={isSubmitting} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="space-y-2 rounded-lg border p-4">
-                <div>
-                  <p className="text-sm font-medium">Assign customer (optional)</p>
-                  <p className="text-xs text-muted-foreground">
-                    Search by email or phone if the recipient already has an account.
-                    You can also assign later from the row actions menu.
-                  </p>
-                </div>
-                <CardCodeUserSearchPicker
-                  selectedUser={selectedAssignUser}
-                  onSelect={setSelectedAssignUser}
-                  disabled={isSubmitting}
-                  emailInputId="create-assign-email"
-                  phoneInputId="create-assign-phone"
-                />
-              </div>
-
               <DialogFooter className="gap-2 sm:gap-0">
                 <Button
                   type="button"
@@ -503,21 +643,27 @@ export function CodesPage({ codes }: CodesPageProps) {
             </form>
           </Form>
         </DialogContent>
-      </Dialog>
+        </Dialog>
+      ) : null}
 
-      <CardCodeAssignUserDialog
-        open={assignOpen}
-        onOpenChange={setAssignOpen}
-        cardCode={selectedCode}
-      />
+      {canUpdate ? (
+        <CardCodeAssignUserDialog
+          open={assignOpen}
+          onOpenChange={setAssignOpen}
+          cardCode={selectedCode}
+        />
+      ) : null}
 
-      <CardCodeDetailDialog
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        cardCode={selectedCode}
-      />
+      {canView ? (
+        <CardCodeDetailDialog
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          cardCode={selectedCode}
+        />
+      ) : null}
 
-      <Dialog open={qrOpen} onOpenChange={setQrOpen}>
+      {canView ? (
+        <Dialog open={qrOpen} onOpenChange={setQrOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Scan QR code</DialogTitle>
@@ -538,6 +684,7 @@ export function CodesPage({ codes }: CodesPageProps) {
           ) : null}
         </DialogContent>
       </Dialog>
+      ) : null}
     </div>
   );
 }

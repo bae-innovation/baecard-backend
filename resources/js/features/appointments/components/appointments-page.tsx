@@ -62,9 +62,44 @@ type AppointmentsPageProps = {
 };
 
 export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
-  const { hasAbility } = useAuth();
-  const canManage = hasPermission('appointment.appointment.manage');
-  const canCreate = canManage || hasPermission('appointment.appointment.view_own');
+  const {
+    user,
+    canViewAppointments,
+    canCreateAppointments,
+    canUpdateAppointments,
+    canDeleteAppointments,
+    canViewOwnAppointments,
+    canCreateOwnAppointments,
+    canUpdateOwnAppointments,
+    canDeleteOwnAppointments,
+  } = useAuth();
+  const canView = canViewAppointments() || canViewOwnAppointments();
+  const canCreate = canCreateAppointments() || canCreateOwnAppointments();
+  const canUpdateAny = canUpdateAppointments();
+  const canDeleteAny = canDeleteAppointments();
+  const canUpdateOwn = canUpdateOwnAppointments();
+  const canDeleteOwn = canDeleteOwnAppointments();
+  const showActionsColumn =
+    canView || canUpdateAny || canDeleteAny || canUpdateOwn || canDeleteOwn;
+
+  const ownsAppointment = React.useCallback(
+    (appointment: Appointment) =>
+      appointment.created_by != null && appointment.created_by === user?.id,
+    [user?.id],
+  );
+
+  const canUpdateAppointment = React.useCallback(
+    (appointment: Appointment) =>
+      canUpdateAny || (canUpdateOwn && ownsAppointment(appointment)),
+    [canUpdateOwn, canUpdateAny, ownsAppointment],
+  );
+
+  const canDeleteAppointment = React.useCallback(
+    (appointment: Appointment) =>
+      canDeleteAny || (canDeleteOwn && ownsAppointment(appointment)),
+    [canDeleteOwn, canDeleteAny, ownsAppointment],
+  );
+
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(appointments, ['appointments']);
   const [globalFilter, setGlobalFilter] = React.useState('');
@@ -76,11 +111,6 @@ export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
   const [selectedForView, setSelectedForView] = React.useState<Appointment | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
 
-  const canModifyAppointment = React.useCallback(
-    () => canManage,
-    [canManage],
-  );
-
   const openDelete = React.useCallback((appointment: Appointment) => {
     setSelectedForDelete(appointment);
     setDeleteOpen(true);
@@ -91,9 +121,9 @@ export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
     setViewOpen(true);
   }, []);
 
-  const columns = React.useMemo(
-    () => [
-      createDataTableSelectionColumn<Appointment>(),
+  const columns = React.useMemo(() => {
+    const baseColumns = [
+      ...(canDeleteAny || canDeleteOwn ? [createDataTableSelectionColumn<Appointment>()] : []),
       columnHelper.accessor('title', {
         header: 'Appointment',
         cell: ({ row }) => (
@@ -136,35 +166,76 @@ export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
         header: 'Status',
         cell: ({ getValue }) => <Badge variant="outline">{getValue()}</Badge>,
       }),
+    ];
+
+    if (!showActionsColumn) {
+      return baseColumns;
+    }
+
+    return [
+      ...baseColumns,
       createDataTableActionsColumn<Appointment>({
-        cell: ({ row }) => (
-          <DataTableRowActionsMenu label={`Actions for ${row.original.title}`}>
-            <TableDropdownAction icon={Eye} onClick={() => openView(row.original)}>
-              View
-            </TableDropdownAction>
-            {canModifyAppointment() ? (
-              <>
-                <TableDropdownAction
-                  icon={Pencil}
-                  onClick={() => router.visit(`/appointments/${row.original.id}/edit`)}
-                >
-                  Edit
-                </TableDropdownAction>
-                <TableDropdownAction
-                  icon={Trash2}
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => openDelete(row.original)}
-                >
-                  Delete
-                </TableDropdownAction>
-              </>
-            ) : null}
-          </DataTableRowActionsMenu>
-        ),
+        cell: ({ row }) => {
+          const menuItems: React.ReactNode[] = [];
+
+          if (canView) {
+            menuItems.push(
+              <TableDropdownAction
+                key="view"
+                icon={Eye}
+                onClick={() => openView(row.original)}
+              >
+                View
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canUpdateAppointment(row.original)) {
+            menuItems.push(
+              <TableDropdownAction
+                key="edit"
+                icon={Pencil}
+                onClick={() => router.visit(`/appointments/${row.original.id}/edit`)}
+              >
+                Edit
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canDeleteAppointment(row.original)) {
+            menuItems.push(
+              <TableDropdownAction
+                key="delete"
+                icon={Trash2}
+                className="text-destructive focus:text-destructive"
+                onClick={() => openDelete(row.original)}
+              >
+                Delete
+              </TableDropdownAction>,
+            );
+          }
+
+          if (menuItems.length === 0) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+
+          return (
+            <DataTableRowActionsMenu label={`Actions for ${row.original.title}`}>
+              {menuItems}
+            </DataTableRowActionsMenu>
+          );
+        },
       }),
-    ],
-    [canModifyAppointment, openDelete, openView],
-  );
+    ];
+  }, [
+    canDeleteAny,
+    canDeleteAppointment,
+    canUpdateAppointment,
+    canView,
+    openDelete,
+    openView,
+    showActionsColumn,
+  ]);
 
   const table = useReactTable({
     data,
@@ -175,7 +246,7 @@ export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     manualPagination: true,
-    enableRowSelection: true,
+    enableRowSelection: canDeleteAny || canDeleteOwn,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
@@ -193,8 +264,12 @@ export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
       </div>
       <DataTableLayout
         table={table}
-        colSpan={table.getAllColumns().length}
-        bodyProps={{ emptyMessage: 'No appointments found.' }}
+        colSpan={columns.length}
+        bodyProps={{
+          emptyMessage: canCreate
+            ? 'No appointments yet. Create the first appointment to get started.'
+            : 'No appointments found.',
+        }}
         toolbar={
           <DataTableToolbar
             start={

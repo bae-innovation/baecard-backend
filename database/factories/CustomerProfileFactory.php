@@ -20,12 +20,16 @@ class CustomerProfileFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'bio' => fake()->optional()->paragraph(),
-            'job_title' => fake()->optional()->jobTitle(),
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
+            'personal_email' => fake()->safeEmail(),
+            'personal_phone_code' => '+880',
+            'personal_phone' => fake()->numerify('17########'),
+            'bio' => fake()->optional()->sentence(),
             'company' => fake()->optional()->company(),
+            'designation' => fake()->optional()->jobTitle(),
+            'social_links' => [],
             'active_template' => 1,
-            'profile_visibility' => null,
-            'template_settings' => null,
         ];
     }
 }

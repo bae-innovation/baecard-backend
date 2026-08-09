@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\CardCode;
 
-use App\Rules\AssignableCardCustomer;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCardCodeRequest extends FormRequest
@@ -28,9 +27,7 @@ class StoreCardCodeRequest extends FormRequest
     {
         return [
             'code' => ['required', 'string', 'max:8', 'regex:/^[A-Z0-9]+$/', 'unique:card_codes,code'],
-            'name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'user_id' => ['nullable', 'integer', 'exists:users,id', new AssignableCardCustomer],
+            'order_id' => ['required', 'integer', 'exists:orders,id', 'unique:card_codes,order_id'],
         ];
     }
 }

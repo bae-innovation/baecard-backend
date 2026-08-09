@@ -12,20 +12,12 @@ class ProfilePreviewData
      */
     public static function forUser(User $user, ?int $templateOverride = null): array
     {
-        $user->loadMissing(['cardCode', 'customerSocials', 'userServices', 'profile']);
+        $user->loadMissing(['cardCode', 'profile']);
 
         $profile = $user->profile;
         $cardCode = $user->cardCode;
         $activeTemplate = $templateOverride ?? ($profile?->active_template ?? 1);
-        $templateSettings = $profile?->template_settings ?? [];
-        $coverImage = $templateSettings[(string) $activeTemplate]['cover_image']
-            ?? $templateSettings[$activeTemplate]['cover_image']
-            ?? null;
-
-        $visibility = array_merge(
-            ProfileSocialPlatform::defaultVisibility(),
-            $profile?->profile_visibility ?? [],
-        );
+        $displayName = $profile?->displayName() ?: $user->name;
 
         return [
             'card' => $cardCode ? [
@@ -37,35 +29,48 @@ class ProfilePreviewData
                 'status' => $cardCode->status,
             ] : [
                 'code' => 'PREVIEW',
-                'name' => $user->name,
-                'phone' => $user->phone,
+                'name' => $displayName,
+                'phone' => $profile?->personal_phone,
                 'scan_url' => url('/PREVIEW'),
                 'profile_url' => null,
                 'status' => CardCode::STATUS_PUBLISHED,
             ],
             'user' => [
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
+                'name' => $displayName,
+                'first_name' => $profile?->first_name,
+                'last_name' => $profile?->last_name,
+                'email' => $profile?->personal_email ?: $user->email,
+                'personal_email' => $profile?->personal_email,
+                'personal_phone' => self::formatPhone($profile?->personal_phone_code, $profile?->personal_phone),
+                'personal_address' => $profile?->personal_address,
+                'work_email' => $profile?->work_email,
+                'work_phone' => self::formatPhone($profile?->work_phone_code, $profile?->work_phone),
+                'work_address' => $profile?->work_address,
                 'bio' => $profile?->bio,
-                'job_title' => $profile?->job_title,
                 'company' => $profile?->company,
-                'avatar_url' => $user->avatar_url,
+                'designation' => $profile?->designation,
+                'avatar_url' => $profile?->profile_image_url,
+                'cover_image_url' => $profile?->cover_image_url,
                 'active_template' => $activeTemplate,
-                'profile_visibility' => $visibility,
-                'cover_image_url' => $coverImage ? asset($coverImage) : null,
             ],
-            'social_links' => $user->customerSocials()
-                ->orderBy('sort_order')
-                ->get()
-                ->values()
-                ->all(),
-            'services' => $user->userServices()
-                ->where('is_active', true)
-                ->orderBy('sort_order')
-                ->get()
-                ->values()
-                ->all(),
+            'social_links' => $profile?->social_links ?? [],
         ];
+    }
+
+    private static function formatPhone(?string $code, ?string $number): ?string
+    {
+        $number = trim((string) $number);
+
+        if ($number === '') {
+            return null;
+        }
+
+        $code = trim((string) $code);
+
+        if ($code === '') {
+            return $number;
+        }
+
+        return rtrim($code, ' ').' '.$number;
     }
 }

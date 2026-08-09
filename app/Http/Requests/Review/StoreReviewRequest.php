@@ -23,7 +23,11 @@ class StoreReviewRequest extends FormRequest
 
         $user = $this->user();
 
-        if ($user && ! PermissionResolver::allows($user, 'review.review.manage')) {
+        if (
+            $user
+            && PermissionResolver::allows($user, 'review.review.create_own')
+            && ! PermissionResolver::allowsAny($user, ['review.review.view', 'review.review.create'])
+        ) {
             $this->merge([
                 'name' => $user->name,
                 'email' => $user->email,

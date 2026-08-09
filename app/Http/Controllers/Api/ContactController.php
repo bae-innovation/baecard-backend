@@ -26,7 +26,7 @@ class ContactController extends Controller
         $query = Contact::query()->latest();
 
         if ($user && ! PermissionResolver::allows($user, 'contact.contact.view')) {
-            $query->where('user_id', $user->id);
+            $query->where('created_by', $user->id);
         }
 
         return Inertia::render('Contacts/Index', [

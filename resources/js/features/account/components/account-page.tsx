@@ -29,18 +29,14 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { AccountCardLinkSection } from '@/features/account/components/account-card-link-section';
-import { ProfileAvatarField } from '@/features/account/components/profile-avatar-field';
 import { resolveUserAvatarUrl } from '@/features/account/lib/user-avatar';
 import { resolveUserCardCode } from '@/features/account/lib/user-card-code';
 import {
   type AccountUser,
-  type UpdateAccountFormValues,
   type UpdateAccountPasswordFormValues,
-  updateAccountFormSchema,
   updateAccountPasswordFormSchema,
 } from '@/features/account/schemas/account.schema';
 import { getUserRoleNames } from '@/features/users/schemas/user.schema';
-import { objectToFormData } from '@/lib/object-to-form-data';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 import { cn } from '@/lib/utils';
 
@@ -164,135 +160,6 @@ function ProfileSummaryCard({ user }: { user: AccountUser }) {
         </div>
       </div>
     </section>
-  );
-}
-
-function ProfileSettingsForm({ user }: { user: AccountUser }) {
-  const [processing, setProcessing] = React.useState(false);
-  const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
-  const [removeAvatar, setRemoveAvatar] = React.useState(false);
-
-  const form = useForm<UpdateAccountFormValues>({
-    resolver: zodResolver(updateAccountFormSchema),
-    defaultValues: {
-      name: user.name,
-      phone: user.phone ?? '',
-    },
-  });
-
-  React.useEffect(() => {
-    form.reset({
-      name: user.name,
-      phone: user.phone ?? '',
-    });
-    setAvatarFile(null);
-    setRemoveAvatar(false);
-  }, [user, form]);
-
-  const onSubmit = form.handleSubmit((values) => {
-    setProcessing(true);
-    router.post(
-      '/user/account',
-      objectToFormData(
-        {
-          ...values,
-          ...(removeAvatar ? { remove_avatar: '1' } : {}),
-        },
-        { avatar: avatarFile },
-        'PUT',
-      ),
-      {
-        preserveScroll: true,
-        forceFormData: true,
-        only: ['user', 'auth'],
-        onSuccess: () => showMutationSuccess('Profile updated'),
-        onError: () => showMutationError(null, 'Failed to update profile'),
-        onFinish: () => setProcessing(false),
-      },
-    );
-  });
-
-  return (
-    <FormSection
-      title="Profile information"
-      description="Update your photo, name, and contact details."
-    >
-      <Form {...form}>
-        <form onSubmit={onSubmit} className="space-y-6">
-          <ProfileAvatarField
-            user={user}
-            avatarFile={avatarFile}
-            removeAvatar={removeAvatar}
-            onAvatarFileChange={setAvatarFile}
-            onRemoveAvatarChange={setRemoveAvatar}
-            disabled={processing}
-          />
-
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Full name</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Jane Doe"
-                    autoComplete="name"
-                    disabled={processing}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium leading-none">Email</label>
-              <Input
-                value={user.email}
-                type="email"
-                readOnly
-                disabled
-                className="bg-muted"
-              />
-              <p className="text-xs text-muted-foreground">
-                Email cannot be changed from this page.
-              </p>
-            </div>
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone (optional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="+1 555 000 0000"
-                      autoComplete="tel"
-                      disabled={processing}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <Button type="submit" disabled={processing}>
-              {processing ? (
-                <Loader2 className="mr-2 size-4 animate-spin" />
-              ) : null}
-              Save profile
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </FormSection>
   );
 }
 
@@ -479,7 +346,6 @@ export function AccountPage({ user }: AccountPageProps) {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="space-y-6">
-          <ProfileSettingsForm user={user} />
           <PasswordSettingsForm />
         </div>
 

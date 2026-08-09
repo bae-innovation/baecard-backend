@@ -10,6 +10,7 @@ class Review extends Model
     protected $fillable = [
         'product_id',
         'user_id',
+        'created_by',
         'name',
         'email',
         'image',
@@ -39,6 +40,11 @@ class Review extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function getImageUrlAttribute(): ?string

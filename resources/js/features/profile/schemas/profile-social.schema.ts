@@ -31,29 +31,12 @@ export const PROFILE_PLATFORMS = [
 
 export type ProfilePlatform = (typeof PROFILE_PLATFORMS)[number];
 
-export const profileSocialSchema = z.object({
-  id: z.number(),
-  customer_id: z.number(),
+export const profileSocialLinkSchema = z.object({
   platform: z.enum(PROFILE_PLATFORMS),
-  platform_value: z.string(),
-  url: z.string().nullable().optional(),
-  label: z.string().nullable().optional(),
-  is_primary: z.boolean().optional(),
-  sort_order: z.number().optional(),
+  url: z.string(),
 });
 
-export type ProfileSocial = z.infer<typeof profileSocialSchema>;
-
-export const profileSocialFormSchema = z.object({
-  platform: z.enum(PROFILE_PLATFORMS),
-  platform_value: z.string().min(1, 'Value is required').max(255),
-  url: z.string().max(500).optional().or(z.literal('')),
-  label: z.string().max(255).optional().or(z.literal('')),
-  is_primary: z.boolean().optional(),
-  sort_order: z.coerce.number().int().min(0).optional(),
-});
-
-export type ProfileSocialFormValues = z.infer<typeof profileSocialFormSchema>;
+export type ProfileSocialLink = z.infer<typeof profileSocialLinkSchema>;
 
 export const PLATFORM_LABELS: Record<ProfilePlatform, string> = {
   behance: 'Behance',

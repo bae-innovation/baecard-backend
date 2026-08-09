@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { fetchCustomerDetails } from '@/features/customers/api/customers.api';
-import type { CustomerSocial } from '@/features/customer-socials/schemas/customer-social.schema';
+import type { ProfileSocialLink } from '@/features/profile/schemas/profile-social.schema';
 import type { Customer } from '@/features/customers/schemas/customer.schema';
 import { cn } from '@/lib/utils';
 
@@ -100,23 +100,13 @@ function StatCard({
   );
 }
 
-function SocialLinkItem({ social }: { social: CustomerSocial }) {
+function SocialLinkItem({ social }: { social: ProfileSocialLink & { platform: string } }) {
   const href = social.url?.trim() || undefined;
 
   return (
     <div className="flex items-start justify-between gap-3 rounded-lg border p-3">
       <div className="min-w-0 space-y-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{social.platform}</Badge>
-          {social.is_primary ? <Badge>Primary</Badge> : null}
-        </div>
-        <p className="text-sm font-medium">{social.platform_value}</p>
-        {social.label ? (
-          <p className="text-xs text-muted-foreground">{social.label}</p>
-        ) : null}
-        {social.fn ? (
-          <p className="text-xs text-muted-foreground">FN: {social.fn}</p>
-        ) : null}
+        <Badge variant="outline">{social.platform}</Badge>
         {href ? (
           <a
             href={href}
@@ -128,11 +118,6 @@ function SocialLinkItem({ social }: { social: CustomerSocial }) {
           </a>
         ) : null}
       </div>
-      {social.sort_order != null ? (
-        <span className="shrink-0 text-xs text-muted-foreground">
-          #{social.sort_order}
-        </span>
-      ) : null}
     </div>
   );
 }
@@ -144,7 +129,29 @@ export function CustomerDetailDialog({
 }: CustomerDetailDialogProps) {
   const [details, setDetails] = React.useState<{
     customer: Customer;
-    socials: CustomerSocial[];
+    profile?: {
+      social_links?: ProfileSocialLink[];
+    } | null;
+    orders: Array<{
+      id: number;
+      order_number: string;
+      source?: 'website' | 'custom';
+      product_name: string;
+      status: string;
+      created_at?: string;
+      card_code?: {
+        id: number;
+        code: string;
+        status: 'pending' | 'published';
+        scan_url?: string;
+      } | null;
+      cardCode?: {
+        id: number;
+        code: string;
+        status: 'pending' | 'published';
+        scan_url?: string;
+      } | null;
+    }>;
   } | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -183,7 +190,8 @@ export function CustomerDetailDialog({
   }, [open, customer]);
 
   const displayCustomer = details?.customer ?? customer;
-  const socials = details?.socials ?? [];
+  const socials = details?.profile?.social_links ?? [];
+  const orders = details?.orders ?? [];
 
   if (!displayCustomer) {
     return (
@@ -284,6 +292,63 @@ export function CustomerDetailDialog({
 
                 <section className="rounded-lg border bg-card p-4">
                   <h3 className="mb-3 text-sm font-semibold tracking-tight">
+                    Orders &amp; Cards
+                  </h3>
+                  {orders.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No orders yet.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {orders.map((order) => {
+                        const linkedCard = order.cardCode ?? order.card_code;
+
+                        return (
+                          <div key={order.id} className="rounded-lg border p-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div>
+                                <p className="font-medium">{order.order_number}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {order.product_name}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {order.source ? (
+                                  <Badge variant="outline">{order.source}</Badge>
+                                ) : null}
+                                <Badge variant="secondary">{order.status}</Badge>
+                              </div>
+                            </div>
+                            {linkedCard ? (
+                              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                                <span className="text-muted-foreground">Card:</span>
+                                <Badge variant="outline" className="font-mono">
+                                  {linkedCard.code}
+                                </Badge>
+                                <Badge variant="secondary">{linkedCard.status}</Badge>
+                                {linkedCard.scan_url ? (
+                                  <a
+                                    href={linkedCard.scan_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-primary hover:underline"
+                                  >
+                                    Open scan link
+                                  </a>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                No card linked to this order yet.
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
+
+                <section className="rounded-lg border bg-card p-4">
+                  <h3 className="mb-3 text-sm font-semibold tracking-tight">
                     Social Links
                   </h3>
                   {socials.length === 0 ? (
@@ -292,8 +357,8 @@ export function CustomerDetailDialog({
                     </p>
                   ) : (
                     <div className="space-y-3">
-                      {socials.map((social) => (
-                        <SocialLinkItem key={social.id} social={social} />
+                      {socials.map((social, index) => (
+                        <SocialLinkItem key={`${social.platform}-${index}`} social={social} />
                       ))}
                     </div>
                   )}

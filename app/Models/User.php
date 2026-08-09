@@ -138,28 +138,25 @@ class User extends Authenticatable implements MustVerifyEmail
             : $this->profile()->first();
 
         return array_merge($this->toArray(), [
+            'first_name' => $profile?->first_name,
+            'last_name' => $profile?->last_name,
             'bio' => $profile?->bio,
-            'job_title' => $profile?->job_title,
             'company' => $profile?->company,
+            'designation' => $profile?->designation,
             'active_template' => $profile?->active_template ?? 1,
-            'profile_visibility' => $profile?->profile_visibility,
-            'template_settings' => $profile?->template_settings,
+            'profile_image_url' => $profile?->profile_image_url,
+            'cover_image_url' => $profile?->cover_image_url,
         ]);
+    }
+
+    public function cardCodes(): HasMany
+    {
+        return $this->hasMany(CardCode::class);
     }
 
     public function cardCode(): HasOne
     {
         return $this->hasOne(CardCode::class);
-    }
-
-    public function customerSocials(): HasMany
-    {
-        return $this->hasMany(CustomerSocial::class, 'customer_id');
-    }
-
-    public function userServices(): HasMany
-    {
-        return $this->hasMany(UserService::class)->orderBy('sort_order');
     }
 
     public function orders(): HasMany

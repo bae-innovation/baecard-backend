@@ -58,9 +58,43 @@ type ReviewsPageProps = {
 };
 
 export function ReviewsPage({ reviews }: ReviewsPageProps) {
-  const { hasAbility, user } = useAuth();
-  const canManage = hasPermission('review.review.manage');
-  const canCreate = canManage || hasPermission('review.review.create');
+  const {
+    user,
+    canViewReviews,
+    canViewOwnReviews,
+    canCreateReviews,
+    canUpdateReviews,
+    canDeleteReviews,
+    canCreateOwnReviews,
+    canUpdateOwnReviews,
+    canDeleteOwnReviews,
+  } = useAuth();
+  const isStaff = canViewReviews();
+  const canView = isStaff || canViewOwnReviews();
+  const canCreate = canCreateReviews() || canCreateOwnReviews();
+  const canUpdateStaff = canUpdateReviews();
+  const canDeleteStaff = canDeleteReviews();
+  const canUpdateOwn = canUpdateOwnReviews();
+  const canDeleteOwn = canDeleteOwnReviews();
+  const isPortalCustomer =
+    canCreateOwnReviews() && !canCreateReviews() && !isStaff;
+  const showActionsColumn =
+    canView || canUpdateStaff || canDeleteStaff || canUpdateOwn || canDeleteOwn;
+
+  const canUpdateReview = React.useCallback(
+    (review: Review) =>
+      canUpdateStaff ||
+      (canUpdateOwn && review.created_by != null && review.created_by === user?.id),
+    [canUpdateOwn, canUpdateStaff, user?.id],
+  );
+
+  const canDeleteReview = React.useCallback(
+    (review: Review) =>
+      canDeleteStaff ||
+      (canDeleteOwn && review.created_by != null && review.created_by === user?.id),
+    [canDeleteOwn, canDeleteStaff, user?.id],
+  );
+
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(reviews, ['reviews']);
   const [globalFilter, setGlobalFilter] = React.useState('');
@@ -92,9 +126,9 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
     setDeleteOpen(true);
   }, []);
 
-  const columns = React.useMemo(
-    () => [
-      createDataTableSelectionColumn<Review>(),
+  const columns = React.useMemo(() => {
+    const baseColumns = [
+      ...(canDeleteStaff || canDeleteOwn ? [createDataTableSelectionColumn<Review>()] : []),
       columnHelper.accessor('name', {
         header: 'Reviewer',
         cell: ({ row }) => (
@@ -118,7 +152,7 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
           <p className="max-w-xs truncate text-sm">{getValue()}</p>
         ),
       }),
-      ...(canManage
+      ...(isStaff
         ? [
             columnHelper.accessor('is_visible', {
               header: 'Visible',
@@ -130,54 +164,99 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
             }),
           ]
         : []),
+    ];
+
+    if (!showActionsColumn) {
+      return baseColumns;
+    }
+
+    return [
+      ...baseColumns,
       createDataTableActionsColumn<Review>({
-        cell: ({ row }) => (
-          <DataTableRowActionsMenu label={`Actions for ${row.original.name}`}>
-            <TableDropdownAction
-              icon={Eye}
-              onClick={() => {
-                setSelected(row.original);
-                setDetailOpen(true);
-              }}
-            >
-              View
-            </TableDropdownAction>
-            {canManage ? (
-              <>
-                <TableDropdownAction
-                  icon={Pencil}
-                  onClick={() => openEdit(row.original)}
-                >
-                  Edit
-                </TableDropdownAction>
-                <TableDropdownAction
-                  icon={EyeOff}
-                  onClick={() => {
-                    router.patch(`/reviews/${row.original.id}/toggle-visibility`, {}, {
-                      preserveScroll: true,
-                      only: ['reviews'],
-                      onSuccess: () => showMutationSuccess('Visibility updated'),
-                      onError: () => showMutationError(null, 'Failed to update visibility'),
-                    });
-                  }}
-                >
-                  {row.original.is_visible ? 'Hide' : 'Show'}
-                </TableDropdownAction>
-                <TableDropdownAction
-                  icon={Trash2}
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => openDelete(row.original)}
-                >
-                  Delete
-                </TableDropdownAction>
-              </>
-            ) : null}
-          </DataTableRowActionsMenu>
-        ),
+        cell: ({ row }) => {
+          const menuItems: React.ReactNode[] = [];
+
+          if (canView) {
+            menuItems.push(
+              <TableDropdownAction
+                key="view"
+                icon={Eye}
+                onClick={() => {
+                  setSelected(row.original);
+                  setDetailOpen(true);
+                }}
+              >
+                View
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canUpdateReview(row.original)) {
+            menuItems.push(
+              <TableDropdownAction
+                key="edit"
+                icon={Pencil}
+                onClick={() => openEdit(row.original)}
+              >
+                Edit
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canUpdateStaff) {
+            menuItems.push(
+              <TableDropdownAction
+                key="toggle-visibility"
+                icon={EyeOff}
+                onClick={() => {
+                  router.patch(`/reviews/${row.original.id}/toggle-visibility`, {}, {
+                    preserveScroll: true,
+                    only: ['reviews'],
+                    onSuccess: () => showMutationSuccess('Visibility updated'),
+                    onError: () => showMutationError(null, 'Failed to update visibility'),
+                  });
+                }}
+              >
+                {row.original.is_visible ? 'Hide' : 'Show'}
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canDeleteReview(row.original)) {
+            menuItems.push(
+              <TableDropdownAction
+                key="delete"
+                icon={Trash2}
+                className="text-destructive focus:text-destructive"
+                onClick={() => openDelete(row.original)}
+              >
+                Delete
+              </TableDropdownAction>,
+            );
+          }
+
+          if (menuItems.length === 0) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+
+          return (
+            <DataTableRowActionsMenu label={`Actions for ${row.original.name}`}>
+              {menuItems}
+            </DataTableRowActionsMenu>
+          );
+        },
       }),
-    ],
-    [canManage, openDelete, openEdit],
-  );
+    ];
+  }, [
+    canDeleteReview,
+    canUpdateReview,
+    canUpdateStaff,
+    canView,
+    isStaff,
+    openDelete,
+    openEdit,
+    showActionsColumn,
+  ]);
 
   const table = useReactTable({
     data,
@@ -188,7 +267,7 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     manualPagination: true,
-    enableRowSelection: true,
+    enableRowSelection: canDeleteStaff || canDeleteOwn,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
@@ -196,7 +275,13 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <PageTitle title="Reviews" description="Customer reviews" icon={Star} />
+        <PageTitle
+          title={isStaff ? 'Reviews' : 'My Reviews'}
+          description={
+            isStaff ? 'Customer reviews' : 'Reviews you have submitted'
+          }
+          icon={Star}
+        />
         {canCreate ? (
           <Button type="button" onClick={openCreate}>
             <Plus className="mr-2 h-4 w-4" />
@@ -206,8 +291,12 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
       </div>
       <DataTableLayout
         table={table}
-        colSpan={table.getAllColumns().length}
-        bodyProps={{ emptyMessage: 'No reviews yet.' }}
+        colSpan={columns.length}
+        bodyProps={{
+          emptyMessage: canCreate
+            ? 'No reviews yet. Add the first review to get started.'
+            : 'No reviews found.',
+        }}
         toolbar={
           <DataTableToolbar
             start={
@@ -230,12 +319,14 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
         }
         footer={<DataTableFooter table={table} />}
       />
-      <ReviewDetailDialog
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        review={selected}
-      />
-      {canCreate ? (
+      {canView ? (
+        <ReviewDetailDialog
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          review={selected}
+        />
+      ) : null}
+      {canCreate || canUpdateStaff || canUpdateOwn ? (
         <ReviewFormDialog
           open={formOpen}
           onOpenChange={setFormOpen}
@@ -243,12 +334,12 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
           review={selectedForEdit}
           isSubmitting={isSubmitting}
           defaultValues={
-            !canManage && formMode === 'create'
+            isPortalCustomer && formMode === 'create'
               ? { name: user?.name ?? '', email: user?.email ?? '' }
               : undefined
           }
-          lockName={!canManage && formMode === 'create'}
-          lockEmail={!canManage && formMode === 'create'}
+          lockName={isPortalCustomer && formMode === 'create'}
+          lockEmail={isPortalCustomer && formMode === 'create'}
           onSubmit={async (values: ReviewFormValues, image?: File | null) => {
             setIsSubmitting(true);
 
@@ -278,7 +369,7 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
               return;
             }
 
-            if (!canManage || !selectedForEdit) {
+            if (!selectedForEdit || !canUpdateReview(selectedForEdit)) {
               setIsSubmitting(false);
               return;
             }
@@ -311,28 +402,28 @@ export function ReviewsPage({ reviews }: ReviewsPageProps) {
           }}
         />
       ) : null}
-      {canManage ? (
+      {canDeleteStaff || canDeleteOwn ? (
         <DeleteReviewDialog
-            open={deleteOpen}
-            onOpenChange={setDeleteOpen}
-            review={selectedForDelete}
-            isDeleting={isDeleting}
-            onConfirm={async () => {
-              if (!selectedForDelete) return;
-              setIsDeleting(true);
-              router.delete(`/reviews/${selectedForDelete.id}`, {
-                preserveScroll: true,
-                only: ['reviews'],
-                onSuccess: () => {
-                  showMutationSuccess('Review deleted');
-                  setDeleteOpen(false);
-                  setSelectedForDelete(null);
-                },
-                onError: () => showMutationError(null, 'Failed to delete review'),
-                onFinish: () => setIsDeleting(false),
-              });
-            }}
-          />
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          review={selectedForDelete}
+          isDeleting={isDeleting}
+          onConfirm={async () => {
+            if (!selectedForDelete) return;
+            setIsDeleting(true);
+            router.delete(`/reviews/${selectedForDelete.id}`, {
+              preserveScroll: true,
+              only: ['reviews'],
+              onSuccess: () => {
+                showMutationSuccess('Review deleted');
+                setDeleteOpen(false);
+                setSelectedForDelete(null);
+              },
+              onError: () => showMutationError(null, 'Failed to delete review'),
+              onFinish: () => setIsDeleting(false),
+            });
+          }}
+        />
       ) : null}
     </div>
   );

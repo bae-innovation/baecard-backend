@@ -15,6 +15,7 @@ class StorePublicOrderRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255'],
             'phone' => ['required', 'string', 'size:11', 'regex:/^01[0-9]{9}$/'],
             'product_id' => ['required', 'integer', 'exists:products,id'],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:99'],

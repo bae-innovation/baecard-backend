@@ -29,7 +29,7 @@ class ReviewController extends Controller
         if ($user && PermissionResolver::allows($user, 'review.review.view')) {
             // Staff sees all reviews.
         } elseif ($user && PermissionResolver::allows($user, 'review.review.view_own')) {
-            $query->where('user_id', $user->id);
+            $query->where('created_by', $user->id);
         } else {
             $query->where('is_visible', true);
         }

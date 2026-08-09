@@ -2,7 +2,6 @@ import type { NavItem } from '@/components/shared/sidebar/nav-main';
 import { DASHBOARD_ACCESS_PERMISSIONS } from '@/lib/permissions';
 import {
   BarChart3,
-  Briefcase,
   Calendar,
   CreditCard,
   Globe,
@@ -25,33 +24,11 @@ import {
   UserRound,
 } from 'lucide-react';
 
-const buildTemplateNav = (activeTemplate?: number): NavItem[] => [
+const buildTemplateNav = (): NavItem[] => [
   {
-    title: 'Classic Light',
-    url: '/profile/templates/1',
+    title: 'Browse Themes',
+    url: '/profile/templates',
     icon: LayoutTemplate,
-    activeIndicator: activeTemplate === 1,
-    requiredPermissions: ['profile.template.manage'],
-  },
-  {
-    title: 'Classic Dark',
-    url: '/profile/templates/2',
-    icon: LayoutTemplate,
-    activeIndicator: activeTemplate === 2,
-    requiredPermissions: ['profile.template.manage'],
-  },
-  {
-    title: 'Modern Light',
-    url: '/profile/templates/3',
-    icon: LayoutTemplate,
-    activeIndicator: activeTemplate === 3,
-    requiredPermissions: ['profile.template.manage'],
-  },
-  {
-    title: 'Modern Dark',
-    url: '/profile/templates/4',
-    icon: LayoutTemplate,
-    activeIndicator: activeTemplate === 4,
     requiredPermissions: ['profile.template.manage'],
   },
 ];
@@ -221,24 +198,18 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Profile Management',
     url: '.',
     icon: UserRound,
-    requiredPermissions: ['profile.social.manage', 'profile.service.manage', 'profile.template.manage'],
+    requiredPermissions: ['profile.content.manage', 'profile.template.manage'],
     items: [
       {
-        title: 'Social Links',
-        url: '/profile/social',
+        title: 'Profile Content',
+        url: '/profile/content',
         icon: Share2,
-        requiredPermissions: ['profile.social.manage'],
-      },
-      {
-        title: 'My Services',
-        url: '/profile/services',
-        icon: Briefcase,
-        requiredPermissions: ['profile.service.manage'],
+        requiredPermissions: ['profile.content.manage'],
       },
     ],
   },
   {
-    title: 'Template Management',
+    title: 'Themes',
     url: '.',
     icon: LayoutTemplate,
     requiredPermissions: ['profile.template.manage'],
@@ -314,12 +285,8 @@ const TEMPLATE_NAV: NavItem[] = [
   },
 ];
 
-export function getDashboardNav(activeTemplate?: number): NavItem[] {
-  return TEMPLATE_NAV.map((item) =>
-    item.title === 'Template Management'
-      ? { ...item, items: buildTemplateNav(activeTemplate) }
-      : item,
-  );
+export function getDashboardNav(): NavItem[] {
+  return TEMPLATE_NAV;
 }
 
 export function filterNavByPermissions(

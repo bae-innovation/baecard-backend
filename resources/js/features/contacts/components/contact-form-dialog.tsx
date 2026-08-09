@@ -41,6 +41,7 @@ type ContactFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   defaultValues?: Partial<ContactFormValues>;
   isSubmitting?: boolean;
+  lockEmail?: boolean;
   onSubmit: (values: ContactFormValues) => void | Promise<void>;
 };
 
@@ -49,6 +50,7 @@ export function ContactFormDialog({
   onOpenChange,
   defaultValues,
   isSubmitting = false,
+  lockEmail = false,
   onSubmit,
 }: ContactFormDialogProps) {
   const form = useForm<ContactFormValues>({
@@ -94,7 +96,11 @@ export function ContactFormDialog({
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={isSubmitting} />
+                    <Input
+                      placeholder="Your name"
+                      {...field}
+                      disabled={isSubmitting}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -124,7 +130,12 @@ export function ContactFormDialog({
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} disabled={isSubmitting} />
+                    <Input
+                      type="email"
+                      {...field}
+                      readOnly={lockEmail}
+                      disabled={lockEmail || isSubmitting}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

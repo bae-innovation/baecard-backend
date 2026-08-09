@@ -78,10 +78,33 @@ type ContactsPageProps = {
 };
 
 export function ContactsPage({ contacts }: ContactsPageProps) {
-  const { hasAbility, user } = useAuth();
-  const isStaff = hasPermission('contact.contact.view');
-  const canCreate = hasPermission('contact.contact.create');
-  const canDelete = hasPermission('contact.contact.delete');
+  const {
+    user,
+    canViewContacts,
+    canViewOwnContacts,
+    canCreateContacts,
+    canDeleteContacts,
+    canCreateOwnContacts,
+    canDeleteOwnContacts,
+  } = useAuth();
+  const isStaff = canViewContacts();
+  const canView = isStaff || canViewOwnContacts();
+  const canCreate = canCreateContacts() || canCreateOwnContacts();
+  const lockContactEmail = canCreateOwnContacts() && !canCreateContacts();
+  const canDeleteStaff = canDeleteContacts();
+  const canDeleteOwn = canDeleteOwnContacts();
+  const showActionsColumn = canView || canDeleteStaff || canDeleteOwn;
+
+  const ownsContact = React.useCallback(
+    (contact: Contact) =>
+      contact.created_by != null && contact.created_by === user?.id,
+    [user?.id],
+  );
+
+  const canDeleteContact = React.useCallback(
+    (contact: Contact) => canDeleteStaff || (canDeleteOwn && ownsContact(contact)),
+    [canDeleteOwn, canDeleteStaff, ownsContact],
+  );
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(contacts, ['contacts']);
   const [globalFilter, setGlobalFilter] = React.useState('');
@@ -107,9 +130,9 @@ export function ContactsPage({ contacts }: ContactsPageProps) {
     });
   }, []);
 
-  const columns = React.useMemo(
-    () => [
-      createDataTableSelectionColumn<Contact>(),
+  const columns = React.useMemo(() => {
+    const baseColumns = [
+      ...(canDeleteStaff || canDeleteOwn ? [createDataTableSelectionColumn<Contact>()] : []),
       columnHelper.accessor('name', {
         header: 'From',
         cell: ({ row }) => (
@@ -169,36 +192,62 @@ export function ContactsPage({ contacts }: ContactsPageProps) {
             }),
           ]
         : []),
+    ];
+
+    if (!showActionsColumn) {
+      return baseColumns;
+    }
+
+    return [
+      ...baseColumns,
       createDataTableActionsColumn<Contact>({
-        cell: ({ row }) => (
-          <DataTableRowActionsMenu label={`Actions for ${row.original.name}`}>
-            <TableDropdownAction
-              icon={Eye}
-              onClick={() => {
-                setSelected(row.original);
-                setViewOpen(true);
-                if (isStaff && !row.original.is_read) {
-                  markAsRead(row.original.id);
-                }
-              }}
-            >
-              View
-            </TableDropdownAction>
-            {canDelete ? (
+        cell: ({ row }) => {
+          const menuItems: React.ReactNode[] = [];
+
+          if (canView) {
+            menuItems.push(
               <TableDropdownAction
+                key="view"
+                icon={Eye}
+                onClick={() => {
+                  setSelected(row.original);
+                  setViewOpen(true);
+                  if (isStaff && !row.original.is_read) {
+                    markAsRead(row.original.id);
+                  }
+                }}
+              >
+                View
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canDeleteContact(row.original)) {
+            menuItems.push(
+              <TableDropdownAction
+                key="delete"
                 icon={Trash2}
                 className="text-destructive focus:text-destructive"
                 onClick={() => openDelete(row.original)}
               >
                 Delete
-              </TableDropdownAction>
-            ) : null}
-          </DataTableRowActionsMenu>
-        ),
+              </TableDropdownAction>,
+            );
+          }
+
+          if (menuItems.length === 0) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+
+          return (
+            <DataTableRowActionsMenu label={`Actions for ${row.original.name}`}>
+              {menuItems}
+            </DataTableRowActionsMenu>
+          );
+        },
       }),
-    ],
-    [canDelete, isStaff, markAsRead, openDelete],
-  );
+    ];
+  }, [canDeleteContact, canView, isStaff, markAsRead, openDelete, showActionsColumn]);
 
   const table = useReactTable({
     data,
@@ -209,7 +258,7 @@ export function ContactsPage({ contacts }: ContactsPageProps) {
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     manualPagination: true,
-    enableRowSelection: true,
+    enableRowSelection: canDeleteStaff || canDeleteOwn,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
@@ -306,7 +355,7 @@ export function ContactsPage({ contacts }: ContactsPageProps) {
                 </div>
               ) : null}
               <p className="whitespace-pre-wrap">{selected.message ?? '—'}</p>
-              {canDelete ? (
+              {selected && canDeleteContact(selected) ? (
                 <Button
                   variant="destructive"
                   size="sm"
@@ -324,9 +373,9 @@ export function ContactsPage({ contacts }: ContactsPageProps) {
           open={createOpen}
           onOpenChange={setCreateOpen}
           defaultValues={{
-            name: user?.name ?? '',
             email: user?.email ?? '',
           }}
+          lockEmail={lockContactEmail}
           isSubmitting={isSubmitting}
           onSubmit={async (values) => {
             setIsSubmitting(true);
@@ -343,7 +392,7 @@ export function ContactsPage({ contacts }: ContactsPageProps) {
           }}
         />
       ) : null}
-      {canDelete ? (
+      {canDeleteStaff || canDeleteOwn ? (
         <DeleteContactDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}

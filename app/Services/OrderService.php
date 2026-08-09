@@ -2,19 +2,21 @@
 
 namespace App\Services;
 
-use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
-use App\Models\User;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class OrderService
 {
     use ApiResponseTrait;
+
+    public function __construct(
+        protected CustomerResolver $customerResolver,
+    ) {}
 
     public function list(): JsonResponse
     {
@@ -49,7 +51,11 @@ class OrderService
                 return $this->notFoundResponse('Product not found.');
             }
 
-            $customer = $this->resolveOrCreateGuestCustomer($data['name'], $data['phone']);
+            $customer = $this->customerResolver->findOrCreateForCheckout(
+                $data['name'],
+                $data['phone'],
+                $data['email'],
+            );
             $quantity = (int) ($data['quantity'] ?? 1);
             $unitPrice = $product->effectiveUnitPrice();
 
@@ -70,6 +76,7 @@ class OrderService
     public function create(array $data): JsonResponse
     {
         return DB::transaction(function () use ($data) {
+            $customerId = $this->resolveCustomerIdForOrder($data);
             $quantity = $data['quantity'] ?? 1;
             $unitPrice = (float) $data['unit_price'];
             $subtotal = $unitPrice * $quantity;
@@ -84,7 +91,7 @@ class OrderService
 
             $order = Order::create([
                 'order_number' => $this->generateOrderNumber(),
-                'customer_id' => $data['customer_id'],
+                'customer_id' => $customerId,
                 'product_id' => $data['product_id'] ?? null,
                 'product_name' => $data['product_name'],
                 'unit_price' => $unitPrice,
@@ -205,48 +212,20 @@ class OrderService
         return $this->successResponse(null, 'Order deleted successfully.');
     }
 
-    private function resolveOrCreateGuestCustomer(string $name, string $phone): User
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function resolveCustomerIdForOrder(array $data): int
     {
-        UserRole::ensureExists(UserRole::User);
-
-        $customer = User::role(UserRole::User->value)
-            ->where('phone', $phone)
-            ->first();
-
-        if ($customer) {
-            if ($customer->name !== $name) {
-                $customer->update(['name' => $name]);
-            }
-
-            return $customer;
+        if (! empty($data['customer_id'])) {
+            return $this->customerResolver->findByIdForOrder((int) $data['customer_id'])->id;
         }
 
-        $customer = User::create([
-            'name' => $name,
-            'email' => $this->uniqueGuestEmail($phone),
-            'phone' => $phone,
-            'password' => Str::password(32),
-            'email_verified_at' => now(),
-        ]);
-
-        $customer->assignRole(UserRole::User->value);
-        $customer->ensureProfile();
-
-        return $customer;
-    }
-
-    private function uniqueGuestEmail(string $phone): string
-    {
-        $base = "guest.{$phone}@orders.baecard.local";
-        $email = $base;
-        $suffix = 1;
-
-        while (User::where('email', $email)->exists()) {
-            $email = str_replace('@', ".{$suffix}@", $base);
-            $suffix++;
+        if (! empty($data['new_customer']) && is_array($data['new_customer'])) {
+            return $this->customerResolver->createFromAdmin($data['new_customer'])->id;
         }
 
-        return $email;
+        throw new HttpException(422, 'A customer is required for this order.');
     }
 
     private function generateOrderNumber(): string

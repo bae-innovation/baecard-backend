@@ -1,16 +1,24 @@
-import { router, useForm } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { Calendar } from 'lucide-react';
 import * as React from 'react';
 
 import { FormPageShell } from '@/components/shared/form-page-shell';
 import { AppointmentForm } from '@/features/appointments/components/appointment-form';
-import type { AppointmentFormValues } from '@/features/appointments/schemas/appointment.schema';
+import type {
+  AppointmentCustomerOption,
+  AppointmentFormValues,
+} from '@/features/appointments/schemas/appointment.schema';
 import { useAuth } from '@/hooks/useAuth';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 
+type CreatePageProps = {
+  customers: AppointmentCustomerOption[];
+};
+
 export function AppointmentCreatePage() {
-  const { hasAbility } = useAuth();
-  const canManage = hasPermission('appointment.appointment.manage');
+  const { customers } = usePage<CreatePageProps>().props;
+  const { canCreateAppointments } = useAuth();
+  const canAssignCustomer = canCreateAppointments();
   const [processing, setProcessing] = React.useState(false);
   useForm({});
 
@@ -25,14 +33,15 @@ export function AppointmentCreatePage() {
       <AppointmentForm
         mode="create"
         variant="page"
-        showAdminFields={canManage}
+        customers={customers}
+        showAdminFields={canAssignCustomer}
         isSubmitting={processing}
         onCancel={() => router.visit('/appointments')}
         onSubmit={async (values: AppointmentFormValues) => {
           setProcessing(true);
           const payload = { ...values };
 
-          if (!canManage) {
+          if (!canAssignCustomer) {
             delete payload.customer_id;
           }
 

@@ -16,7 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { hasAnyPermission, user } = useAuth();
-  const navMain = filterNavByPermissions(getDashboardNav(user?.active_template), hasAnyPermission);
+  const navMain = filterNavByPermissions(getDashboardNav(), hasAnyPermission);
 
   return (
     <Sidebar collapsible="icon" {...props}>

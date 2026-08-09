@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Enums\UserRole;
 use App\Models\CardCode;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\User;
 use App\Support\PhoneSearch;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class CardCodeService
@@ -20,12 +22,34 @@ class CardCodeService
 
     private const CODE_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
+    public function __construct(
+        protected CustomerResolver $customerResolver,
+        protected OrderService $orderService,
+    ) {}
+
     public function listPaginated(int $perPage = 15): LengthAwarePaginator
     {
         return CardCode::query()
-            ->with('user:id,name,email,phone')
+            ->with([
+                'user:id,name,email,phone',
+                'order:id,order_number,customer_id,source,status',
+            ])
             ->latest()
             ->paginate($perPage);
+    }
+
+    public function availableOrdersForCustomer(int $customerId): JsonResponse
+    {
+        $this->customerResolver->findByIdForOrder($customerId);
+
+        $orders = Order::query()
+            ->where('customer_id', $customerId)
+            ->whereDoesntHave('cardCode')
+            ->with('product:id,name')
+            ->latest()
+            ->get(['id', 'order_number', 'source', 'product_id', 'product_name', 'status', 'created_at']);
+
+        return $this->successResponse($orders, 'Available orders retrieved successfully.');
     }
 
     public function generateUniqueCode(): string
@@ -45,35 +69,68 @@ class CardCodeService
 
     public function create(array $data): JsonResponse
     {
-        $userId = isset($data['user_id']) ? (int) $data['user_id'] : null;
+        return DB::transaction(function () use ($data) {
+            $order = Order::query()->find($data['order_id']);
 
-        if ($userId !== null) {
-            $validationError = $this->validateCustomerAssignment($userId);
-
-            if ($validationError !== null) {
-                return $validationError;
+            if (! $order) {
+                return $this->notFoundResponse('Order not found.');
             }
-        }
 
-        $cardCode = CardCode::create([
-            'code' => strtoupper($data['code']),
-            'name' => $data['name'],
-            'phone' => $data['phone'] ?? null,
-            'user_id' => $userId,
-            'status' => CardCode::STATUS_PENDING,
-        ]);
+            if ($order->cardCode()->exists()) {
+                return $this->errorResponse(
+                    'This order already has a card linked to it.',
+                    null,
+                    422,
+                );
+            }
 
-        $cardCode = $cardCode->fresh();
+            $cardCode = CardCode::create([
+                'code' => strtoupper($data['code']),
+                'order_id' => $order->id,
+                'user_id' => $order->customer_id,
+                'status' => CardCode::STATUS_PENDING,
+            ]);
 
-        if ($userId !== null) {
-            $cardCode->load('user:id,name,email,phone');
-        }
+            $this->advanceOrderStatusAfterCardCreated($order);
 
-        return $this->successResponse(
-            $cardCode,
-            'Card code created successfully.',
-            201,
-        );
+            return $this->successResponse(
+                $cardCode->fresh()->load([
+                    'user:id,name,email,phone',
+                    'order:id,order_number,customer_id,source,status',
+                ]),
+                'Card code created successfully.',
+                201,
+            );
+        });
+    }
+
+    public function fulfill(array $data): JsonResponse
+    {
+        return DB::transaction(function () use ($data) {
+            $customer = $this->customerResolver->createFromAdmin($data['new_customer']);
+
+            $orderResponse = $this->orderService->create([
+                'customer_id' => $customer->id,
+                'product_id' => $data['product_id'] ?? null,
+                'product_name' => $data['product_name'],
+                'unit_price' => $data['unit_price'],
+                'quantity' => $data['quantity'] ?? 1,
+                'notes' => $data['notes'] ?? null,
+                'source' => 'custom',
+            ]);
+
+            $orderPayload = $orderResponse->getData(true);
+            $orderId = (int) ($orderPayload['data']['id'] ?? 0);
+
+            if ($orderId <= 0) {
+                return $this->errorResponse('Unable to create order for fulfillment.', null, 500);
+            }
+
+            return $this->create([
+                'code' => $data['code'],
+                'order_id' => $orderId,
+            ]);
+        });
     }
 
     public function delete(int $id): JsonResponse
@@ -108,8 +165,8 @@ class CardCodeService
 
         return $this->successResponse([
             'code' => $cardCode->code,
-            'name' => $cardCode->name,
-            'phone' => $cardCode->phone,
+            'name' => $cardCode->display_name,
+            'phone' => $cardCode->user?->phone ?? $cardCode->phone,
             'status' => $cardCode->status,
             'scan_url' => $cardCode->scan_url,
             'profile_url' => $cardCode->profile_url,
@@ -167,6 +224,14 @@ class CardCodeService
             return $this->notFoundResponse('Card code not found.');
         }
 
+        if ($cardCode->order_id !== null) {
+            return $this->errorResponse(
+                'This card is linked to an order. The customer is derived from the order.',
+                null,
+                422,
+            );
+        }
+
         if (
             $cardCode->isPublished()
             && $cardCode->user_id !== null
@@ -179,7 +244,7 @@ class CardCodeService
             );
         }
 
-        $validationError = $this->validateCustomerAssignment($userId, $cardCodeId);
+        $validationError = $this->validateCustomerAssignment($userId);
 
         if ($validationError !== null) {
             return $validationError;
@@ -217,7 +282,7 @@ class CardCodeService
             abort(403, 'This card code is linked to another account.');
         }
 
-        $this->ensureCustomerCanHoldCard((int) $user->id, $cardCode->id);
+        $this->ensureUserMatchesOrderCustomer($cardCode, $user);
 
         $cardCode->update([
             'user_id' => $user->id,
@@ -244,7 +309,7 @@ class CardCodeService
         }
 
         if ($cardCode->user_id === null) {
-            $this->ensureCustomerCanHoldCard((int) $user->id, $cardCode->id);
+            $this->ensureUserMatchesOrderCustomer($cardCode, $user);
         } elseif ((int) $cardCode->user_id !== (int) $user->id) {
             abort(403, 'This card code is linked to another account.');
         }
@@ -254,7 +319,9 @@ class CardCodeService
             'status' => CardCode::STATUS_PUBLISHED,
         ]);
 
-        return $cardCode->fresh()->load('user');
+        $this->advanceOrderStatusAfterCardVerified($cardCode);
+
+        return $cardCode->fresh()->load(['user', 'order:id,order_number,status']);
     }
 
     public function findPublishedByCode(string $code): ?CardCode
@@ -266,12 +333,10 @@ class CardCodeService
             ->first();
     }
 
-    private function validateCustomerAssignment(
-        int $userId,
-        ?int $excludeCardCodeId = null,
-    ): ?JsonResponse {
+    private function validateCustomerAssignment(int $userId): ?JsonResponse
+    {
         try {
-            $this->ensureCustomerCanHoldCard($userId, $excludeCardCodeId);
+            $this->ensureCustomerRole($userId);
         } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
             return $this->errorResponse(
                 $exception->getMessage(),
@@ -283,10 +348,8 @@ class CardCodeService
         return null;
     }
 
-    private function ensureCustomerCanHoldCard(
-        int $userId,
-        ?int $excludeCardCodeId = null,
-    ): void {
+    private function ensureCustomerRole(int $userId): void
+    {
         $user = User::query()->find($userId);
 
         if (! $user) {
@@ -300,21 +363,45 @@ class CardCodeService
                 .'Create the account under Customer Management, not Access Control.',
             );
         }
+    }
 
-        $existingCardQuery = CardCode::query()->where('user_id', $userId);
+    private function ensureUserMatchesOrderCustomer(CardCode $cardCode, User $user): void
+    {
+        if ($cardCode->order_id === null) {
+            $this->ensureCustomerRole((int) $user->id);
 
-        if ($excludeCardCodeId !== null) {
-            $existingCardQuery->where('id', '!=', $excludeCardCodeId);
+            return;
         }
 
-        $existingCard = $existingCardQuery->first();
+        $cardCode->loadMissing('order:id,customer_id');
 
-        if ($existingCard) {
-            abort(
-                422,
-                'This user is already linked to card code '.$existingCard->code.'.',
-            );
+        if ((int) $cardCode->order?->customer_id !== (int) $user->id) {
+            abort(403, 'This card is linked to a different customer order.');
         }
+    }
+
+    private function advanceOrderStatusAfterCardCreated(Order $order): void
+    {
+        if ($order->status !== 'pending') {
+            return;
+        }
+
+        $order->update(['status' => 'processing']);
+    }
+
+    private function advanceOrderStatusAfterCardVerified(CardCode $cardCode): void
+    {
+        if ($cardCode->order_id === null) {
+            return;
+        }
+
+        $order = Order::query()->find($cardCode->order_id);
+
+        if (! $order || $order->status !== 'processing') {
+            return;
+        }
+
+        $order->update(['status' => 'confirmed']);
     }
 
     private function buildRandomCode(): string

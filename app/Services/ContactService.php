@@ -39,6 +39,7 @@ class ContactService
 
         $contact = Contact::create([
             'user_id' => $user?->id,
+            'created_by' => $user?->id,
             'name' => $data['name'],
             'email' => $data['email'] ?? null,
             'phone' => $data['phone'] ?? null,
@@ -72,6 +73,12 @@ class ContactService
             return $this->notFoundResponse('Contact not found.');
         }
 
+        $user = request()->user();
+
+        if ($user && ! $this->canDelete($user, $contact)) {
+            return $this->forbiddenResponse('You are not allowed to delete this contact message.');
+        }
+
         $contact->delete();
 
         return $this->successResponse(null, 'Contact deleted successfully.');
@@ -83,13 +90,25 @@ class ContactService
         $user = request()->user();
 
         if ($user && ! PermissionResolver::allows($user, 'contact.contact.view')) {
-            $query->where(function (Builder $inner) use ($user) {
-                $inner->where('user_id', $user->id)
-                    ->orWhere('email', $user->email);
-            });
+            $query->where('created_by', $user->id);
         }
 
         return $query;
+    }
+
+    public function ownsContact($user, Contact $contact): bool
+    {
+        return (int) $contact->created_by === (int) $user->id;
+    }
+
+    private function canDelete($user, Contact $contact): bool
+    {
+        if (PermissionResolver::allows($user, 'contact.contact.delete')) {
+            return true;
+        }
+
+        return PermissionResolver::allows($user, 'contact.contact.delete_own')
+            && $this->ownsContact($user, $contact);
     }
 
     private function buildMessageFromSubject(string $subject, array $data): string

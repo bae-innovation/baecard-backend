@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\CardCode;
+use App\Models\Order;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,19 +19,68 @@ beforeEach(function () {
     $this->admin->assignRole('SuperAdmin');
 });
 
+function createCardOrder(User $customer, array $overrides = []): Order
+{
+    return Order::query()->create(array_merge([
+        'order_number' => 'ORD-'.uniqid(),
+        'source' => 'custom',
+        'customer_id' => $customer->id,
+        'product_name' => 'NFC Card',
+        'unit_price' => 500,
+        'quantity' => 1,
+        'status' => 'pending',
+        'payment_status' => 'pending',
+        'subtotal' => 500,
+        'total' => 500,
+        'paid_amount' => 0,
+        'due_amount' => 500,
+    ], $overrides));
+}
+
 it('creates a card code from the admin panel', function () {
+    $customer = User::factory()->create(['email_verified_at' => now()]);
+    $customer->assignRole('User');
+    $order = createCardOrder($customer);
+
     $response = $this->actingAs($this->admin)->post('/cards', [
         'code' => 'QDF2QL',
-        'name' => 'Rakib101095',
-        'phone' => '+8801712345678',
+        'order_id' => $order->id,
     ]);
 
     $response->assertRedirect(route('cards.index'));
     $this->assertDatabaseHas('card_codes', [
         'code' => 'QDF2QL',
-        'name' => 'Rakib101095',
+        'order_id' => $order->id,
+        'user_id' => $customer->id,
         'status' => CardCode::STATUS_PENDING,
     ]);
+    expect($order->fresh()->status)->toBe('processing');
+});
+
+it('moves a pending order to processing when a card is created', function () {
+    $customer = User::factory()->create(['email_verified_at' => now()]);
+    $customer->assignRole('User');
+    $order = createCardOrder($customer, ['status' => 'pending']);
+
+    $this->actingAs($this->admin)->post('/cards', [
+        'code' => 'PROC01',
+        'order_id' => $order->id,
+    ])->assertRedirect(route('cards.index'));
+
+    expect($order->fresh()->status)->toBe('processing');
+});
+
+it('does not change order status when it is no longer pending', function () {
+    $customer = User::factory()->create(['email_verified_at' => now()]);
+    $customer->assignRole('User');
+    $order = createCardOrder($customer, ['status' => 'confirmed']);
+
+    $this->actingAs($this->admin)->post('/cards', [
+        'code' => 'CONF01',
+        'order_id' => $order->id,
+    ])->assertRedirect(route('cards.index'));
+
+    expect($order->fresh()->status)->toBe('confirmed');
 });
 
 it('generates a unique card code', function () {
@@ -101,11 +151,13 @@ it('redirects guests with pre-linked pending cards to login', function () {
 it('activates a pre-linked pending card after login', function () {
     $customer = User::factory()->create(['email_verified_at' => now()]);
     $customer->assignRole('User');
+    $order = createCardOrder($customer, ['status' => 'processing']);
 
     CardCode::create([
         'code' => 'ACTIV1',
         'name' => 'Activate Me',
         'status' => CardCode::STATUS_PENDING,
+        'order_id' => $order->id,
         'user_id' => $customer->id,
     ]);
 
@@ -119,26 +171,113 @@ it('activates a pre-linked pending card after login', function () {
         'user_id' => $customer->id,
         'status' => CardCode::STATUS_PUBLISHED,
     ]);
+    expect($order->fresh()->status)->toBe('confirmed');
 });
 
-it('creates a card code with an optional assigned customer as pending', function () {
+it('moves a processing order to confirmed when the linked card is verified', function () {
     $customer = User::factory()->create(['email_verified_at' => now()]);
     $customer->assignRole('User');
+    $order = createCardOrder($customer, ['status' => 'processing']);
+
+    CardCode::create([
+        'code' => 'VERIF1',
+        'order_id' => $order->id,
+        'user_id' => $customer->id,
+        'status' => CardCode::STATUS_PENDING,
+    ]);
+
+    $this->actingAs($customer)->get('/VERIF1')->assertOk();
+
+    expect($order->fresh()->status)->toBe('confirmed');
+});
+
+it('creates a card code linked to the order customer', function () {
+    $customer = User::factory()->create(['email_verified_at' => now()]);
+    $customer->assignRole('User');
+    $order = createCardOrder($customer);
 
     $response = $this->actingAs($this->admin)->post('/cards', [
         'code' => 'WITHUSR',
-        'name' => 'Pre-assigned Card',
-        'phone' => '+8801712345678',
-        'user_id' => $customer->id,
+        'order_id' => $order->id,
     ]);
 
     $response->assertRedirect(route('cards.index'));
     $this->assertDatabaseHas('card_codes', [
         'code' => 'WITHUSR',
-        'name' => 'Pre-assigned Card',
+        'order_id' => $order->id,
         'user_id' => $customer->id,
         'status' => CardCode::STATUS_PENDING,
     ]);
+});
+
+it('requires an order when creating a card', function () {
+    $response = $this->actingAs($this->admin)->post('/cards', [
+        'code' => 'NOORD1',
+    ]);
+
+    $response->assertSessionHasErrors('order_id');
+});
+
+it('rejects creating a second card for the same order', function () {
+    $customer = User::factory()->create(['email_verified_at' => now()]);
+    $customer->assignRole('User');
+    $order = createCardOrder($customer);
+
+    CardCode::create([
+        'code' => 'FIRST1',
+        'order_id' => $order->id,
+        'user_id' => $customer->id,
+        'status' => CardCode::STATUS_PENDING,
+    ]);
+
+    $response = $this->actingAs($this->admin)->from('/cards')->post('/cards', [
+        'code' => 'SECOND',
+        'order_id' => $order->id,
+    ]);
+
+    $response->assertRedirect('/cards');
+});
+
+it('allows the same customer to hold cards on different orders', function () {
+    $customer = User::factory()->create(['email_verified_at' => now()]);
+    $customer->assignRole('User');
+    $firstOrder = createCardOrder($customer);
+    $secondOrder = createCardOrder($customer, ['order_number' => 'ORD-SECOND']);
+
+    $this->actingAs($this->admin)->post('/cards', [
+        'code' => 'CARD01',
+        'order_id' => $firstOrder->id,
+    ])->assertRedirect(route('cards.index'));
+
+    $this->actingAs($this->admin)->post('/cards', [
+        'code' => 'CARD02',
+        'order_id' => $secondOrder->id,
+    ])->assertRedirect(route('cards.index'));
+
+    expect(CardCode::query()->where('user_id', $customer->id)->count())->toBe(2);
+});
+
+it('lists available orders without cards for a customer', function () {
+    $customer = User::factory()->create(['email_verified_at' => now()]);
+    $customer->assignRole('User');
+    $available = createCardOrder($customer);
+    $taken = createCardOrder($customer, ['order_number' => 'ORD-TAKEN']);
+
+    CardCode::create([
+        'code' => 'TAKEN1',
+        'order_id' => $taken->id,
+        'user_id' => $customer->id,
+        'status' => CardCode::STATUS_PENDING,
+    ]);
+
+    $response = $this->actingAs($this->admin)->getJson(
+        '/cards/available-orders?customer_id='.$customer->id,
+    );
+
+    $response->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $available->id);
 });
 
 it('exposes a public card code lookup api', function () {
@@ -258,7 +397,34 @@ it('rejects assigning a staff account to a card code', function () {
     ]);
 });
 
-it('assigns a customer to a pending card code without verifying it', function () {
+it('rejects assigning a user to an order-linked card', function () {
+    $customer = User::factory()->create(['email_verified_at' => now()]);
+    $customer->assignRole('User');
+    $order = createCardOrder($customer);
+
+    $cardCode = CardCode::create([
+        'code' => 'ORDLNK',
+        'order_id' => $order->id,
+        'user_id' => $customer->id,
+        'status' => CardCode::STATUS_PENDING,
+    ]);
+
+    $other = User::factory()->create(['email_verified_at' => now()]);
+    $other->assignRole('User');
+
+    $response = $this->actingAs($this->admin)->from('/cards')->patch(
+        '/cards/'.$cardCode->id.'/assign-user',
+        ['user_id' => $other->id],
+    );
+
+    $response->assertRedirect('/cards');
+    $this->assertDatabaseHas('card_codes', [
+        'id' => $cardCode->id,
+        'user_id' => $customer->id,
+    ]);
+});
+
+it('assigns a customer to a legacy pending card without an order', function () {
     $cardCode = CardCode::create([
         'code' => 'ASSIGN1',
         'name' => 'Assign Me',

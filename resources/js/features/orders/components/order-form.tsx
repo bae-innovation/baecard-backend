@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { FormSection } from '@/components/shared/form-section';
 import { Button } from '@/components/ui/button';
@@ -22,21 +23,29 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import {
+  CustomerPicker,
+  type CustomerOption,
+} from '@/features/orders/components/customer-picker';
 import {
   orderFormSchema,
   type Order,
   type OrderFormValues,
+  type ProductOption,
 } from '@/features/orders/schemas/order.schema';
+import { cn } from '@/lib/utils';
 
 export type OrderFormProps = {
   mode: 'create' | 'edit';
   variant?: 'dialog' | 'page';
   order?: Order | null;
+  customers?: CustomerOption[];
+  products?: ProductOption[];
   onSubmit: (values: OrderFormValues) => Promise<void>;
   isSubmitting?: boolean;
   onCancel?: () => void;
   submitLabel?: string;
+  onCustomerCreated?: (customer: CustomerOption) => void;
 };
 
 const ORDER_STATUSES = [
@@ -79,17 +88,27 @@ export function OrderForm({
   mode,
   variant = 'dialog',
   order,
+  customers = [],
+  products = [],
   onSubmit,
   isSubmitting,
   onCancel,
   submitLabel,
+  onCustomerCreated,
 }: OrderFormProps) {
   const isPage = variant === 'page';
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
     defaultValues: {
-      customer_id: undefined,
+      customer_mode: 'existing',
+      customer_id: '',
+      new_customer: {
+        name: '',
+        email: '',
+        phone: '',
+        password: '',
+      },
       product_id: '',
       product_name: '',
       unit_price: 0,
@@ -104,10 +123,43 @@ export function OrderForm({
     },
   });
 
+  const customerMode = form.watch('customer_mode');
+  const selectedProductId = form.watch('product_id');
+  const lastAppliedProductIdRef = React.useRef<string | number>('');
+
+  React.useEffect(() => {
+    if (!selectedProductId) {
+      lastAppliedProductIdRef.current = '';
+      return;
+    }
+
+    if (selectedProductId === lastAppliedProductIdRef.current) {
+      return;
+    }
+
+    lastAppliedProductIdRef.current = selectedProductId;
+
+    const product = products.find((item) => item.id === Number(selectedProductId));
+    if (!product) {
+      return;
+    }
+
+    form.setValue('product_name', product.name, { shouldValidate: true });
+    form.setValue('unit_price', Number(product.price), { shouldValidate: true });
+  }, [form, products, selectedProductId]);
+
   React.useEffect(() => {
     if (mode === 'edit' && order) {
+      lastAppliedProductIdRef.current = order.product_id ?? '';
       form.reset({
+        customer_mode: 'existing',
         customer_id: order.customer_id,
+        new_customer: {
+          name: '',
+          email: '',
+          phone: '',
+          password: '',
+        },
         product_id: order.product_id ?? '',
         product_name: order.product_name,
         unit_price: Number(order.unit_price),
@@ -120,8 +172,6 @@ export function OrderForm({
         shipping_cost: order.shipping_cost ?? '',
         notes: order.notes ?? '',
       });
-    } else if (mode === 'create') {
-      form.reset();
     }
   }, [form, mode, order]);
 
@@ -129,32 +179,160 @@ export function OrderForm({
 
   const customerProductFields = (
     <>
-      <FormField
-        control={form.control}
-        name="customer_id"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Customer ID *</FormLabel>
-            <FormControl>
-              <Input type="number" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="product_id"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Product ID</FormLabel>
-            <FormControl>
-              <Input type="number" placeholder="Optional" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {mode === 'create' ? (
+        <FormField
+          control={form.control}
+          name="customer_mode"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Customer *</FormLabel>
+              <FormControl>
+                <CustomerPicker
+                  customers={customers}
+                  mode={field.value}
+                  onModeChange={(value) => {
+                    field.onChange(value);
+                    if (value === 'existing') {
+                      form.setValue('new_customer', {
+                        name: '',
+                        email: '',
+                        phone: '',
+                        password: '',
+                      });
+                    } else {
+                      form.setValue('customer_id', '');
+                    }
+                  }}
+                  selectedCustomerId={
+                    form.watch('customer_id') ? Number(form.watch('customer_id')) : null
+                  }
+                  onSelectCustomer={(customerId) => {
+                    form.setValue('customer_id', customerId ?? '', {
+                      shouldValidate: true,
+                    });
+                  }}
+                  newCustomer={
+                    form.watch('new_customer') ?? {
+                      name: '',
+                      email: '',
+                      phone: '',
+                      password: '',
+                    }
+                  }
+                  onNewCustomerChange={(values) =>
+                    form.setValue('new_customer', values, { shouldValidate: true })
+                  }
+                  disabled={isSubmitting}
+                  onCustomerCreated={onCustomerCreated}
+                />
+              </FormControl>
+              {customerMode === 'existing' ? (
+                <FormField
+                  control={form.control}
+                  name="customer_id"
+                  render={() => (
+                    <FormItem>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="new_customer.name"
+                    render={() => (
+                      <FormItem>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="new_customer.email"
+                    render={() => (
+                      <FormItem>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+            </FormItem>
+          )}
+        />
+      ) : (
+        <FormField
+          control={form.control}
+          name="customer_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Customer *</FormLabel>
+              <Select
+                onValueChange={(value) => field.onChange(Number(value))}
+                value={field.value ? String(field.value) : undefined}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select customer" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer.id} value={String(customer.id)}>
+                      {customer.name} ({customer.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+      {products.length > 0 ? (
+        <FormField
+          control={form.control}
+          name="product_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Product</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value ? String(field.value) : undefined}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select product (optional)" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {products.map((product) => (
+                    <SelectItem key={product.id} value={String(product.id)}>
+                      {product.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ) : (
+        <FormField
+          control={form.control}
+          name="product_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Product ID</FormLabel>
+              <FormControl>
+                <Input type="number" placeholder="Optional" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
       <FormField
         control={form.control}
         name="product_name"
@@ -176,7 +354,19 @@ export function OrderForm({
             <FormItem>
               <FormLabel>Unit Price (৳) *</FormLabel>
               <FormControl>
-                <Input type="number" step="0.01" {...field} />
+                <Input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  name={field.name}
+                  ref={field.ref}
+                  onBlur={field.onBlur}
+                  value={field.value === '' || field.value == null ? '' : field.value}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    field.onChange(next === '' ? '' : Number(next));
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -330,9 +520,21 @@ export function OrderForm({
     <Form {...form}>
       <form
         className={cn(isPage ? 'space-y-6 pb-6' : 'space-y-4')}
-        onSubmit={form.handleSubmit(async (values) => {
-          await onSubmit(values);
-        })}
+        onSubmit={form.handleSubmit(
+          async (values) => {
+            await onSubmit(values);
+          },
+          (errors) => {
+            const firstError = Object.values(errors)[0];
+            const message =
+              firstError?.message ??
+              (firstError && 'root' in firstError
+                ? firstError.root?.message
+                : undefined) ??
+              'Please fix the highlighted fields before submitting.';
+            toast.error(String(message));
+          },
+        )}
       >
         {isPage ? (
           <>

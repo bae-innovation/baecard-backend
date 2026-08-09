@@ -16,8 +16,8 @@ export const PROFILE_TEMPLATES = {
 } as const;
 
 export const TEMPLATE_OPTIONS = [
-  { id: 1, title: 'Classic Light', description: 'Warm classic card with social grid' },
-  { id: 2, title: 'Classic Dark', description: 'Dark classic card with social grid' },
-  { id: 3, title: 'Modern Light', description: 'Clean modern card with centered profile' },
-  { id: 4, title: 'Modern Dark', description: 'Dark modern card with centered profile' },
+  { id: 1, title: 'Theme 1 Dark', description: 'Classic dark card with left circular avatar' },
+  { id: 2, title: 'Theme 1 Light', description: 'Classic light card with left circular avatar' },
+  { id: 3, title: 'Theme 2 Dark', description: 'Wave dark card with centered rounded avatar' },
+  { id: 4, title: 'Theme 2 Light', description: 'Wave light card with centered rounded avatar' },
 ] as const;

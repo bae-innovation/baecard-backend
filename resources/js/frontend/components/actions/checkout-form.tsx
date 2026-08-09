@@ -24,6 +24,7 @@ const phoneSchema = z
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
+  email: z.string().min(1, 'Email is required').email('Enter a valid email'),
   phone: phoneSchema,
   quantity: z.coerce.number().int().min(1).max(99),
   notes: z.string().max(2000).optional(),
@@ -46,6 +47,7 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
     resolver: zodResolver(schema),
     defaultValues: {
       name: '',
+      email: '',
       phone: '',
       quantity: 1,
       notes: '',
@@ -60,6 +62,7 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
     try {
       const response = await submitPublicOrder({
         name: values.name,
+        email: values.email,
         phone: values.phone,
         product_id: product.id,
         quantity: values.quantity,
@@ -144,6 +147,22 @@ export function CheckoutForm({ product }: CheckoutFormProps) {
         />
         {form.formState.errors.name ? (
           <p className="text-sm text-red-400">{form.formState.errors.name.message}</p>
+        ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="checkout-email">
+          {translate({ en: 'Email address', bn: 'ইমেইল ঠিকানা' })} *
+        </Label>
+        <Input
+          id="checkout-email"
+          type="email"
+          autoComplete="email"
+          className="border-fe-border bg-fe-surface/50"
+          {...form.register('email')}
+        />
+        {form.formState.errors.email ? (
+          <p className="text-sm text-red-400">{form.formState.errors.email.message}</p>
         ) : null}
       </div>
 

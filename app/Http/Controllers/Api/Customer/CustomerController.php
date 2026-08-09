@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\Customer;
 
 use App\Http\Controllers\Concerns\RespondsWithInertia;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customer\QuickStoreCustomerRequest;
 use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
 use App\Models\Customer;
+use App\Services\CustomerResolver;
 use App\Services\CustomerService;
 use App\Support\InertiaData;
 use Illuminate\Http\Request;
@@ -18,6 +20,7 @@ class CustomerController extends Controller
 
     public function __construct(
         protected CustomerService $customerService,
+        protected CustomerResolver $customerResolver,
     ) {}
 
     public function indexPage(Request $request)
@@ -36,12 +39,16 @@ class CustomerController extends Controller
     {
         $customer->load([
             'roles:id,name',
-            'customerSocials' => fn ($query) => $query->orderBy('sort_order'),
+            'profile',
+            'orders' => fn ($query) => $query
+                ->with(['product:id,name', 'cardCode:id,order_id,code,status,scan_url'])
+                ->latest(),
         ]);
 
         $payload = [
             'customer' => $customer,
-            'socials' => $customer->customerSocials,
+            'profile' => $customer->profile,
+            'orders' => $customer->orders,
         ];
 
         if (InertiaData::prefersJson($request)) {
@@ -63,6 +70,17 @@ class CustomerController extends Controller
             'customers.index',
             'Customer created.',
         );
+    }
+
+    public function quickCreate(QuickStoreCustomerRequest $request)
+    {
+        $customer = $this->customerResolver->createFromAdmin($request->validated());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Customer created successfully.',
+            'data' => $customer->only(['id', 'name', 'email', 'phone']),
+        ], 201);
     }
 
     public function update(UpdateCustomerRequest $request, Customer $customer)

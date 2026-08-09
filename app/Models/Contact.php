@@ -9,6 +9,7 @@ class Contact extends Model
 {
     protected $fillable = [
         'user_id',
+        'created_by',
         'name',
         'email',
         'phone',
@@ -30,5 +31,10 @@ class Contact extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

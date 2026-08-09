@@ -19,6 +19,7 @@ export const appointmentSchema = z.object({
   ]),
   location: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
+  created_by: z.number().nullable().optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
   customer: z
@@ -27,6 +28,12 @@ export const appointmentSchema = z.object({
 });
 
 export type Appointment = z.infer<typeof appointmentSchema>;
+
+export type AppointmentCustomerOption = {
+  id: number;
+  name: string;
+  email: string;
+};
 
 export const appointmentFormSchema = z.object({
   customer_id: z

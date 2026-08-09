@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import {
   appointmentFormSchema,
   type Appointment,
+  type AppointmentCustomerOption,
   type AppointmentFormValues,
 } from '@/features/appointments/schemas/appointment.schema';
 
@@ -33,6 +34,7 @@ export type AppointmentFormProps = {
   mode: 'create' | 'edit';
   variant?: 'dialog' | 'page';
   appointment?: Appointment | null;
+  customers?: AppointmentCustomerOption[];
   onSubmit: (values: AppointmentFormValues) => Promise<void>;
   isSubmitting?: boolean;
   showAdminFields?: boolean;
@@ -70,6 +72,7 @@ export function AppointmentForm({
   mode,
   variant = 'dialog',
   appointment,
+  customers = [],
   onSubmit,
   isSubmitting,
   showAdminFields,
@@ -189,10 +192,31 @@ export function AppointmentForm({
           name="customer_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Customer ID</FormLabel>
-              <FormControl>
-                <Input type="number" {...field} />
-              </FormControl>
+              <FormLabel>Customer</FormLabel>
+              <Select
+                onValueChange={(value) =>
+                  field.onChange(value === '__none__' ? '' : Number(value))
+                }
+                value={
+                  field.value === '' || field.value == null
+                    ? '__none__'
+                    : String(field.value)
+                }
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a customer" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="__none__">No customer selected</SelectItem>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer.id} value={String(customer.id)}>
+                      {customer.name} ({customer.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

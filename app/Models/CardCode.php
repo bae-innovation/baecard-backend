@@ -20,6 +20,7 @@ class CardCode extends Model
         'phone',
         'status',
         'user_id',
+        'order_id',
     ];
 
     /**
@@ -28,11 +29,22 @@ class CardCode extends Model
     protected $appends = [
         'scan_url',
         'profile_url',
+        'display_name',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->user?->name ?? $this->name ?? '';
     }
 
     public function getScanUrlAttribute(): string

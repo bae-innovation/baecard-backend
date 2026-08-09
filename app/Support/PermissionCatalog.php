@@ -80,26 +80,36 @@ class PermissionCatalog
             self::perm('order.custom_order.delete', 'order', 'Delete Custom Orders'),
             self::wildcard('card.*', 'card', 'Cards (All)'),
             self::perm('card.card.view', 'card', 'View Cards'),
-            self::perm('card.card.manage', 'card', 'Manage Cards'),
-            self::perm('card.card.generate', 'card', 'Generate Cards'),
-            self::perm('card.card.regenerate', 'card', 'Regenerate Cards'),
+            self::perm('card.card.create', 'card', 'Create Cards'),
+            self::perm('card.card.update', 'card', 'Update Cards'),
+            self::perm('card.card.delete', 'card', 'Delete Cards'),
             self::wildcard('appointment.*', 'appointment', 'Appointments (All)'),
             self::perm('appointment.appointment.view', 'appointment', 'View Appointments'),
-            self::perm('appointment.appointment.manage', 'appointment', 'Manage Appointments'),
+            self::perm('appointment.appointment.create', 'appointment', 'Create Appointments'),
+            self::perm('appointment.appointment.update', 'appointment', 'Update Appointments'),
+            self::perm('appointment.appointment.delete', 'appointment', 'Delete Appointments'),
             self::perm('appointment.appointment.view_own', 'appointment', 'View Own Appointments'),
+            self::perm('appointment.appointment.create_own', 'appointment', 'Create Own Appointments'),
+            self::perm('appointment.appointment.update_own', 'appointment', 'Update Own Appointments'),
+            self::perm('appointment.appointment.delete_own', 'appointment', 'Delete Own Appointments'),
             self::wildcard('contact.*', 'contact', 'Contacts (All)'),
             self::perm('contact.contact.view', 'contact', 'View Contact Messages'),
             self::perm('contact.contact.delete', 'contact', 'Delete Contact Messages'),
             self::perm('contact.contact.view_own', 'contact', 'View Own Contact Messages'),
             self::perm('contact.contact.create', 'contact', 'Create Contact Messages'),
+            self::perm('contact.contact.create_own', 'contact', 'Create Own Contact Messages'),
+            self::perm('contact.contact.delete_own', 'contact', 'Delete Own Contact Messages'),
             self::wildcard('review.*', 'review', 'Reviews (All)'),
             self::perm('review.review.view', 'review', 'View Reviews'),
-            self::perm('review.review.manage', 'review', 'Manage Reviews'),
-            self::perm('review.review.view_own', 'review', 'View Own Reviews'),
             self::perm('review.review.create', 'review', 'Create Reviews'),
+            self::perm('review.review.update', 'review', 'Update Reviews'),
+            self::perm('review.review.delete', 'review', 'Delete Reviews'),
+            self::perm('review.review.view_own', 'review', 'View Own Reviews'),
+            self::perm('review.review.create_own', 'review', 'Create Own Reviews'),
+            self::perm('review.review.update_own', 'review', 'Update Own Reviews'),
+            self::perm('review.review.delete_own', 'review', 'Delete Own Reviews'),
             self::wildcard('profile.*', 'profile', 'Profile Portal (All)'),
-            self::perm('profile.social.manage', 'profile', 'Manage Social Links'),
-            self::perm('profile.service.manage', 'profile', 'Manage Services'),
+            self::perm('profile.content.manage', 'profile', 'Manage Profile Content'),
             self::perm('profile.template.manage', 'profile', 'Manage Profile Templates'),
             self::wildcard('cms.*', 'cms', 'CMS (All)'),
             self::perm('cms.section.view', 'cms', 'View CMS Sections'),
@@ -158,7 +168,7 @@ class PermissionCatalog
 
     public static function viewDependencyFor(string $permission): ?string
     {
-        if (str_ends_with($permission, '.view') || str_contains($permission, '.view_own')) {
+        if (str_ends_with($permission, '.view') || str_ends_with($permission, '.view_own')) {
             return null;
         }
 
@@ -169,6 +179,18 @@ class PermissionCatalog
         }
 
         $action = $parts[count($parts) - 1];
+
+        if (str_ends_with($action, '_own')) {
+            $baseAction = substr($action, 0, -strlen('_own'));
+
+            if (in_array($baseAction, ['create', 'update', 'delete'], true)) {
+                $parts[count($parts) - 1] = 'view_own';
+
+                return implode('.', $parts);
+            }
+
+            return null;
+        }
 
         if (! in_array($action, ['create', 'update', 'delete', 'manage', 'assign_role'], true)) {
             return null;
@@ -184,11 +206,13 @@ class PermissionCatalog
      */
     public static function mutatingActionsForView(string $viewPermission): array
     {
-        if (! str_ends_with($viewPermission, '.view') || str_contains($viewPermission, '.view_own')) {
+        if (! str_ends_with($viewPermission, '.view') && ! str_ends_with($viewPermission, '.view_own')) {
             return [];
         }
 
-        $prefix = substr($viewPermission, 0, -strlen('.view'));
+        $prefix = str_ends_with($viewPermission, '.view_own')
+            ? substr($viewPermission, 0, -strlen('.view_own'))
+            : substr($viewPermission, 0, -strlen('.view'));
 
         return array_values(array_filter(
             self::assignableNames(),
@@ -203,14 +227,16 @@ class PermissionCatalog
     public static function customerPortalPermissions(): array
     {
         return [
-            'profile.social.manage',
-            'profile.service.manage',
+            'profile.content.manage',
             'profile.template.manage',
             'contact.contact.view_own',
-            'contact.contact.create',
+            'contact.contact.create_own',
             'appointment.appointment.view_own',
+            'appointment.appointment.create_own',
+            'appointment.appointment.update_own',
+            'appointment.appointment.delete_own',
             'review.review.view_own',
-            'review.review.create',
+            'review.review.create_own',
         ];
     }
 
@@ -244,8 +270,7 @@ class PermissionCatalog
     {
         return array_values(array_filter(
             self::assignableNames(),
-            fn (string $name) => $name !== 'card.card.regenerate'
-                && ! in_array($name, self::customerPortalPermissions(), true)
+            fn (string $name) => ! in_array($name, self::customerPortalPermissions(), true)
                 && ! in_array($name, self::staffPortalWildcards(), true)
         ));
     }
@@ -270,7 +295,9 @@ class PermissionCatalog
             'order.website_order.view',
             'card.card.view',
             'appointment.appointment.view',
-            'appointment.appointment.manage',
+            'appointment.appointment.create',
+            'appointment.appointment.update',
+            'appointment.appointment.delete',
             'cms.offer_ticker.view',
             'cms.offer_ticker.manage',
             'cms.site_social.view',

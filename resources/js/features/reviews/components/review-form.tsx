@@ -26,6 +26,7 @@ import {
 import { showMutationError } from '@/lib/mutation-toast';
 import { cn } from '@/lib/utils';
 import {
+  REVIEW_BODY_MAX_LENGTH,
   reviewFormSchema,
   type Review,
   type ReviewFormValues,
@@ -242,8 +243,16 @@ export function ReviewForm({
           <FormItem>
             <FormLabel>Review *</FormLabel>
             <FormControl>
-              <Textarea {...field} rows={5} />
+              <Textarea
+                {...field}
+                rows={5}
+                maxLength={REVIEW_BODY_MAX_LENGTH}
+                disabled={isSubmitting}
+              />
             </FormControl>
+            <FormDescription className="text-right tabular-nums">
+              {field.value?.length ?? 0} / {REVIEW_BODY_MAX_LENGTH}
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}

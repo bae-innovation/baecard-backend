@@ -1,6 +1,6 @@
 export function objectToFormData(
   values: Record<string, unknown>,
-  files?: Record<string, File | null | undefined>,
+  files?: Record<string, File | File[] | null | undefined>,
   method?: 'PUT' | 'PATCH' | 'DELETE',
 ): FormData {
   const formData = new FormData();
@@ -10,6 +10,14 @@ export function objectToFormData(
     if (typeof value === 'number' && Number.isNaN(value)) return;
     if (typeof value === 'boolean') {
       formData.append(key, value ? '1' : '0');
+      return;
+    }
+    if (typeof File !== 'undefined' && value instanceof File) {
+      formData.append(key, value);
+      return;
+    }
+    if (typeof Blob !== 'undefined' && value instanceof Blob) {
+      formData.append(key, value);
       return;
     }
     formData.append(key, String(value));

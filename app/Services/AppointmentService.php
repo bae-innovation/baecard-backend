@@ -17,7 +17,7 @@ class AppointmentService
         $query = Appointment::with(['customer:id,name,email', 'creator:id,name']);
 
         if ($user && ! PermissionResolver::allows($user, 'appointment.appointment.view')) {
-            $query->where('customer_id', $user->id);
+            $query->where('created_by', $user->id);
         }
 
         $appointments = $query->latest('appointment_date')->paginate(10);
@@ -75,7 +75,11 @@ class AppointmentService
             return $this->errorResponse('Customer is required.', null, 422);
         }
 
-        if ($user && ! PermissionResolver::allows($user, 'appointment.appointment.manage') && $user->id !== (int) $customerId) {
+        if (
+            $user
+            && $customerId !== (int) $user->id
+            && ! PermissionResolver::allows($user, 'appointment.appointment.create')
+        ) {
             return $this->forbiddenResponse('You can only create appointments for yourself.');
         }
 
@@ -108,11 +112,11 @@ class AppointmentService
 
         $user = request()->user();
 
-        if ($user && ! $this->canManage($user, $appointment)) {
+        if ($user && ! $this->canUpdate($user, $appointment)) {
             return $this->forbiddenResponse('You are not allowed to update this appointment.');
         }
 
-        if ($user && ! PermissionResolver::allows($user, 'appointment.appointment.manage')) {
+        if ($user && ! PermissionResolver::allows($user, 'appointment.appointment.update')) {
             unset($data['customer_id'], $data['status']);
         }
 
@@ -134,7 +138,7 @@ class AppointmentService
 
         $user = request()->user();
 
-        if ($user && ! $this->canManage($user, $appointment)) {
+        if ($user && ! $this->canDelete($user, $appointment)) {
             return $this->forbiddenResponse('You are not allowed to delete this appointment.');
         }
 
@@ -143,17 +147,38 @@ class AppointmentService
         return $this->successResponse(null, 'Appointment deleted successfully.');
     }
 
-    private function canAccess($user, Appointment $appointment): bool
+    public function canAccess($user, Appointment $appointment): bool
     {
         if (PermissionResolver::allows($user, 'appointment.appointment.view')) {
             return true;
         }
 
-        return $user->id === $appointment->customer_id;
+        return PermissionResolver::allows($user, 'appointment.appointment.view_own')
+            && $this->ownsAppointment($user, $appointment);
     }
 
-    private function canManage($user, Appointment $appointment): bool
+    public function canUpdate($user, Appointment $appointment): bool
     {
-        return PermissionResolver::allows($user, 'appointment.appointment.manage');
+        if (PermissionResolver::allows($user, 'appointment.appointment.update')) {
+            return true;
+        }
+
+        return PermissionResolver::allows($user, 'appointment.appointment.update_own')
+            && $this->ownsAppointment($user, $appointment);
+    }
+
+    public function canDelete($user, Appointment $appointment): bool
+    {
+        if (PermissionResolver::allows($user, 'appointment.appointment.delete')) {
+            return true;
+        }
+
+        return PermissionResolver::allows($user, 'appointment.appointment.delete_own')
+            && $this->ownsAppointment($user, $appointment);
+    }
+
+    private function ownsAppointment($user, Appointment $appointment): bool
+    {
+        return (int) $appointment->created_by === (int) $user->id;
     }
 }

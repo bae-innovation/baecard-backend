@@ -54,6 +54,7 @@ export function submitAppointment(payload: AppointmentPayload) {
 
 export type PublicOrderPayload = {
   name: string;
+  email: string;
   phone: string;
   product_id: number;
   quantity?: number;

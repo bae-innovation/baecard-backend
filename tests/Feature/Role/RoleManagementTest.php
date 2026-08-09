@@ -99,7 +99,7 @@ describe('Role Management - As SuperAdmin', function () {
         $this->actingAs($this->superAdmin)
             ->put("/access-control/roles/{$role->id}", [
                 'name' => 'User',
-                'permissions' => ['rbac.role.view', 'profile.social.manage'],
+                'permissions' => ['rbac.role.view', 'profile.content.manage'],
             ])
             ->assertRedirect(route('access-control.roles.index'));
     });
@@ -114,12 +114,12 @@ describe('Role Management - As SuperAdmin', function () {
         $this->actingAs($this->superAdmin)
             ->put("/access-control/roles/{$role->id}", [
                 'name' => 'Editor',
-                'permissions' => ['profile.social.manage', 'order.website_order.view'],
+                'permissions' => ['profile.content.manage', 'order.website_order.view'],
             ])
             ->assertRedirect(route('access-control.roles.index'));
 
         expect($role->fresh()->permissions->pluck('name')->all())
-            ->toContain('profile.social.manage', 'order.website_order.view');
+            ->toContain('profile.content.manage', 'order.website_order.view');
     });
 
     it('can clear all permissions from a role', function () {

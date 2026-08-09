@@ -23,6 +23,7 @@ it('creates a public order from checkout api', function () {
 
     $response = $this->postJson('/api/order/create', [
         'name' => 'Rahim Uddin',
+        'email' => 'rahim@example.com',
         'phone' => '01712345678',
         'product_id' => $product->id,
         'quantity' => 2,
@@ -46,11 +47,68 @@ it('creates a public order from checkout api', function () {
 
     $customer = User::query()->where('phone', '01712345678')->first();
     expect($customer)->not->toBeNull();
+    expect($customer->email)->toBe('rahim@example.com');
     expect($customer->hasRole('User'))->toBeTrue();
 
     $order = Order::query()->first();
     expect($order->customer_id)->toBe($customer->id);
     expect((float) $order->total)->toBe(1000.0);
+});
+
+it('reuses an existing customer matched by phone during checkout', function () {
+    $product = Product::query()->create([
+        'name' => 'NFC Card',
+        'slug' => 'nfc-card',
+        'price' => 500,
+        'is_active' => true,
+        'is_featured' => false,
+    ]);
+
+    $existing = User::factory()->create([
+        'name' => 'Old Name',
+        'email' => 'existing@example.com',
+        'phone' => '01712345678',
+        'email_verified_at' => now(),
+    ]);
+    $existing->assignRole('User');
+
+    $this->postJson('/api/order/create', [
+        'name' => 'Updated Name',
+        'email' => 'updated@example.com',
+        'phone' => '01712345678',
+        'product_id' => $product->id,
+    ])->assertCreated();
+
+    expect(User::query()->where('phone', '01712345678')->count())->toBe(1);
+    expect($existing->fresh()->name)->toBe('Updated Name');
+    expect($existing->fresh()->email)->toBe('updated@example.com');
+});
+
+it('reuses an existing customer matched by email during checkout', function () {
+    $product = Product::query()->create([
+        'name' => 'NFC Card',
+        'slug' => 'nfc-card',
+        'price' => 500,
+        'is_active' => true,
+        'is_featured' => false,
+    ]);
+
+    $existing = User::factory()->create([
+        'name' => 'Email Match',
+        'email' => 'same@example.com',
+        'phone' => '01710000001',
+        'email_verified_at' => now(),
+    ]);
+    $existing->assignRole('User');
+
+    $this->postJson('/api/order/create', [
+        'name' => 'Email Match',
+        'email' => 'same@example.com',
+        'phone' => '01710000001',
+        'product_id' => $product->id,
+    ])->assertCreated();
+
+    expect(User::query()->where('email', 'same@example.com')->count())->toBe(1);
 });
 
 it('validates public order phone number', function () {
@@ -64,12 +122,32 @@ it('validates public order phone number', function () {
 
     $response = $this->postJson('/api/order/create', [
         'name' => 'Rahim Uddin',
+        'email' => 'rahim@example.com',
         'phone' => '123',
         'product_id' => $product->id,
     ]);
 
     $response->assertUnprocessable()
         ->assertJsonValidationErrors(['phone']);
+});
+
+it('requires email on public checkout', function () {
+    $product = Product::query()->create([
+        'name' => 'NFC Card',
+        'slug' => 'nfc-card',
+        'price' => 500,
+        'is_active' => true,
+        'is_featured' => false,
+    ]);
+
+    $response = $this->postJson('/api/order/create', [
+        'name' => 'Rahim Uddin',
+        'phone' => '01712345678',
+        'product_id' => $product->id,
+    ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['email']);
 });
 
 it('renders checkout and thank you pages', function () {

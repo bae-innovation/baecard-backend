@@ -62,6 +62,7 @@ class ReviewService
 
         $review = Review::create([
             'user_id' => $user?->id,
+            'created_by' => $user?->id,
             'name' => $data['name'],
             'email' => $data['email'],
             'image' => $imagePath,
@@ -80,16 +81,20 @@ class ReviewService
 
     public function update(int $id, array $data): JsonResponse
     {
-        $user = request()->user();
-
-        if (! $user || ! PermissionResolver::allows($user, 'review.review.manage')) {
-            return $this->forbiddenResponse('You are not allowed to update reviews.');
-        }
-
         $review = Review::find($id);
 
         if (! $review) {
             return $this->notFoundResponse('Review not found.');
+        }
+
+        $user = request()->user();
+
+        if ($user && ! $this->canUpdate($user, $review)) {
+            return $this->forbiddenResponse('You are not allowed to update this review.');
+        }
+
+        if ($user && ! PermissionResolver::allows($user, 'review.review.update')) {
+            unset($data['is_visible']);
         }
 
         if (request()->hasFile('image')) {
@@ -112,7 +117,7 @@ class ReviewService
     {
         $user = request()->user();
 
-        if (! $user || ! PermissionResolver::allows($user, 'review.review.manage')) {
+        if (! $user || ! PermissionResolver::allows($user, 'review.review.update')) {
             return $this->forbiddenResponse('You are not allowed to update review visibility.');
         }
 
@@ -129,16 +134,16 @@ class ReviewService
 
     public function delete(int $id): JsonResponse
     {
-        $user = request()->user();
-
-        if (! $user || ! PermissionResolver::allows($user, 'review.review.manage')) {
-            return $this->forbiddenResponse('You are not allowed to delete reviews.');
-        }
-
         $review = Review::find($id);
 
         if (! $review) {
             return $this->notFoundResponse('Review not found.');
+        }
+
+        $user = request()->user();
+
+        if ($user && ! $this->canDelete($user, $review)) {
+            return $this->forbiddenResponse('You are not allowed to delete this review.');
         }
 
         $this->imageUploadService->delete($review->image);
@@ -147,9 +152,34 @@ class ReviewService
         return $this->successResponse(null, 'Review deleted successfully.');
     }
 
+    public function canUpdate($user, Review $review): bool
+    {
+        if (PermissionResolver::allows($user, 'review.review.update')) {
+            return true;
+        }
+
+        return PermissionResolver::allows($user, 'review.review.update_own')
+            && $this->ownsReview($user, $review);
+    }
+
+    public function canDelete($user, Review $review): bool
+    {
+        if (PermissionResolver::allows($user, 'review.review.delete')) {
+            return true;
+        }
+
+        return PermissionResolver::allows($user, 'review.review.delete_own')
+            && $this->ownsReview($user, $review);
+    }
+
+    public function ownsReview($user, Review $review): bool
+    {
+        return (int) $review->created_by === (int) $user->id;
+    }
+
     private function defaultVisibilityForCreate(?\App\Models\User $user, array $data): bool
     {
-        if ($user && PermissionResolver::allows($user, 'review.review.manage')) {
+        if ($user && PermissionResolver::allows($user, 'review.review.update')) {
             return (bool) ($data['is_visible'] ?? true);
         }
 

@@ -1,8 +1,11 @@
 import { z } from 'zod';
 
+export const REVIEW_BODY_MAX_LENGTH = 5000;
+
 export const reviewSchema = z.object({
   id: z.number(),
   user_id: z.coerce.number().nullable().optional(),
+  created_by: z.coerce.number().nullable().optional(),
   name: z.string(),
   email: z.string().email(),
   image_url: z.string().nullable().optional(),
@@ -25,7 +28,10 @@ export const reviewFormSchema = z.object({
   email: z.string().email('Valid email is required'),
   rating: z.coerce.number().int().min(1).max(5),
   title: z.string().max(255).optional().or(z.literal('')),
-  body: z.string().min(1, 'Review body is required').max(5000),
+  body: z
+    .string()
+    .min(1, 'Review body is required')
+    .max(REVIEW_BODY_MAX_LENGTH, `Review must be at most ${REVIEW_BODY_MAX_LENGTH} characters`),
   is_visible: z.boolean().optional(),
 });
 

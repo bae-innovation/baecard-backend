@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Contact;
 
+use App\Support\PermissionResolver;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -10,6 +11,21 @@ class StoreContactRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $user = $this->user();
+
+        if (
+            $user
+            && PermissionResolver::allows($user, 'contact.contact.create_own')
+            && ! PermissionResolver::allows($user, 'contact.contact.create')
+        ) {
+            $this->merge([
+                'email' => $user->email,
+            ]);
+        }
     }
 
     public function rules(): array

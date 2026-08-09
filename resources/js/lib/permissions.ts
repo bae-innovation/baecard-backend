@@ -159,6 +159,189 @@ export function canDeleteCustomOrders(
   return hasPermission(permissions, 'order.custom_order.delete');
 }
 
+export const CARD_VIEW_PERMISSIONS = [
+  'card.card.view',
+  'card.*',
+] as const;
+
+export function canViewCards(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasAnyPermission(permissions, CARD_VIEW_PERMISSIONS);
+}
+
+export function canCreateCards(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'card.card.create');
+}
+
+export function canUpdateCards(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'card.card.update');
+}
+
+export function canDeleteCards(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'card.card.delete');
+}
+
+export const APPOINTMENT_VIEW_PERMISSIONS = [
+  'appointment.appointment.view',
+  'appointment.*',
+] as const;
+
+export function canViewAppointments(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasAnyPermission(permissions, APPOINTMENT_VIEW_PERMISSIONS);
+}
+
+export function canCreateAppointments(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'appointment.appointment.create');
+}
+
+export function canUpdateAppointments(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'appointment.appointment.update');
+}
+
+export function canDeleteAppointments(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'appointment.appointment.delete');
+}
+
+export function canViewOwnAppointments(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'appointment.appointment.view_own');
+}
+
+export function canCreateOwnAppointments(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'appointment.appointment.create_own');
+}
+
+export function canUpdateOwnAppointments(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'appointment.appointment.update_own');
+}
+
+export function canDeleteOwnAppointments(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'appointment.appointment.delete_own');
+}
+
+/** @deprecated Use canViewOwnAppointments */
+export function canBookOwnAppointments(
+  permissions: readonly { name: string }[],
+): boolean {
+  return canViewOwnAppointments(permissions);
+}
+
+export const CONTACT_VIEW_PERMISSIONS = [
+  'contact.contact.view',
+  'contact.*',
+] as const;
+
+export function canViewContacts(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasAnyPermission(permissions, CONTACT_VIEW_PERMISSIONS);
+}
+
+export function canViewOwnContacts(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'contact.contact.view_own');
+}
+
+export function canCreateContacts(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'contact.contact.create');
+}
+
+export function canDeleteContacts(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'contact.contact.delete');
+}
+
+export function canCreateOwnContacts(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'contact.contact.create_own');
+}
+
+export function canDeleteOwnContacts(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'contact.contact.delete_own');
+}
+
+export const REVIEW_VIEW_PERMISSIONS = [
+  'review.review.view',
+  'review.*',
+] as const;
+
+export function canViewReviews(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasAnyPermission(permissions, REVIEW_VIEW_PERMISSIONS);
+}
+
+export function canViewOwnReviews(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'review.review.view_own');
+}
+
+export function canCreateReviews(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'review.review.create');
+}
+
+export function canUpdateReviews(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'review.review.update');
+}
+
+export function canDeleteReviews(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'review.review.delete');
+}
+
+export function canCreateOwnReviews(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'review.review.create_own');
+}
+
+export function canUpdateOwnReviews(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'review.review.update_own');
+}
+
+export function canDeleteOwnReviews(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'review.review.delete_own');
+}
+
 export const DASHBOARD_ACCESS_PERMISSIONS = [
   'dashboard.analytics.view',
   'dashboard.*',

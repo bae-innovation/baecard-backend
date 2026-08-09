@@ -33,12 +33,17 @@ it('derives customer portal abilities for the User role', function () {
     expect($names)
         ->toContain('product.product.view')
         ->toContain('appointment.appointment.view_own')
+        ->toContain('appointment.appointment.create_own')
+        ->toContain('appointment.appointment.update_own')
+        ->toContain('appointment.appointment.delete_own')
         ->toContain('contact.contact.view_own')
-        ->toContain('contact.contact.create')
+        ->toContain('contact.contact.create_own')
         ->toContain('review.review.view_own')
-        ->toContain('review.review.create')
+        ->toContain('review.review.create_own')
         ->toContain('profile.template.manage')
-        ->toContain('product.product.view')
+        ->not->toContain('contact.contact.create')
+        ->not->toContain('review.review.create')
+        ->not->toContain('appointment.appointment.view')
         ->not->toContain('rbac.user.view')
         ->not->toContain('order.website_order.view')
         ->not->toContain('dashboard.analytics.view')
@@ -74,11 +79,21 @@ it('blocks customers from staff-only modules', function () {
     $this->actingAs($this->customer)->get('/settings/general')->assertForbidden();
 });
 
-it('scopes appointments to the logged-in customer and blocks edits', function () {
+it('scopes appointments to the logged-in customer and allows own edits', function () {
     Appointment::create([
         'customer_id' => $this->customer->id,
+        'created_by' => $this->customer->id,
         'title' => 'Mine',
         'appointment_date' => now()->addDay(),
+        'duration_minutes' => 30,
+        'status' => 'pending',
+    ]);
+
+    Appointment::create([
+        'customer_id' => $this->customer->id,
+        'created_by' => $this->admin->id,
+        'title' => 'Assigned by admin',
+        'appointment_date' => now()->addDays(2),
         'duration_minutes' => 30,
         'status' => 'pending',
     ]);
@@ -88,6 +103,7 @@ it('scopes appointments to the logged-in customer and blocks edits', function ()
 
     Appointment::create([
         'customer_id' => $other->id,
+        'created_by' => $other->id,
         'title' => 'Theirs',
         'appointment_date' => now()->addDays(2),
         'duration_minutes' => 30,
@@ -102,7 +118,7 @@ it('scopes appointments to the logged-in customer and blocks edits', function ()
             ->has('appointments.data', 1)
             ->where('appointments.data.0.title', 'Mine'));
 
-    $appointment = Appointment::where('customer_id', $this->customer->id)->first();
+    $appointment = Appointment::where('created_by', $this->customer->id)->first();
 
     $this->actingAs($this->customer)
         ->post('/appointments', [
@@ -117,19 +133,39 @@ it('scopes appointments to the logged-in customer and blocks edits', function ()
         ->put("/appointments/{$appointment->id}", [
             'title' => 'Updated',
         ])
-        ->assertForbidden();
+        ->assertRedirect(route('appointments.index'));
+
+    $otherAppointment = Appointment::where('created_by', $other->id)->first();
+
+    $this->actingAs($this->customer)
+        ->put("/appointments/{$otherAppointment->id}", [
+            'title' => 'Hacked',
+        ])
+        ->assertRedirect(route('appointments.index'));
+
+    expect($otherAppointment->fresh()->title)->toBe('Theirs');
 });
 
 it('scopes contacts to the logged-in customer and allows create only', function () {
     Contact::create([
         'user_id' => $this->customer->id,
+        'created_by' => $this->customer->id,
         'name' => $this->customer->name,
         'email' => $this->customer->email,
         'message' => 'My message',
     ]);
 
     Contact::create([
+        'user_id' => $this->customer->id,
+        'created_by' => $this->admin->id,
+        'name' => $this->customer->name,
+        'email' => $this->customer->email,
+        'message' => 'Assigned by admin',
+    ]);
+
+    Contact::create([
         'user_id' => $this->admin->id,
+        'created_by' => $this->admin->id,
         'name' => 'Admin',
         'email' => $this->admin->email,
         'message' => 'Admin message',
@@ -152,12 +188,13 @@ it('scopes contacts to the logged-in customer and allows create only', function 
         ])
         ->assertRedirect(route('contacts.index'));
 
-    expect(Contact::where('user_id', $this->customer->id)->count())->toBe(2);
+    expect(Contact::where('created_by', $this->customer->id)->count())->toBe(2);
 });
 
 it('scopes reviews to the logged-in customer and blocks updates', function () {
     Review::create([
         'user_id' => $this->customer->id,
+        'created_by' => $this->customer->id,
         'name' => $this->customer->name,
         'email' => $this->customer->email,
         'rating' => 5,
@@ -166,7 +203,18 @@ it('scopes reviews to the logged-in customer and blocks updates', function () {
     ]);
 
     Review::create([
+        'user_id' => $this->customer->id,
+        'created_by' => $this->admin->id,
+        'name' => $this->customer->name,
+        'email' => $this->customer->email,
+        'rating' => 5,
+        'body' => 'Assigned by admin',
+        'is_visible' => true,
+    ]);
+
+    Review::create([
         'user_id' => $this->admin->id,
+        'created_by' => $this->admin->id,
         'name' => 'Admin',
         'email' => $this->admin->email,
         'rating' => 4,
@@ -191,7 +239,7 @@ it('scopes reviews to the logged-in customer and blocks updates', function () {
         ])
         ->assertRedirect(route('reviews.index'));
 
-    $review = Review::where('user_id', $this->customer->id)->first();
+    $review = Review::where('created_by', $this->customer->id)->first();
 
     $this->actingAs($this->customer)
         ->patch("/reviews/{$review->id}", [

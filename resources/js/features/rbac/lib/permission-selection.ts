@@ -1,6 +1,7 @@
 import type { PermissionGroup, PermissionItem } from '@/features/rbac/schemas/rbac.schema';
 
 const MUTATING_ACTIONS = new Set(['create', 'update', 'delete', 'manage', 'assign_role']);
+const OWN_MUTATING_ACTIONS = new Set(['create_own', 'update_own', 'delete_own']);
 
 export function flattenPermissionNames(permissionGroups: PermissionGroup): string[] {
   return Object.values(permissionGroups)
@@ -9,7 +10,7 @@ export function flattenPermissionNames(permissionGroups: PermissionGroup): strin
 }
 
 export function viewDependencyFor(permissionName: string): string | null {
-  if (permissionName.endsWith('.view') || permissionName.includes('.view_own')) {
+  if (permissionName.endsWith('.view') || permissionName.endsWith('.view_own')) {
     return null;
   }
 
@@ -20,6 +21,10 @@ export function viewDependencyFor(permissionName: string): string | null {
   }
 
   const action = parts[parts.length - 1];
+
+  if (OWN_MUTATING_ACTIONS.has(action)) {
+    return `${parts.slice(0, -1).join('.')}.view_own`;
+  }
 
   if (!MUTATING_ACTIONS.has(action)) {
     return null;
@@ -32,7 +37,7 @@ export function mutatingDependenciesForView(
   viewPermission: string,
   availableNames: readonly string[],
 ): string[] {
-  if (!viewPermission.endsWith('.view') || viewPermission.includes('.view_own')) {
+  if (!viewPermission.endsWith('.view') && !viewPermission.endsWith('.view_own')) {
     return [];
   }
 
@@ -97,7 +102,7 @@ export function applyPermissionToggle(
     return outsideGroup;
   }
 
-  if (!checked && permission.name.endsWith('.view') && !permission.name.includes('.view_own')) {
+  if (!checked && (permission.name.endsWith('.view') || permission.name.endsWith('.view_own'))) {
     const dependents = mutatingDependenciesForView(permission.name, availableNames);
 
     return selected.filter(

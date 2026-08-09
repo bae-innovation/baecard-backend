@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Concerns\RespondsWithInertia;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CardCode\AssignCardCodeUserRequest;
+use App\Http\Requests\CardCode\FulfillCardRequest;
 use App\Http\Requests\CardCode\SearchCardCodeUserRequest;
 use App\Http\Requests\CardCode\StoreCardCodeRequest;
 use App\Models\CardCode;
+use App\Models\Customer;
 use App\Services\CardCodeService;
 use App\Support\InertiaData;
 use Illuminate\Http\Request;
@@ -27,7 +29,22 @@ class CardCodeController extends Controller
             'codes' => InertiaData::paginate(
                 $this->cardCodeService->listPaginated($request->integer('per_page', 15))
             ),
+            'customers' => Customer::query()
+                ->select('id', 'name', 'email', 'phone')
+                ->orderBy('name')
+                ->get(),
         ]);
+    }
+
+    public function availableOrders(Request $request)
+    {
+        $request->validate([
+            'customer_id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        return $this->cardCodeService->availableOrdersForCustomer(
+            $request->integer('customer_id'),
+        );
     }
 
     public function generateCode()
@@ -47,6 +64,16 @@ class CardCodeController extends Controller
             $this->cardCodeService->create($request->validated()),
             'cards.index',
             'Card code created.',
+        );
+    }
+
+    public function fulfill(FulfillCardRequest $request)
+    {
+        return $this->webOrJson(
+            $request,
+            $this->cardCodeService->fulfill($request->validated()),
+            'cards.index',
+            'Card fulfilled successfully.',
         );
     }
 
