@@ -2,9 +2,14 @@
 
 namespace App\Models;
 
-use App\Notifications\Auth\VerifyEmailNotification;
+use App\Exceptions\MailDeliveryException;
+use App\Mail\VerifyEmailMail;
+use App\Support\EmailVerification;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Mail;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -34,12 +39,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'phone',
         'avatar',
-        'bio',
-        'job_title',
-        'company',
-        'active_template',
-        'profile_visibility',
-        'template_settings',
     ];
 
     /**
@@ -69,9 +68,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'active_template' => 'integer',
-            'profile_visibility' => 'array',
-            'template_settings' => 'array',
         ];
     }
 
@@ -80,7 +76,34 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function sendEmailVerificationNotification(): void
     {
-        $this->notify(new VerifyEmailNotification);
+        $this->sendVerificationEmail(raiseOnFailure: true);
+    }
+
+    /**
+     * Send the verification email.
+     */
+    public function sendVerificationEmail(bool $raiseOnFailure = true): bool
+    {
+        try {
+            Mail::to($this->getEmailForVerification())->send(new VerifyEmailMail(
+                name: $this->name ?? 'there',
+                url: EmailVerification::signedUrl($this),
+                expireMinutes: (int) Config::get('auth.verification.expire', 60),
+            ));
+
+            return true;
+        } catch (TransportExceptionInterface $exception) {
+            report($exception);
+
+            if ($raiseOnFailure) {
+                throw new MailDeliveryException(
+                    EmailVerification::deliveryFailureMessage($exception),
+                    previous: $exception,
+                );
+            }
+
+            return false;
+        }
     }
 
     public function getAvatarUrlAttribute(): ?string
@@ -90,6 +113,38 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return asset($this->avatar);
+    }
+
+    public function profile(): HasOne
+    {
+        return $this->hasOne(CustomerProfile::class);
+    }
+
+    public function ensureProfile(): CustomerProfile
+    {
+        return $this->profile()->firstOrCreate(
+            ['user_id' => $this->id],
+            ['active_template' => 1],
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toAuthArray(): array
+    {
+        $profile = $this->relationLoaded('profile')
+            ? $this->profile
+            : $this->profile()->first();
+
+        return array_merge($this->toArray(), [
+            'bio' => $profile?->bio,
+            'job_title' => $profile?->job_title,
+            'company' => $profile?->company,
+            'active_template' => $profile?->active_template ?? 1,
+            'profile_visibility' => $profile?->profile_visibility,
+            'template_settings' => $profile?->template_settings,
+        ]);
     }
 
     public function cardCode(): HasOne

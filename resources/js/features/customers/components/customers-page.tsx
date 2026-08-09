@@ -5,7 +5,7 @@ import {
   getFilteredRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Eye, Link2, Pencil, Plus, Trash2, UserRound } from 'lucide-react';
+import { Eye, Pencil, Plus, Trash2, UserRound } from 'lucide-react';
 import * as React from 'react';
 
 import {
@@ -22,7 +22,6 @@ import { TableDropdownAction } from '@/components/shared/table-dropdown-action';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CustomerSocialsDialog } from '@/features/customer-socials/components/customer-socials-dialog';
 import { CustomerDetailDialog } from '@/features/customers/components/customer-detail-dialog';
 import { CustomerFormDialog } from '@/features/customers/components/customer-form-dialog';
 import { DeleteCustomerDialog } from '@/features/customers/components/customer-delete-dialog';
@@ -30,6 +29,7 @@ import type {
   CreateCustomerFormValues,
   Customer,
 } from '@/features/customers/schemas/customer.schema';
+import { useAuth } from '@/hooks/useAuth';
 import { useInertiaPagination } from '@/hooks/useInertiaPagination';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 import type { LaravelPaginator } from '@/types/inertia';
@@ -48,6 +48,18 @@ type CustomersPageProps = {
 };
 
 export function CustomersPage({ customers }: CustomersPageProps) {
+  const {
+    canViewCustomers,
+    canCreateCustomers,
+    canUpdateCustomers,
+    canDeleteCustomers,
+  } = useAuth();
+  const canView = canViewCustomers();
+  const canCreate = canCreateCustomers();
+  const canUpdate = canUpdateCustomers();
+  const canDelete = canDeleteCustomers();
+  const showActionsColumn = canView || canUpdate || canDelete;
+
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(customers, ['customers']);
   const [globalFilter, setGlobalFilter] = React.useState('');
@@ -56,8 +68,6 @@ export function CustomersPage({ customers }: CustomersPageProps) {
   const [formMode, setFormMode] = React.useState<'create' | 'edit'>('create');
   const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
-  const [socialsOpen, setSocialsOpen] = React.useState(false);
-  const [socialsCustomer, setSocialsCustomer] = React.useState<Customer | null>(null);
   const [detailOpen, setDetailOpen] = React.useState(false);
   const [detailCustomer, setDetailCustomer] = React.useState<Customer | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -80,19 +90,14 @@ export function CustomersPage({ customers }: CustomersPageProps) {
     setDeleteOpen(true);
   }, []);
 
-  const openSocials = React.useCallback((customer: Customer) => {
-    setSocialsCustomer(customer);
-    setSocialsOpen(true);
-  }, []);
-
   const openDetails = React.useCallback((customer: Customer) => {
     setDetailCustomer(customer);
     setDetailOpen(true);
   }, []);
 
-  const columns = React.useMemo(
-    () => [
-      createDataTableSelectionColumn<Customer>(),
+  const columns = React.useMemo(() => {
+    const baseColumns = [
+      ...(canDelete ? [createDataTableSelectionColumn<Customer>()] : []),
       columnHelper.accessor('name', {
         header: 'Customer',
         cell: ({ row }) => (
@@ -129,40 +134,76 @@ export function CustomersPage({ customers }: CustomersPageProps) {
           <span className="text-muted-foreground">{formatDate(getValue())}</span>
         ),
       }),
+    ];
+
+    if (!showActionsColumn) {
+      return baseColumns;
+    }
+
+    return [
+      ...baseColumns,
       createDataTableActionsColumn<Customer>({
-        cell: ({ row }) => (
-          <DataTableRowActionsMenu label={`Actions for ${row.original.name}`}>
-            <TableDropdownAction
-              icon={Eye}
-              onClick={() => openDetails(row.original)}
-            >
-              View details
-            </TableDropdownAction>
-            <TableDropdownAction
-              icon={Link2}
-              onClick={() => openSocials(row.original)}
-            >
-              Social Links
-            </TableDropdownAction>
-            <TableDropdownAction
-              icon={Pencil}
-              onClick={() => openEdit(row.original)}
-            >
-              Edit
-            </TableDropdownAction>
-            <TableDropdownAction
-              icon={Trash2}
-              className="text-destructive focus:text-destructive"
-              onClick={() => openDelete(row.original)}
-            >
-              Delete
-            </TableDropdownAction>
-          </DataTableRowActionsMenu>
-        ),
+        cell: ({ row }) => {
+          const menuItems: React.ReactNode[] = [];
+
+          if (canView) {
+            menuItems.push(
+              <TableDropdownAction
+                key="view"
+                icon={Eye}
+                onClick={() => openDetails(row.original)}
+              >
+                View details
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canUpdate) {
+            menuItems.push(
+              <TableDropdownAction
+                key="edit"
+                icon={Pencil}
+                onClick={() => openEdit(row.original)}
+              >
+                Edit
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canDelete) {
+            menuItems.push(
+              <TableDropdownAction
+                key="delete"
+                icon={Trash2}
+                className="text-destructive focus:text-destructive"
+                onClick={() => openDelete(row.original)}
+              >
+                Delete
+              </TableDropdownAction>,
+            );
+          }
+
+          if (menuItems.length === 0) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+
+          return (
+            <DataTableRowActionsMenu label={`Actions for ${row.original.name}`}>
+              {menuItems}
+            </DataTableRowActionsMenu>
+          );
+        },
       }),
-    ],
-    [openDelete, openDetails, openEdit, openSocials],
-  );
+    ];
+  }, [
+    canDelete,
+    canUpdate,
+    canView,
+    openDelete,
+    openDetails,
+    openEdit,
+    showActionsColumn,
+  ]);
 
   const table = useReactTable({
     data,
@@ -172,7 +213,7 @@ export function CustomersPage({ customers }: CustomersPageProps) {
     onPaginationChange: setPagination,
     onGlobalFilterChange: setGlobalFilter,
     onRowSelectionChange: setRowSelection,
-    enableRowSelection: true,
+    enableRowSelection: canDelete,
     manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -184,20 +225,23 @@ export function CustomersPage({ customers }: CustomersPageProps) {
         <PageTitle
           title="Customers"
           icon={UserRound}
-          color="blue"
-          description="Manage customer accounts, orders, and social links."
+          description="Manage customer accounts and orders."
         />
-        <Button type="button" className="shrink-0" onClick={openCreate}>
-          <Plus className="size-4" />
-          Create customer
-        </Button>
+        {canCreate ? (
+          <Button type="button" className="shrink-0" onClick={openCreate}>
+            <Plus className="size-4" />
+            Create customer
+          </Button>
+        ) : null}
       </div>
 
       <DataTableLayout
         table={table}
         colSpan={columns.length}
         bodyProps={{
-          emptyMessage: 'No customers yet. Create the first customer to get started.',
+          emptyMessage: canCreate
+            ? 'No customers yet. Create the first customer to get started.'
+            : 'No customers found.',
         }}
         toolbar={
           <DataTableToolbar
@@ -234,87 +278,86 @@ export function CustomersPage({ customers }: CustomersPageProps) {
         }
       />
 
-      <CustomerFormDialog
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        mode={formMode}
-        customer={selectedCustomer}
-        isSubmitting={isSubmitting}
-        onSubmit={async (values) => {
-          setIsSubmitting(true);
-          if (formMode === 'create') {
-            router.post('/customers', values as CreateCustomerFormValues, {
-              preserveScroll: true,
-              only: ['customers'],
-              onSuccess: () => {
-                showMutationSuccess('Customer created successfully');
-                setFormOpen(false);
+      {canCreate || canUpdate ? (
+        <CustomerFormDialog
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          mode={formMode}
+          customer={selectedCustomer}
+          isSubmitting={isSubmitting}
+          onSubmit={async (values) => {
+            setIsSubmitting(true);
+            if (formMode === 'create') {
+              router.post('/customers', values as CreateCustomerFormValues, {
+                preserveScroll: true,
+                only: ['customers'],
+                onSuccess: () => {
+                  showMutationSuccess('Customer created successfully');
+                  setFormOpen(false);
+                },
+                onError: () => showMutationError(null, 'Failed to create customer'),
+                onFinish: () => setIsSubmitting(false),
+              });
+              return;
+            }
+            if (!selectedCustomer) {
+              setIsSubmitting(false);
+              return;
+            }
+            router.put(
+              `/customers/${selectedCustomer.id}`,
+              {
+                name: values.name,
+                email: values.email,
+                phone: values.phone,
               },
-              onError: () => showMutationError(null, 'Failed to create customer'),
-              onFinish: () => setIsSubmitting(false),
-            });
-            return;
-          }
-          if (!selectedCustomer) {
-            setIsSubmitting(false);
-            return;
-          }
-          router.put(
-            `/customers/${selectedCustomer.id}`,
-            {
-              name: values.name,
-              email: values.email,
-              phone: values.phone,
-            },
-            {
+              {
+                preserveScroll: true,
+                only: ['customers'],
+                onSuccess: () => {
+                  showMutationSuccess('Customer updated successfully');
+                  setFormOpen(false);
+                  setSelectedCustomer(null);
+                },
+                onError: () => showMutationError(null, 'Failed to update customer'),
+                onFinish: () => setIsSubmitting(false),
+              },
+            );
+          }}
+        />
+      ) : null}
+
+      {canDelete ? (
+        <DeleteCustomerDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          customer={selectedCustomer}
+          isDeleting={isDeleting}
+          onConfirm={async () => {
+            if (!selectedCustomer) return;
+            setIsDeleting(true);
+            router.delete(`/customers/${selectedCustomer.id}`, {
               preserveScroll: true,
               only: ['customers'],
               onSuccess: () => {
-                showMutationSuccess('Customer updated successfully');
-                setFormOpen(false);
+                showMutationSuccess('Customer deleted successfully');
+                setDeleteOpen(false);
                 setSelectedCustomer(null);
               },
-              onError: () => showMutationError(null, 'Failed to update customer'),
-              onFinish: () => setIsSubmitting(false),
-            },
-          );
-        }}
-      />
+              onError: () => showMutationError(null, 'Failed to delete customer'),
+              onFinish: () => setIsDeleting(false),
+            });
+          }}
+        />
+      ) : null}
 
-      <DeleteCustomerDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        customer={selectedCustomer}
-        isDeleting={isDeleting}
-        onConfirm={async () => {
-          if (!selectedCustomer) return;
-          setIsDeleting(true);
-          router.delete(`/customers/${selectedCustomer.id}`, {
-            preserveScroll: true,
-            only: ['customers'],
-            onSuccess: () => {
-              showMutationSuccess('Customer deleted successfully');
-              setDeleteOpen(false);
-              setSelectedCustomer(null);
-            },
-            onError: () => showMutationError(null, 'Failed to delete customer'),
-            onFinish: () => setIsDeleting(false),
-          });
-        }}
-      />
-
-      <CustomerSocialsDialog
-        open={socialsOpen}
-        onOpenChange={setSocialsOpen}
-        customerId={socialsCustomer?.id ?? 0}
-        customerName={socialsCustomer?.name}
-      />
-
-      <CustomerDetailDialog
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        customer={detailCustomer}
-      />
+      {canView ? (
+        <CustomerDetailDialog
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          customer={detailCustomer}
+        />
+      ) : null}
     </div>
   );
 }

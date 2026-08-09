@@ -25,7 +25,6 @@ export function OfferTickerEditPage({ offerTicker }: OfferTickerEditPageProps) {
       title="Edit Offer Ticker"
       description="Update promo message, theme, or visibility"
       icon={Megaphone}
-      color="violet"
     >
       <OfferTickerForm
         mode="edit"

@@ -22,23 +22,24 @@ class ProfileTemplateController extends Controller
     public function templatePage(Request $request, int $template)
     {
         $user = $request->user();
+        $profile = $user->ensureProfile();
         $preview = ProfilePreviewData::forUser($user, $template);
 
         return Inertia::render('Profile/Template', [
             'template_id' => $template,
-            'active_template' => $user->active_template ?? 1,
+            'active_template' => $profile->active_template ?? 1,
             'profile_visibility' => array_merge(
                 ProfileSocialPlatform::defaultVisibility(),
-                $user->profile_visibility ?? [],
+                $profile->profile_visibility ?? [],
             ),
-            'template_settings' => $user->template_settings ?? [],
+            'template_settings' => $profile->template_settings ?? [],
             ...$preview,
         ]);
     }
 
     public function activate(Request $request, int $template)
     {
-        $request->user()->update(['active_template' => $template]);
+        $request->user()->ensureProfile()->update(['active_template' => $template]);
 
         return back()->with('success', 'Template activated.');
     }
@@ -46,12 +47,13 @@ class ProfileTemplateController extends Controller
     public function updateVisibility(UpdateProfileVisibilityRequest $request)
     {
         $user = $request->user();
+        $profile = $user->ensureProfile();
         $current = array_merge(
             ProfileSocialPlatform::defaultVisibility(),
-            $user->profile_visibility ?? [],
+            $profile->profile_visibility ?? [],
         );
 
-        $user->update([
+        $profile->update([
             'profile_visibility' => array_merge($current, $request->validated()),
         ]);
 
@@ -65,7 +67,8 @@ class ProfileTemplateController extends Controller
         ]);
 
         $user = $request->user();
-        $settings = $user->template_settings ?? [];
+        $profile = $user->ensureProfile();
+        $settings = $profile->template_settings ?? [];
         $key = (string) $template;
         $existing = $settings[$key]['cover_image'] ?? null;
 
@@ -79,7 +82,7 @@ class ProfileTemplateController extends Controller
             'cover_image' => $path,
         ]);
 
-        $user->update(['template_settings' => $settings]);
+        $profile->update(['template_settings' => $settings]);
 
         return back()->with('success', 'Cover image updated.');
     }

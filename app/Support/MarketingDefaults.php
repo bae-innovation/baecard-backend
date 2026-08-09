@@ -55,8 +55,6 @@ class MarketingDefaults
                 ['label' => self::ls('About Us', 'আমাদের সম্পর্কে'), 'href' => '/about', 'route' => '/about'],
                 ['label' => self::ls('Contact', 'যোগাযোগ'), 'href' => '/contact', 'route' => '/contact'],
                 ['label' => self::ls('FAQ', 'FAQ'), 'href' => '/faq', 'route' => '/faq'],
-                ['label' => self::ls('Terms & Condition', 'শর্তাবলী'), 'href' => '/terms', 'route' => '/terms'],
-                ['label' => self::ls('Privacy & Policy', 'গোপনীয়তা নীতি'), 'href' => '/policy', 'route' => '/policy'],
             ],
             'contact' => [
                 'heading' => self::ls('Get in Touch', 'যোগাযোগ করুন'),

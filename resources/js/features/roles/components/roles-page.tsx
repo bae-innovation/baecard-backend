@@ -199,17 +199,18 @@ export function RolesPage({ roles }: RolesPageProps) {
   });
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-5 py-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 py-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <PageTitle
           title="Roles"
           icon={ShieldCheck}
-          color="violet"
+          compact
           description="Manage platform roles and assign permissions."
         />
         {canCreate ? (
           <Button
             type="button"
+            size="sm"
             className="shrink-0"
             onClick={() => router.visit('/access-control/roles/create')}
           >

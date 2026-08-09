@@ -35,7 +35,8 @@ type ProductDetailDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   product: Product | null;
-  canManage?: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
   onDelete?: (product: Product) => void;
 };
 
@@ -120,7 +121,8 @@ export function ProductDetailDialog({
   open,
   onOpenChange,
   product,
-  canManage = false,
+  canUpdate = false,
+  canDelete = false,
   onDelete,
 }: ProductDetailDialogProps) {
   if (!product) {
@@ -326,20 +328,22 @@ export function ProductDetailDialog({
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-          {canManage ? (
+          {canUpdate || canDelete ? (
             <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  onOpenChange(false);
-                  router.visit(`/admin/products/${product.id}/edit`);
-                }}
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit Product
-              </Button>
-              {onDelete ? (
+              {canUpdate ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    onOpenChange(false);
+                    router.visit(`/admin/products/${product.id}/edit`);
+                  }}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Product
+                </Button>
+              ) : null}
+              {canDelete && onDelete ? (
                 <Button
                   type="button"
                   variant="destructive"

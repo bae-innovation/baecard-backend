@@ -12,18 +12,19 @@ class ProfilePreviewData
      */
     public static function forUser(User $user, ?int $templateOverride = null): array
     {
-        $user->loadMissing(['cardCode', 'customerSocials', 'userServices']);
+        $user->loadMissing(['cardCode', 'customerSocials', 'userServices', 'profile']);
 
+        $profile = $user->profile;
         $cardCode = $user->cardCode;
-        $activeTemplate = $templateOverride ?? ($user->active_template ?? 1);
-        $templateSettings = $user->template_settings ?? [];
+        $activeTemplate = $templateOverride ?? ($profile?->active_template ?? 1);
+        $templateSettings = $profile?->template_settings ?? [];
         $coverImage = $templateSettings[(string) $activeTemplate]['cover_image']
             ?? $templateSettings[$activeTemplate]['cover_image']
             ?? null;
 
         $visibility = array_merge(
             ProfileSocialPlatform::defaultVisibility(),
-            $user->profile_visibility ?? [],
+            $profile?->profile_visibility ?? [],
         );
 
         return [
@@ -46,9 +47,9 @@ class ProfilePreviewData
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
-                'bio' => $user->bio,
-                'job_title' => $user->job_title,
-                'company' => $user->company,
+                'bio' => $profile?->bio,
+                'job_title' => $profile?->job_title,
+                'company' => $profile?->company,
                 'avatar_url' => $user->avatar_url,
                 'active_template' => $activeTemplate,
                 'profile_visibility' => $visibility,

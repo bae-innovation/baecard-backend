@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\MailDeliveryException;
 use App\Support\InertiaErrorResponder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -40,6 +41,17 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(function (Request $request, \Throwable $e) {
             return $request->is('api/*') || $request->expectsJson();
+        });
+
+        $exceptions->render(function (MailDeliveryException $e, Request $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 503);
+            }
+
+            return back()->with('error', $e->getMessage());
         });
 
         $exceptions->render(function (ValidationException $e, $request) {

@@ -46,6 +46,7 @@ class CustomerService
 
             UserRole::ensureExists(UserRole::User);
             $customer->assignRole(UserRole::User->value);
+            $customer->ensureProfile();
 
             return $this->successResponse(
                 $customer->load('roles'),

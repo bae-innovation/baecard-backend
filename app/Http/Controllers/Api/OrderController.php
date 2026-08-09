@@ -15,6 +15,7 @@ use App\Services\OrderService;
 use App\Support\InertiaData;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 class OrderController extends Controller
 {
@@ -28,8 +29,17 @@ class OrderController extends Controller
     {
         return Inertia::render('Orders/Index', [
             'orders' => InertiaData::paginate(
-                Order::with(['customer:id,name,email,phone', 'product:id,name,price', 'payments'])
-                    ->latest()
+                $this->websiteOrdersQuery()
+                    ->paginate($request->integer('per_page', 10))
+            ),
+        ]);
+    }
+
+    public function customIndexPage(Request $request)
+    {
+        return Inertia::render('CustomOrders/Index', [
+            'orders' => InertiaData::paginate(
+                $this->customOrdersQuery()
                     ->paginate($request->integer('per_page', 10))
             ),
         ]);
@@ -37,7 +47,7 @@ class OrderController extends Controller
 
     public function createPage()
     {
-        return Inertia::render('Orders/Create', [
+        return Inertia::render('CustomOrders/Create', [
             'products' => Product::query()
                 ->where('is_active', true)
                 ->select('id', 'name', 'price')
@@ -52,9 +62,11 @@ class OrderController extends Controller
 
     public function editPage(Order $order)
     {
+        abort_unless($order->source === 'custom', Response::HTTP_NOT_FOUND);
+
         $order->load(['customer:id,name,email', 'product:id,name,price', 'payments']);
 
-        return Inertia::render('Orders/Edit', [
+        return Inertia::render('CustomOrders/Edit', [
             'order' => $order,
             'products' => Product::query()
                 ->where('is_active', true)
@@ -83,7 +95,7 @@ class OrderController extends Controller
         return $this->webOrJson(
             $request,
             $this->orderService->create($request->validated()),
-            'orders.index',
+            'custom-orders.index',
             'Order created.',
         );
     }
@@ -93,8 +105,10 @@ class OrderController extends Controller
         return $this->orderService->createPublicCheckout($request->validated());
     }
 
-    public function update(UpdateOrderRequest $request, Order $order)
+    public function updateWebsite(UpdateOrderRequest $request, Order $order)
     {
+        abort_unless($order->source === 'website', Response::HTTP_NOT_FOUND);
+
         return $this->webOrJson(
             $request,
             $this->orderService->update($order->id, $request->validated()),
@@ -103,8 +117,22 @@ class OrderController extends Controller
         );
     }
 
-    public function addPayment(AddPaymentRequest $request, Order $order)
+    public function updateCustom(UpdateOrderRequest $request, Order $order)
     {
+        abort_unless($order->source === 'custom', Response::HTTP_NOT_FOUND);
+
+        return $this->webOrJson(
+            $request,
+            $this->orderService->update($order->id, $request->validated()),
+            'custom-orders.index',
+            'Order updated.',
+        );
+    }
+
+    public function addWebsitePayment(AddPaymentRequest $request, Order $order)
+    {
+        abort_unless($order->source === 'website', Response::HTTP_NOT_FOUND);
+
         return $this->webOrJson(
             $request,
             $this->orderService->addPayment($order->id, $request->validated()),
@@ -113,13 +141,43 @@ class OrderController extends Controller
         );
     }
 
-    public function destroy(Request $request, Order $order)
+    public function addCustomPayment(AddPaymentRequest $request, Order $order)
     {
+        abort_unless($order->source === 'custom', Response::HTTP_NOT_FOUND);
+
+        return $this->webOrJson(
+            $request,
+            $this->orderService->addPayment($order->id, $request->validated()),
+            'custom-orders.index',
+            'Payment added.',
+        );
+    }
+
+    public function destroyCustom(Request $request, Order $order)
+    {
+        abort_unless($order->source === 'custom', Response::HTTP_NOT_FOUND);
+
         return $this->webOrJson(
             $request,
             $this->orderService->delete($order->id),
-            'orders.index',
+            'custom-orders.index',
             'Order deleted.',
         );
+    }
+
+    private function websiteOrdersQuery()
+    {
+        return Order::query()
+            ->where('source', 'website')
+            ->with(['customer:id,name,email,phone', 'product:id,name,price', 'payments'])
+            ->latest();
+    }
+
+    private function customOrdersQuery()
+    {
+        return Order::query()
+            ->where('source', 'custom')
+            ->with(['customer:id,name,email,phone', 'product:id,name,price', 'payments'])
+            ->latest();
     }
 }

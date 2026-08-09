@@ -64,7 +64,7 @@ it('creates a custom role with selected permissions', function () {
 
     $response = $this->actingAs($admin)->post('/access-control/roles', [
         'name' => 'Sales Manager',
-        'permissions' => ['order.order.view', 'product.product.view'],
+        'permissions' => ['order.website_order.view', 'product.product.view'],
     ]);
 
     $response->assertRedirect(route('access-control.roles.index'));

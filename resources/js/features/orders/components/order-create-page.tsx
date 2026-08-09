@@ -13,20 +13,20 @@ export function OrderCreatePage() {
 
   return (
     <FormPageShell
-      backTo="/orders"
-      backLabel="Back to Orders"
+      backTo="/custom-orders"
+      backLabel="Back to Custom Orders"
       title="Create Order"
-      description="Create a new customer order"
+      description="Create a manually managed customer order"
       icon={ShoppingCart}
     >
       <OrderForm
         mode="create"
         variant="page"
         isSubmitting={processing}
-        onCancel={() => router.visit('/orders')}
+        onCancel={() => router.visit('/custom-orders')}
         onSubmit={async (values: OrderFormValues) => {
           setProcessing(true);
-          router.post('/orders', values, {
+          router.post('/custom-orders', values, {
             onSuccess: () => showMutationSuccess('Order created'),
             onError: () => showMutationError(null, 'Failed to create order'),
             onFinish: () => setProcessing(false),

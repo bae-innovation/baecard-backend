@@ -194,17 +194,18 @@ export function AccessControlUsersPage({ users, roles }: AccessControlUsersPageP
   });
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-5 py-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 py-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <PageTitle
           title="Access Control · Users"
           icon={UserCog}
-          color="indigo"
+          compact
           description="Manage team accounts, roles, and access. Customer accounts are listed under Customers."
         />
         {canCreate ? (
           <Button
             type="button"
+            size="sm"
             className="shrink-0"
             onClick={() => setCreateOpen(true)}
           >
@@ -215,9 +216,9 @@ export function AccessControlUsersPage({ users, roles }: AccessControlUsersPageP
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border bg-gradient-to-br from-indigo-50/80 to-background p-4 dark:from-indigo-950/30">
+        <div className="rounded-xl border bg-gradient-to-br from-primary/10 to-background p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Shield className="size-4 text-indigo-600 dark:text-indigo-400" />
+            <Shield className="size-4 text-primary" />
             Total team users
           </div>
           <p className="mt-2 text-2xl font-semibold tabular-nums">

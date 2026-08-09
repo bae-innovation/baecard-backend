@@ -27,6 +27,7 @@ class Order extends Model
         'paid_amount',
         'due_amount',
         'notes',
+        'source',
         'created_by',
     ];
 

@@ -59,12 +59,18 @@ type ProductsPageProps = {
 };
 
 export function ProductsPage({ products }: ProductsPageProps) {
-  const { hasAnyPermission } = useAuth();
-  const canManage = hasAnyPermission([
-    'product.product.create',
-    'product.product.update',
-    'product.product.delete',
-  ]);
+  const {
+    canViewProducts,
+    canCreateProducts,
+    canUpdateProducts,
+    canDeleteProducts,
+  } = useAuth();
+  const canView = canViewProducts();
+  const canCreate = canCreateProducts();
+  const canUpdate = canUpdateProducts();
+  const canDelete = canDeleteProducts();
+  const showActionsColumn = canView || canUpdate || canDelete;
+
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(products, ['products']);
   const [globalFilter, setGlobalFilter] = React.useState('');
@@ -85,9 +91,9 @@ export function ProductsPage({ products }: ProductsPageProps) {
     setDeleteOpen(true);
   }, []);
 
-  const columns = React.useMemo(
-    () => [
-      createDataTableSelectionColumn<Product>(),
+  const columns = React.useMemo(() => {
+    const baseColumns = [
+      ...(canDelete ? [createDataTableSelectionColumn<Product>()] : []),
       columnHelper.accessor('id', {
         header: 'ID',
         cell: ({ getValue }) => (
@@ -97,26 +103,45 @@ export function ProductsPage({ products }: ProductsPageProps) {
       columnHelper.accessor('name', {
         header: 'Product',
         cell: ({ row }) => (
-          <button
-            type="button"
-            className="flex min-w-[200px] items-center gap-3 text-left hover:opacity-80"
-            onClick={() => openView(row.original)}
-          >
-            {row.original.image_url ? (
-              <img
-                src={row.original.image_url}
-                alt=""
-                className="h-10 w-10 shrink-0 rounded object-cover"
-              />
-            ) : (
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-muted">
-                <Package className="h-4 w-4 text-muted-foreground" />
+          canView ? (
+            <button
+              type="button"
+              className="flex min-w-[200px] items-center gap-3 text-left hover:opacity-80"
+              onClick={() => openView(row.original)}
+            >
+              {row.original.image_url ? (
+                <img
+                  src={row.original.image_url}
+                  alt=""
+                  className="h-10 w-10 shrink-0 rounded object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-muted">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="truncate font-medium">{row.original.name}</p>
               </div>
-            )}
-            <div className="min-w-0">
-              <p className="truncate font-medium">{row.original.name}</p>
+            </button>
+          ) : (
+            <div className="flex min-w-[200px] items-center gap-3">
+              {row.original.image_url ? (
+                <img
+                  src={row.original.image_url}
+                  alt=""
+                  className="h-10 w-10 shrink-0 rounded object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-muted">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="truncate font-medium">{row.original.name}</p>
+              </div>
             </div>
-          </button>
+          )
         ),
       }),
       columnHelper.accessor('slug', {
@@ -246,38 +271,75 @@ export function ProductsPage({ products }: ProductsPageProps) {
           </span>
         ),
       }),
+    ];
+
+    if (!showActionsColumn) {
+      return baseColumns;
+    }
+
+    return [
+      ...baseColumns,
       createDataTableActionsColumn<Product>({
-        cell: ({ row }) => (
-          <DataTableRowActionsMenu label={`Actions for ${row.original.name}`}>
-            <TableDropdownAction
-              icon={Eye}
-              onClick={() => openView(row.original)}
-            >
-              View
-            </TableDropdownAction>
-            {canManage ? (
-              <>
-                <TableDropdownAction
-                  icon={Pencil}
-                  onClick={() => router.visit(`/admin/products/${row.original.id}/edit`)}
-                >
-                  Edit
-                </TableDropdownAction>
-                <TableDropdownAction
-                  icon={Trash2}
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => openDelete(row.original)}
-                >
-                  Delete
-                </TableDropdownAction>
-              </>
-            ) : null}
-          </DataTableRowActionsMenu>
-        ),
+        cell: ({ row }) => {
+          const menuItems: React.ReactNode[] = [];
+
+          if (canView) {
+            menuItems.push(
+              <TableDropdownAction
+                key="view"
+                icon={Eye}
+                onClick={() => openView(row.original)}
+              >
+                View details
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canUpdate) {
+            menuItems.push(
+              <TableDropdownAction
+                key="edit"
+                icon={Pencil}
+                onClick={() => router.visit(`/admin/products/${row.original.id}/edit`)}
+              >
+                Edit
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canDelete) {
+            menuItems.push(
+              <TableDropdownAction
+                key="delete"
+                icon={Trash2}
+                className="text-destructive focus:text-destructive"
+                onClick={() => openDelete(row.original)}
+              >
+                Delete
+              </TableDropdownAction>,
+            );
+          }
+
+          if (menuItems.length === 0) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+
+          return (
+            <DataTableRowActionsMenu label={`Actions for ${row.original.name}`}>
+              {menuItems}
+            </DataTableRowActionsMenu>
+          );
+        },
       }),
-    ],
-    [canManage, openDelete, openView],
-  );
+    ];
+  }, [
+    canDelete,
+    canUpdate,
+    canView,
+    openDelete,
+    openView,
+    showActionsColumn,
+  ]);
 
   const table = useReactTable({
     data,
@@ -288,7 +350,7 @@ export function ProductsPage({ products }: ProductsPageProps) {
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     manualPagination: true,
-    enableRowSelection: true,
+    enableRowSelection: canDelete,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     initialState: {
@@ -310,15 +372,21 @@ export function ProductsPage({ products }: ProductsPageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <PageTitle title="Products" description="NFC card products" icon={Package} />
-        <Button type="button" onClick={() => router.visit('/admin/products/create')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product
-        </Button>
+        {canCreate ? (
+          <Button type="button" onClick={() => router.visit('/admin/products/create')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product
+          </Button>
+        ) : null}
       </div>
       <DataTableLayout
         table={table}
-        colSpan={table.getAllColumns().length}
-        bodyProps={{ emptyMessage: 'No products found.' }}
+        colSpan={columns.length}
+        bodyProps={{
+          emptyMessage: canCreate
+            ? 'No products found. Add the first product to get started.'
+            : 'No products found.',
+        }}
         toolbar={
           <DataTableToolbar
             start={
@@ -366,14 +434,17 @@ export function ProductsPage({ products }: ProductsPageProps) {
         }
         footer={<DataTableFooter table={table} />}
       />
-      <ProductDetailDialog
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        product={selectedProduct}
-        canManage={canManage}
-        onDelete={canManage ? openDelete : undefined}
-      />
-      {canManage ? (
+      {canView ? (
+        <ProductDetailDialog
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          product={selectedProduct}
+          canUpdate={canUpdate}
+          canDelete={canDelete}
+          onDelete={canDelete ? openDelete : undefined}
+        />
+      ) : null}
+      {canDelete ? (
         <DeleteProductDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}

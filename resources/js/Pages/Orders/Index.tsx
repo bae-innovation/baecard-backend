@@ -6,7 +6,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import type { LaravelPaginator } from '@/types/inertia';
 
 export default function Index({ orders }: { orders: LaravelPaginator<Order> }) {
-  return <OrdersPage orders={orders} />;
+  return <OrdersPage orders={orders} variant="website" />;
 }
 
 Index.layout = (page: ReactNode) => <DashboardLayout>{page}</DashboardLayout>;

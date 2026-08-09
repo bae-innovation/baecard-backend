@@ -55,8 +55,18 @@ type VendorsPageProps = {
 };
 
 export function VendorsPage({ vendors }: VendorsPageProps) {
-  const { hasAbility } = useAuth();
-  const canManage = hasPermission('vendor.vendor.manage');
+  const {
+    canViewVendors,
+    canCreateVendors,
+    canUpdateVendors,
+    canDeleteVendors,
+  } = useAuth();
+  const canView = canViewVendors();
+  const canCreate = canCreateVendors();
+  const canUpdate = canUpdateVendors();
+  const canDelete = canDeleteVendors();
+  const showActionsColumn = canView || canUpdate || canDelete;
+
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(vendors, ['vendors']);
   const [globalFilter, setGlobalFilter] = React.useState('');
@@ -77,9 +87,9 @@ export function VendorsPage({ vendors }: VendorsPageProps) {
     setDeleteOpen(true);
   }, []);
 
-  const columns = React.useMemo(
-    () => [
-      createDataTableSelectionColumn<Vendor>(),
+  const columns = React.useMemo(() => {
+    const baseColumns = [
+      ...(canDelete ? [createDataTableSelectionColumn<Vendor>()] : []),
       columnHelper.accessor('id', {
         header: 'ID',
         cell: ({ getValue }) => (
@@ -89,26 +99,45 @@ export function VendorsPage({ vendors }: VendorsPageProps) {
       columnHelper.accessor('name', {
         header: 'Vendor',
         cell: ({ row }) => (
-          <button
-            type="button"
-            className="flex min-w-[200px] items-center gap-3 text-left hover:opacity-80"
-            onClick={() => openView(row.original)}
-          >
-            {row.original.image_url ? (
-              <img
-                src={row.original.image_url}
-                alt=""
-                className="h-10 w-10 shrink-0 rounded object-cover"
-              />
-            ) : (
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-muted">
-                <Store className="h-4 w-4 text-muted-foreground" />
+          canView ? (
+            <button
+              type="button"
+              className="flex min-w-[200px] items-center gap-3 text-left hover:opacity-80"
+              onClick={() => openView(row.original)}
+            >
+              {row.original.image_url ? (
+                <img
+                  src={row.original.image_url}
+                  alt=""
+                  className="h-10 w-10 shrink-0 rounded object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-muted">
+                  <Store className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="truncate font-medium">{row.original.name}</p>
               </div>
-            )}
-            <div className="min-w-0">
-              <p className="truncate font-medium">{row.original.name}</p>
+            </button>
+          ) : (
+            <div className="flex min-w-[200px] items-center gap-3">
+              {row.original.image_url ? (
+                <img
+                  src={row.original.image_url}
+                  alt=""
+                  className="h-10 w-10 shrink-0 rounded object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-muted">
+                  <Store className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="truncate font-medium">{row.original.name}</p>
+              </div>
             </div>
-          </button>
+          )
         ),
       }),
       columnHelper.accessor('slug', {
@@ -180,35 +209,75 @@ export function VendorsPage({ vendors }: VendorsPageProps) {
           </span>
         ),
       }),
+    ];
+
+    if (!showActionsColumn) {
+      return baseColumns;
+    }
+
+    return [
+      ...baseColumns,
       createDataTableActionsColumn<Vendor>({
-        cell: ({ row }) => (
-          <DataTableRowActionsMenu label={`Actions for ${row.original.name}`}>
-            <TableDropdownAction icon={Eye} onClick={() => openView(row.original)}>
-              View
-            </TableDropdownAction>
-            {canManage ? (
-              <>
-                <TableDropdownAction
-                  icon={Pencil}
-                  onClick={() => router.visit(`/vendors/${row.original.id}/edit`)}
-                >
-                  Edit
-                </TableDropdownAction>
-                <TableDropdownAction
-                  icon={Trash2}
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => openDelete(row.original)}
-                >
-                  Delete
-                </TableDropdownAction>
-              </>
-            ) : null}
-          </DataTableRowActionsMenu>
-        ),
+        cell: ({ row }) => {
+          const menuItems: React.ReactNode[] = [];
+
+          if (canView) {
+            menuItems.push(
+              <TableDropdownAction
+                key="view"
+                icon={Eye}
+                onClick={() => openView(row.original)}
+              >
+                View details
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canUpdate) {
+            menuItems.push(
+              <TableDropdownAction
+                key="edit"
+                icon={Pencil}
+                onClick={() => router.visit(`/vendors/${row.original.id}/edit`)}
+              >
+                Edit
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canDelete) {
+            menuItems.push(
+              <TableDropdownAction
+                key="delete"
+                icon={Trash2}
+                className="text-destructive focus:text-destructive"
+                onClick={() => openDelete(row.original)}
+              >
+                Delete
+              </TableDropdownAction>,
+            );
+          }
+
+          if (menuItems.length === 0) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+
+          return (
+            <DataTableRowActionsMenu label={`Actions for ${row.original.name}`}>
+              {menuItems}
+            </DataTableRowActionsMenu>
+          );
+        },
       }),
-    ],
-    [canManage, openDelete, openView],
-  );
+    ];
+  }, [
+    canDelete,
+    canUpdate,
+    canView,
+    openDelete,
+    openView,
+    showActionsColumn,
+  ]);
 
   const table = useReactTable({
     data,
@@ -219,7 +288,7 @@ export function VendorsPage({ vendors }: VendorsPageProps) {
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     manualPagination: true,
-    enableRowSelection: true,
+    enableRowSelection: canDelete,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     initialState: {
@@ -237,15 +306,21 @@ export function VendorsPage({ vendors }: VendorsPageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <PageTitle title="Vendors" description="Manage vendors" icon={Store} />
-        <Button type="button" onClick={() => router.visit('/vendors/create')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Vendor
-        </Button>
+        {canCreate ? (
+          <Button type="button" onClick={() => router.visit('/vendors/create')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Vendor
+          </Button>
+        ) : null}
       </div>
       <DataTableLayout
         table={table}
-        colSpan={table.getAllColumns().length}
-        bodyProps={{ emptyMessage: 'No vendors found.' }}
+        colSpan={columns.length}
+        bodyProps={{
+          emptyMessage: canCreate
+            ? 'No vendors found. Add the first vendor to get started.'
+            : 'No vendors found.',
+        }}
         toolbar={
           <DataTableToolbar
             start={
@@ -285,14 +360,17 @@ export function VendorsPage({ vendors }: VendorsPageProps) {
         }
         footer={<DataTableFooter table={table} />}
       />
-      <VendorDetailDialog
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        vendor={selectedVendor}
-        canManage={canManage}
-        onDelete={canManage ? openDelete : undefined}
-      />
-      {canManage ? (
+      {canView ? (
+        <VendorDetailDialog
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          vendor={selectedVendor}
+          canUpdate={canUpdate}
+          canDelete={canDelete}
+          onDelete={canDelete ? openDelete : undefined}
+        />
+      ) : null}
+      {canDelete ? (
         <DeleteVendorDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}

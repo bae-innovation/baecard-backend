@@ -16,6 +16,7 @@ export const paymentSchema = z.object({
 export const orderSchema = z.object({
   id: z.number(),
   order_number: z.string(),
+  source: z.enum(['website', 'custom']).optional(),
   customer_id: z.coerce.number(),
   product_id: z.coerce.number().nullable().optional(),
   product_name: z.string(),

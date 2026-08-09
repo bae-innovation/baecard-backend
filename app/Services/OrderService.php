@@ -62,6 +62,7 @@ class OrderService
                 'status' => 'pending',
                 'payment_status' => 'pending',
                 'notes' => $data['notes'] ?? null,
+                'source' => 'website',
             ]);
         });
     }
@@ -100,6 +101,7 @@ class OrderService
                 'paid_amount' => 0,
                 'due_amount' => $total,
                 'notes' => $data['notes'] ?? null,
+                'source' => $data['source'] ?? 'custom',
                 'created_by' => request()->user()?->id,
             ]);
 
@@ -228,6 +230,7 @@ class OrderService
         ]);
 
         $customer->assignRole(UserRole::User->value);
+        $customer->ensureProfile();
 
         return $customer;
     }

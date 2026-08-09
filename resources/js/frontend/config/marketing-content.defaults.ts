@@ -273,8 +273,6 @@ export const DEFAULT_MARKETING_CONTENT: MarketingContent = {
     { label: ls('About Us', 'আমাদের সম্পর্কে'), href: '/about', route: '/about' },
     { label: ls('Contact', 'যোগাযোগ'), href: '/contact', route: '/contact' },
     { label: ls('FAQ', 'FAQ'), href: '/faq', route: '/faq' },
-    { label: ls('Terms & Condition', 'শর্তাবলী'), href: '/terms', route: '/terms' },
-    { label: ls('Privacy & Policy', 'গোপনীয়তা নীতি'), href: '/policy', route: '/policy' },
   ],
   contact: {
     heading: ls('Get in Touch', 'যোগাযোগ করুন'),

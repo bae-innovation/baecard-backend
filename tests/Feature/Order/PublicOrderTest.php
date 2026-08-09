@@ -41,6 +41,7 @@ it('creates a public order from checkout api', function () {
         'quantity' => 2,
         'status' => 'pending',
         'payment_status' => 'pending',
+        'source' => 'website',
     ]);
 
     $customer = User::query()->where('phone', '01712345678')->first();
@@ -94,6 +95,7 @@ it('renders checkout and thank you pages', function () {
 
     $order = Order::query()->create([
         'order_number' => 'ORD-20260704-ABC123',
+        'source' => 'website',
         'customer_id' => $customer->id,
         'product_id' => $product->id,
         'product_name' => $product->name,

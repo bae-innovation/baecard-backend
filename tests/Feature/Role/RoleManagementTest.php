@@ -38,7 +38,7 @@ describe('Role Management - As SuperAdmin', function () {
         $this->actingAs($this->superAdmin)
             ->post('/access-control/roles', [
                 'name' => 'Editor',
-                'permissions' => ['order.order.view', 'product.product.view'],
+                'permissions' => ['order.website_order.view', 'product.product.view'],
             ])
             ->assertRedirect(route('access-control.roles.index'));
 
@@ -51,12 +51,12 @@ describe('Role Management - As SuperAdmin', function () {
             'guard_name' => 'sanctum',
             'is_protected' => false,
         ]);
-        $role->syncPermissions(['order.order.view']);
+        $role->syncPermissions(['order.website_order.view']);
 
         $this->actingAs($this->superAdmin)
             ->put("/access-control/roles/{$role->id}", [
                 'name' => 'Senior Editor',
-                'permissions' => ['order.order.view', 'product.product.view'],
+                'permissions' => ['order.website_order.view', 'product.product.view'],
             ])
             ->assertRedirect(route('access-control.roles.index'));
 
@@ -114,12 +114,48 @@ describe('Role Management - As SuperAdmin', function () {
         $this->actingAs($this->superAdmin)
             ->put("/access-control/roles/{$role->id}", [
                 'name' => 'Editor',
-                'permissions' => ['profile.social.manage', 'order.order.view'],
+                'permissions' => ['profile.social.manage', 'order.website_order.view'],
             ])
             ->assertRedirect(route('access-control.roles.index'));
 
         expect($role->fresh()->permissions->pluck('name')->all())
-            ->toContain('profile.social.manage', 'order.order.view');
+            ->toContain('profile.social.manage', 'order.website_order.view');
+    });
+
+    it('can clear all permissions from a role', function () {
+        $role = Role::query()->create([
+            'name' => 'Editor',
+            'guard_name' => 'sanctum',
+            'is_protected' => false,
+        ]);
+        $role->syncPermissions(['order.website_order.view']);
+
+        $this->actingAs($this->superAdmin)
+            ->put("/access-control/roles/{$role->id}", [
+                'name' => 'Editor',
+                'permissions' => [],
+            ])
+            ->assertRedirect(route('access-control.roles.index'));
+
+        expect($role->fresh()->permissions)->toBeEmpty();
+    });
+
+    it('auto includes view permission when create is assigned', function () {
+        $role = Role::query()->create([
+            'name' => 'Customer Creator',
+            'guard_name' => 'sanctum',
+            'is_protected' => false,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->put("/access-control/roles/{$role->id}", [
+                'name' => 'Customer Creator',
+                'permissions' => ['customer.customer.create'],
+            ])
+            ->assertRedirect(route('access-control.roles.index'));
+
+        expect($role->fresh()->permissions->pluck('name')->all())
+            ->toContain('customer.customer.create', 'customer.customer.view');
     });
 });
 
@@ -163,7 +199,7 @@ describe('Role Management - View only', function () {
         $this->actingAs($viewer)
             ->put("/access-control/roles/{$target->id}", [
                 'name' => 'Blocked',
-                'permissions' => ['order.order.view'],
+                'permissions' => ['order.website_order.view'],
             ])
             ->assertForbidden();
 

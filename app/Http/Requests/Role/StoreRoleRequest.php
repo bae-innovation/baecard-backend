@@ -24,8 +24,8 @@ class StoreRoleRequest extends FormRequest
                 'max:255',
                 Rule::unique('roles', 'name')->where('guard_name', 'sanctum'),
             ],
-            'permissions' => ['required', 'array', 'min:1'],
-            'permissions.*' => ['required', 'string', 'max:255'],
+            'permissions' => ['present', 'array'],
+            'permissions.*' => ['string', 'max:255'],
         ];
     }
 
@@ -37,7 +37,8 @@ class StoreRoleRequest extends FormRequest
         return [
             'name.required' => 'The role name field is required.',
             'name.unique' => 'This role name already exists.',
-            'permissions.required' => 'Select at least one permission for this role.',
+            'permissions.present' => 'Permissions must be provided.',
+            'permissions.array' => 'Permissions must be a valid list.',
         ];
     }
 }

@@ -26,7 +26,6 @@ export function SiteSocialEditPage({ siteSocialLink, platforms }: SiteSocialEdit
       title="Edit Social Link"
       description="Update platform, link value, or floating visibility"
       icon={Share2}
-      color="blue"
     >
       <SiteSocialForm
         mode="edit"

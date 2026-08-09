@@ -25,7 +25,6 @@ export function ProductEditPage({ product }: ProductEditPageProps) {
       title="Edit Product"
       description={product.name}
       icon={Package}
-      color="emerald"
     >
       <ProductForm
         key={product.id}

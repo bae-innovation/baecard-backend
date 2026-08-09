@@ -9,7 +9,6 @@ use App\Support\CardCodePath;
 use App\Support\PermissionResolver;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -38,9 +37,9 @@ class AuthService
 
             UserRole::ensureExists(UserRole::User);
             $user->assignRole(UserRole::User->value);
+            $user->ensureProfile();
 
-            // Trigger email verification
-            event(new Registered($user));
+            $user->sendVerificationEmail(raiseOnFailure: false);
 
             // Create Sanctum token
             $token = $user->createToken('auth-token')->plainTextToken;
@@ -67,8 +66,9 @@ class AuthService
 
             UserRole::ensureExists(UserRole::User);
             $user->assignRole(UserRole::User->value);
+            $user->ensureProfile();
 
-            event(new Registered($user));
+            $user->sendVerificationEmail(raiseOnFailure: false);
 
             return $user;
         });
@@ -133,8 +133,12 @@ class AuthService
             return route('dashboard');
         }
 
-        if (PermissionResolver::allows($user, 'order.order.view')) {
+        if (PermissionResolver::allows($user, 'order.website_order.view')) {
             return route('orders.index');
+        }
+
+        if (PermissionResolver::allows($user, 'order.custom_order.view')) {
+            return route('custom-orders.index');
         }
 
         if (PermissionResolver::allows($user, 'profile.template.manage')) {
@@ -146,7 +150,11 @@ class AuthService
 
     public function customerHomeRouteFor(User $user): string
     {
-        $template = max(1, min(4, (int) ($user->active_template ?? 1)));
+        $profile = $user->relationLoaded('profile')
+            ? $user->profile
+            : $user->profile()->first();
+
+        $template = max(1, min(4, (int) ($profile?->active_template ?? 1)));
 
         return route('profile.template.show', ['template' => $template]);
     }

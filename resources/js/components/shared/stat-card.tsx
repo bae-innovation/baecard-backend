@@ -28,7 +28,7 @@ export function StatCard({
       <p
         className={cn(
           'text-2xl font-semibold tabular-nums tracking-tight',
-          highlight && 'text-emerald-600 dark:text-emerald-400',
+          highlight && 'text-primary',
           destructive && 'text-destructive',
         )}
       >

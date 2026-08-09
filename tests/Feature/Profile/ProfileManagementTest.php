@@ -10,7 +10,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->seed(RbacSeeder::class);
 
-    $this->customer = User::factory()->create([
+    $this->customer = User::factory()->withCustomerProfile()->create([
         'email_verified_at' => now(),
     ]);
     $this->customer->assignRole('User');
@@ -77,7 +77,7 @@ it('allows customers to manage profile services and templates', function () {
         ->post('/profile/templates/2/activate')
         ->assertRedirect();
 
-    expect($this->customer->fresh()->active_template)->toBe(2);
+    expect($this->customer->fresh()->profile?->active_template)->toBe(2);
 });
 
 it('blocks staff from profile management routes', function () {

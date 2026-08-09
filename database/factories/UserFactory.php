@@ -42,4 +42,11 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    public function withCustomerProfile(array $attributes = []): static
+    {
+        return $this->afterCreating(function (User $user) use ($attributes): void {
+            $user->profile()->create(array_merge(['active_template' => 1], $attributes));
+        });
+    }
 }

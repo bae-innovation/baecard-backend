@@ -19,7 +19,7 @@ beforeEach(function () {
     ]);
     $this->admin->assignRole('Admin');
 
-    $this->customer = User::factory()->create([
+    $this->customer = User::factory()->withCustomerProfile()->create([
         'email' => 'customer@example.com',
         'email_verified_at' => now(),
     ]);
@@ -119,7 +119,7 @@ it('allows dashboard access through the dashboard wildcard permission', function
 });
 
 it('redirects customers to their profile template after login', function () {
-    $this->customer->update(['active_template' => 2]);
+    $this->customer->ensureProfile()->update(['active_template' => 2]);
 
     $this->post('/login', [
         'email' => $this->customer->email,
@@ -128,7 +128,7 @@ it('redirects customers to their profile template after login', function () {
 });
 
 it('redirects customers to their active template even when extra permissions exist', function () {
-    $this->customer->update(['active_template' => 3]);
+    $this->customer->ensureProfile()->update(['active_template' => 3]);
     $this->customer->givePermissionTo('dashboard.analytics.view');
 
     $this->post('/login', [

@@ -36,7 +36,7 @@ export function RoleDetailDialog({ open, onOpenChange, role }: RoleDetailDialogP
       <DialogContent className="max-h-[min(90dvh,720px)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="size-5 text-violet-600" aria-hidden />
+            <ShieldCheck className="size-5 text-primary" aria-hidden />
             {role?.name ?? 'Role details'}
           </DialogTitle>
           <DialogDescription>

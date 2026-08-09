@@ -68,10 +68,16 @@ class PermissionCatalog
             self::perm('product.product.delete', 'product', 'Delete Products'),
             self::wildcard('vendor.*', 'vendor', 'Vendors (All)'),
             self::perm('vendor.vendor.view', 'vendor', 'View Vendors'),
-            self::perm('vendor.vendor.manage', 'vendor', 'Manage Vendors'),
+            self::perm('vendor.vendor.create', 'vendor', 'Create Vendors'),
+            self::perm('vendor.vendor.update', 'vendor', 'Update Vendors'),
+            self::perm('vendor.vendor.delete', 'vendor', 'Delete Vendors'),
             self::wildcard('order.*', 'order', 'Orders (All)'),
-            self::perm('order.order.view', 'order', 'View Orders'),
-            self::perm('order.order.manage', 'order', 'Manage Orders'),
+            self::perm('order.website_order.view', 'order', 'View Website Orders'),
+            self::perm('order.website_order.update', 'order', 'Update Website Orders'),
+            self::perm('order.custom_order.view', 'order', 'View Custom Orders'),
+            self::perm('order.custom_order.create', 'order', 'Create Custom Orders'),
+            self::perm('order.custom_order.update', 'order', 'Update Custom Orders'),
+            self::perm('order.custom_order.delete', 'order', 'Delete Custom Orders'),
             self::wildcard('card.*', 'card', 'Cards (All)'),
             self::perm('card.card.view', 'card', 'View Cards'),
             self::perm('card.card.manage', 'card', 'Manage Cards'),
@@ -125,6 +131,69 @@ class PermissionCatalog
         return array_values(array_filter(
             self::names(),
             fn (string $name) => $name !== self::GLOBAL_WILDCARD,
+        ));
+    }
+
+    /**
+     * Ensures list/view permissions are included when mutating actions are granted.
+     *
+     * @param  list<string>  $permissions
+     * @return list<string>
+     */
+    public static function expandViewDependencies(array $permissions): array
+    {
+        $available = array_flip(self::assignableNames());
+        $expanded = $permissions;
+
+        foreach ($permissions as $permission) {
+            $viewPermission = self::viewDependencyFor($permission);
+
+            if ($viewPermission !== null && isset($available[$viewPermission])) {
+                $expanded[] = $viewPermission;
+            }
+        }
+
+        return array_values(array_unique($expanded));
+    }
+
+    public static function viewDependencyFor(string $permission): ?string
+    {
+        if (str_ends_with($permission, '.view') || str_contains($permission, '.view_own')) {
+            return null;
+        }
+
+        $parts = explode('.', $permission);
+
+        if (count($parts) < 2) {
+            return null;
+        }
+
+        $action = $parts[count($parts) - 1];
+
+        if (! in_array($action, ['create', 'update', 'delete', 'manage', 'assign_role'], true)) {
+            return null;
+        }
+
+        $parts[count($parts) - 1] = 'view';
+
+        return implode('.', $parts);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function mutatingActionsForView(string $viewPermission): array
+    {
+        if (! str_ends_with($viewPermission, '.view') || str_contains($viewPermission, '.view_own')) {
+            return [];
+        }
+
+        $prefix = substr($viewPermission, 0, -strlen('.view'));
+
+        return array_values(array_filter(
+            self::assignableNames(),
+            fn (string $name) => str_starts_with($name, $prefix.'.')
+                && self::viewDependencyFor($name) === $viewPermission,
         ));
     }
 
@@ -195,8 +264,10 @@ class PermissionCatalog
             'product.product.update',
             'product.product.delete',
             'vendor.vendor.view',
-            'vendor.vendor.manage',
-            'order.order.view',
+            'vendor.vendor.create',
+            'vendor.vendor.update',
+            'vendor.vendor.delete',
+            'order.website_order.view',
             'card.card.view',
             'appointment.appointment.view',
             'appointment.appointment.manage',

@@ -44,7 +44,7 @@ class HandleInertiaRequests extends Middleware
             'app' => app(SettingService::class)->getAppSettings(),
             'auth' => [
                 'user' => $user
-                    ? $user->load('roles:id,name')
+                    ? $user->load('roles:id,name')->toAuthArray()
                     : null,
                 'permissions' => $user
                     ? PermissionResolver::permissionsForUser($user)

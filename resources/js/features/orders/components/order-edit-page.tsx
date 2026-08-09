@@ -18,8 +18,8 @@ export function OrderEditPage({ order }: OrderEditPageProps) {
 
   return (
     <FormPageShell
-      backTo="/orders"
-      backLabel="Back to Orders"
+      backTo="/custom-orders"
+      backLabel="Back to Custom Orders"
       title="Edit Order"
       description={order.order_number}
       icon={ShoppingCart}
@@ -30,10 +30,10 @@ export function OrderEditPage({ order }: OrderEditPageProps) {
         variant="page"
         order={order}
         isSubmitting={processing}
-        onCancel={() => router.visit('/orders')}
+        onCancel={() => router.visit('/custom-orders')}
         onSubmit={async (values: OrderFormValues) => {
           setProcessing(true);
-          router.put(`/orders/${order.id}`, values, {
+          router.put(`/custom-orders/${order.id}`, values, {
             onSuccess: () => showMutationSuccess('Order updated'),
             onError: () => showMutationError(null, 'Failed to update order'),
             onFinish: () => setProcessing(false),

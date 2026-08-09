@@ -49,7 +49,9 @@ class RoleService
     public function create(array $data): JsonResponse
     {
         return DB::transaction(function () use ($data) {
-            $this->assertAssignablePermissions($data['permissions'] ?? []);
+            $permissions = PermissionCatalog::expandViewDependencies($data['permissions'] ?? []);
+
+            $this->assertAssignablePermissions($permissions);
 
             $role = Role::query()->create([
                 'name' => $data['name'],
@@ -57,7 +59,7 @@ class RoleService
                 'is_protected' => false,
             ]);
 
-            $role->syncPermissions($data['permissions'] ?? []);
+            $role->syncPermissions($permissions);
 
             return $this->successResponse(
                 $role->load('permissions:id,name'),
@@ -85,10 +87,12 @@ class RoleService
                 return $this->errorResponse('This system role cannot be modified.', null, 400);
             }
 
-            $this->assertAssignablePermissions($data['permissions'] ?? []);
+            $permissions = PermissionCatalog::expandViewDependencies($data['permissions'] ?? []);
+
+            $this->assertAssignablePermissions($permissions);
 
             $role->update(['name' => $data['name']]);
-            $role->syncPermissions($data['permissions'] ?? []);
+            $role->syncPermissions($permissions);
 
             return $this->successResponse(
                 $role->fresh()->load('permissions:id,name'),

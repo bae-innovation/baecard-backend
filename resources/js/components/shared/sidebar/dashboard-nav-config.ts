@@ -145,13 +145,19 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Orders',
     url: '.',
     icon: ShoppingCart,
-    requiredPermissions: ['order.order.view'],
+    requiredPermissions: ['order.website_order.view', 'order.custom_order.view'],
     items: [
       {
-        title: 'Order List',
+        title: 'Website Orders',
         url: '/orders',
         icon: ShoppingCart,
-        requiredPermissions: ['order.order.view'],
+        requiredPermissions: ['order.website_order.view'],
+      },
+      {
+        title: 'Custom Orders',
+        url: '/custom-orders',
+        icon: ShoppingCart,
+        requiredPermissions: ['order.custom_order.view'],
       },
     ],
   },

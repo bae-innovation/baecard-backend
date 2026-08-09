@@ -7,6 +7,7 @@ use App\Models\CardCode;
 use App\Models\User;
 use App\Services\AuthService;
 use App\Services\CardCodeService;
+use App\Support\EmailVerification;
 use App\Support\CardCodePath;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Auth\Events\Verified;
@@ -35,7 +36,13 @@ class EmailVerificationController extends Controller
             return $this->successResponse(null, 'Email already verified.');
         }
 
-        $request->user()->sendEmailVerificationNotification();
+        if (! $request->user()->sendVerificationEmail()) {
+            return $this->errorResponse(
+                'We could not send the verification email. Please try again later or contact support.',
+                null,
+                503,
+            );
+        }
 
         return $this->successResponse(null, 'Verification link sent to your email.');
     }
@@ -60,6 +67,14 @@ class EmailVerificationController extends Controller
                 'code' => $cardCode->code,
                 'name' => $cardCode->name,
             ] : null,
+            'verificationUrl' => app()->environment('local')
+                && $request->user()
+                && ! $request->user()->hasVerifiedEmail()
+                ? EmailVerification::signedUrl($request->user())
+                : null,
+            'mailDriver' => app()->environment('local') ? config('mail.default') : null,
+            'mailDeliveryBlocked' => app()->environment('local')
+                && config('mail.default') === 'smtp',
         ]);
     }
 
@@ -72,7 +87,13 @@ class EmailVerificationController extends Controller
             return back()->with('success', 'Email already verified.');
         }
 
-        $request->user()->sendEmailVerificationNotification();
+        try {
+            $request->user()->sendEmailVerificationNotification();
+        } catch (\App\Exceptions\MailDeliveryException $exception) {
+            return back()
+                ->with('error', $exception->getMessage())
+                ->with('verificationUrl', EmailVerification::signedUrl($request->user()));
+        }
 
         return back()->with('success', 'Verification link sent to your email.');
     }

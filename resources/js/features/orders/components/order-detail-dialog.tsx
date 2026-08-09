@@ -61,7 +61,10 @@ type OrderDetailDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   order: Order | null;
-  canManage?: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
+  allowFullEdit?: boolean;
+  pathPrefix?: string;
   onDelete?: (order: Order) => void;
   onRefresh?: () => void;
 };
@@ -154,7 +157,10 @@ export function OrderDetailDialog({
   open,
   onOpenChange,
   order,
-  canManage = false,
+  canUpdate = false,
+  canDelete = false,
+  allowFullEdit = true,
+  pathPrefix = '/orders',
   onDelete,
   onRefresh,
 }: OrderDetailDialogProps) {
@@ -249,13 +255,13 @@ export function OrderDetailDialog({
                 <DetailField
                   label="Order Status"
                   value={
-                    canManage ? (
+                    canUpdate ? (
                       <Select
                         value={order.status}
                         onValueChange={(value) => {
                           setIsUpdatingStatus(true);
                           router.put(
-                            `/orders/${order.id}`,
+                            `${pathPrefix}/${order.id}`,
                             { status: value },
                             {
                               preserveScroll: true,
@@ -312,7 +318,7 @@ export function OrderDetailDialog({
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
                     Payments
                   </h3>
-                  {canManage && dueAmount > 0 ? (
+                  {canUpdate && dueAmount > 0 ? (
                     <Button type="button" size="sm" onClick={() => setPaymentOpen(true)}>
                       Add Payment
                     </Button>
@@ -370,20 +376,22 @@ export function OrderDetailDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Close
             </Button>
-            {canManage ? (
+            {canUpdate || canDelete ? (
               <div className="flex flex-wrap gap-2">
+              {canUpdate && allowFullEdit ? (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => {
                     onOpenChange(false);
-                    router.visit(`/orders/${order.id}/edit`);
+                    router.visit(`${pathPrefix}/${order.id}/edit`);
                   }}
                 >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit Order
-                </Button>
-                {onDelete ? (
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit Order
+                  </Button>
+                ) : null}
+                {canDelete && onDelete ? (
                   <Button
                     type="button"
                     variant="destructive"
@@ -402,7 +410,7 @@ export function OrderDetailDialog({
         </DialogContent>
       </Dialog>
 
-      {canManage ? (
+      {canUpdate ? (
         <PaymentFormDialog
           open={paymentOpen}
           onOpenChange={setPaymentOpen}
@@ -410,7 +418,7 @@ export function OrderDetailDialog({
           isSubmitting={isAddingPayment}
           onSubmit={async (values: PaymentFormValues) => {
             setIsAddingPayment(true);
-            router.post(`/orders/${order.id}/payments`, values, {
+            router.post(`${pathPrefix}/${order.id}/payments`, values, {
               preserveScroll: true,
               onSuccess: () => {
                 showMutationSuccess('Payment added');

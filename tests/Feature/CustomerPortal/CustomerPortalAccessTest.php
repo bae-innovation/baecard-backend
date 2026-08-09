@@ -40,7 +40,7 @@ it('derives customer portal abilities for the User role', function () {
         ->toContain('profile.template.manage')
         ->toContain('product.product.view')
         ->not->toContain('rbac.user.view')
-        ->not->toContain('order.order.view')
+        ->not->toContain('order.website_order.view')
         ->not->toContain('dashboard.analytics.view')
         ->not->toContain('card.card.view')
         ->not->toContain('settings.general.manage');

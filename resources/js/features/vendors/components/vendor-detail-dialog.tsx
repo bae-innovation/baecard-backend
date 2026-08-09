@@ -31,7 +31,8 @@ type VendorDetailDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vendor: Vendor | null;
-  canManage?: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
   onDelete?: (vendor: Vendor) => void;
 };
 
@@ -112,7 +113,8 @@ export function VendorDetailDialog({
   open,
   onOpenChange,
   vendor,
-  canManage = false,
+  canUpdate = false,
+  canDelete = false,
   onDelete,
 }: VendorDetailDialogProps) {
   if (!vendor) {
@@ -278,20 +280,22 @@ export function VendorDetailDialog({
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-          {canManage ? (
+          {canUpdate || canDelete ? (
             <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  onOpenChange(false);
-                  router.visit(`/vendors/${vendor.id}/edit`);
-                }}
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit Vendor
-              </Button>
-              {onDelete ? (
+              {canUpdate ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    onOpenChange(false);
+                    router.visit(`/vendors/${vendor.id}/edit`);
+                  }}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Vendor
+                </Button>
+              ) : null}
+              {canDelete && onDelete ? (
                 <Button
                   type="button"
                   variant="destructive"

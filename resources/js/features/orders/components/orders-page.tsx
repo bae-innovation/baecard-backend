@@ -58,11 +58,30 @@ function StatusBadge({ status }: { status: string }) {
 
 type OrdersPageProps = {
   orders: LaravelPaginator<Order>;
+  variant: 'website' | 'custom';
 };
 
-export function OrdersPage({ orders }: OrdersPageProps) {
-  const { hasAbility } = useAuth();
-  const canManage = hasPermission('order.order.manage');
+export function OrdersPage({ orders, variant }: OrdersPageProps) {
+  const {
+    canViewWebsiteOrders,
+    canUpdateWebsiteOrders,
+    canViewCustomOrders,
+    canCreateCustomOrders,
+    canUpdateCustomOrders,
+    canDeleteCustomOrders,
+  } = useAuth();
+
+  const isWebsite = variant === 'website';
+  const pathPrefix = isWebsite ? '/orders' : '/custom-orders';
+  const canView = isWebsite ? canViewWebsiteOrders() : canViewCustomOrders();
+  const canCreate = !isWebsite && canCreateCustomOrders();
+  const canUpdate = isWebsite ? canUpdateWebsiteOrders() : canUpdateCustomOrders();
+  const canDelete = !isWebsite && canDeleteCustomOrders();
+  const showActionsColumn = canView || canUpdate || canDelete;
+  const pageTitle = isWebsite ? 'Website Orders' : 'Custom Orders';
+  const pageDescription = isWebsite
+    ? 'Orders placed through the public website'
+    : 'Manually created customer orders';
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(orders, ['orders']);
   const [globalFilter, setGlobalFilter] = React.useState('');
@@ -89,9 +108,9 @@ export function OrdersPage({ orders }: OrdersPageProps) {
     if (updated) setSelectedOrder(updated);
   }, [data, selectedOrder?.id]);
 
-  const columns = React.useMemo(
-    () => [
-      createDataTableSelectionColumn<Order>(),
+  const columns = React.useMemo(() => {
+    const baseColumns = [
+      ...(canDelete ? [createDataTableSelectionColumn<Order>()] : []),
       columnHelper.accessor('id', {
         header: 'ID',
         cell: ({ getValue }) => (
@@ -100,27 +119,33 @@ export function OrdersPage({ orders }: OrdersPageProps) {
       }),
       columnHelper.accessor('order_number', {
         header: 'Order #',
-        cell: ({ row }) => (
-          <button
-            type="button"
-            className="font-mono text-sm font-medium hover:opacity-80"
-            onClick={() => openView(row.original)}
-          >
-            {row.original.order_number}
-          </button>
-        ),
+        cell: ({ row }) =>
+          canView ? (
+            <button
+              type="button"
+              className="font-mono text-sm font-medium hover:opacity-80"
+              onClick={() => openView(row.original)}
+            >
+              {row.original.order_number}
+            </button>
+          ) : (
+            <span className="font-mono text-sm font-medium">{row.original.order_number}</span>
+          ),
       }),
       columnHelper.accessor('product_name', {
         header: 'Product',
-        cell: ({ row }) => (
-          <button
-            type="button"
-            className="min-w-[140px] text-left hover:opacity-80"
-            onClick={() => openView(row.original)}
-          >
-            <p className="font-medium">{row.original.product_name}</p>
-          </button>
-        ),
+        cell: ({ row }) =>
+          canView ? (
+            <button
+              type="button"
+              className="min-w-[140px] text-left hover:opacity-80"
+              onClick={() => openView(row.original)}
+            >
+              <p className="font-medium">{row.original.product_name}</p>
+            </button>
+          ) : (
+            <p className="min-w-[140px] font-medium">{row.original.product_name}</p>
+          ),
       }),
       columnHelper.accessor('customer_id', {
         header: 'Customer ID',
@@ -236,35 +261,77 @@ export function OrdersPage({ orders }: OrdersPageProps) {
           </span>
         ),
       }),
+    ];
+
+    if (!showActionsColumn) {
+      return baseColumns;
+    }
+
+    return [
+      ...baseColumns,
       createDataTableActionsColumn<Order>({
-        cell: ({ row }) => (
-          <DataTableRowActionsMenu label={`Actions for ${row.original.order_number}`}>
-            <TableDropdownAction icon={Eye} onClick={() => openView(row.original)}>
-              View
-            </TableDropdownAction>
-            {canManage ? (
-              <>
-                <TableDropdownAction
-                  icon={Pencil}
-                  onClick={() => router.visit(`/orders/${row.original.id}/edit`)}
-                >
-                  Edit
-                </TableDropdownAction>
-                <TableDropdownAction
-                  icon={Trash2}
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => openDelete(row.original)}
-                >
-                  Delete
-                </TableDropdownAction>
-              </>
-            ) : null}
-          </DataTableRowActionsMenu>
-        ),
+        cell: ({ row }) => {
+          const menuItems: React.ReactNode[] = [];
+
+          if (canView) {
+            menuItems.push(
+              <TableDropdownAction
+                key="view"
+                icon={Eye}
+                onClick={() => openView(row.original)}
+              >
+                View details
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canUpdate && !isWebsite) {
+            menuItems.push(
+              <TableDropdownAction
+                key="edit"
+                icon={Pencil}
+                onClick={() => router.visit(`${pathPrefix}/${row.original.id}/edit`)}
+              >
+                Edit
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canDelete) {
+            menuItems.push(
+              <TableDropdownAction
+                key="delete"
+                icon={Trash2}
+                className="text-destructive focus:text-destructive"
+                onClick={() => openDelete(row.original)}
+              >
+                Delete
+              </TableDropdownAction>,
+            );
+          }
+
+          if (menuItems.length === 0) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+
+          return (
+            <DataTableRowActionsMenu label={`Actions for ${row.original.order_number}`}>
+              {menuItems}
+            </DataTableRowActionsMenu>
+          );
+        },
       }),
-    ],
-    [canManage, openDelete, openView],
-  );
+    ];
+  }, [
+    canDelete,
+    canUpdate,
+    canView,
+    isWebsite,
+    openDelete,
+    openView,
+    pathPrefix,
+    showActionsColumn,
+  ]);
 
   const table = useReactTable({
     data,
@@ -275,7 +342,7 @@ export function OrdersPage({ orders }: OrdersPageProps) {
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
     manualPagination: true,
-    enableRowSelection: true,
+    enableRowSelection: canDelete,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     initialState: {
@@ -298,16 +365,24 @@ export function OrdersPage({ orders }: OrdersPageProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <PageTitle title="Orders" description="Customer orders" icon={ShoppingCart} />
-        <Button type="button" onClick={() => router.visit('/orders/create')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Order
-        </Button>
+        <PageTitle title={pageTitle} description={pageDescription} icon={ShoppingCart} />
+        {canCreate ? (
+          <Button type="button" onClick={() => router.visit(`${pathPrefix}/create`)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Order
+          </Button>
+        ) : null}
       </div>
       <DataTableLayout
         table={table}
-        colSpan={table.getAllColumns().length}
-        bodyProps={{ emptyMessage: 'No orders found.' }}
+        colSpan={columns.length}
+        bodyProps={{
+          emptyMessage: canCreate
+            ? 'No custom orders found. Create the first order to get started.'
+            : isWebsite
+              ? 'No website orders found.'
+              : 'No custom orders found.',
+        }}
         toolbar={
           <DataTableToolbar
             start={
@@ -357,15 +432,20 @@ export function OrdersPage({ orders }: OrdersPageProps) {
         }
         footer={<DataTableFooter table={table} />}
       />
-      <OrderDetailDialog
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        order={selectedOrder}
-        canManage={canManage}
-        onDelete={canManage ? openDelete : undefined}
-        onRefresh={reload}
-      />
-      {canManage ? (
+      {canView ? (
+        <OrderDetailDialog
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          order={selectedOrder}
+          canUpdate={canUpdate}
+          canDelete={canDelete}
+          allowFullEdit={!isWebsite}
+          pathPrefix={pathPrefix}
+          onDelete={canDelete ? openDelete : undefined}
+          onRefresh={reload}
+        />
+      ) : null}
+      {canDelete ? (
         <DeleteOrderDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
@@ -374,7 +454,7 @@ export function OrdersPage({ orders }: OrdersPageProps) {
           onConfirm={async () => {
             if (!selectedForDelete) return;
             setIsDeleting(true);
-            router.delete(`/orders/${selectedForDelete.id}`, {
+            router.delete(`${pathPrefix}/${selectedForDelete.id}`, {
               onSuccess: () => {
                 showMutationSuccess('Order deleted');
                 setDeleteOpen(false);

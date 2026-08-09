@@ -24,7 +24,6 @@ export function SiteSocialCreatePage({ platforms }: SiteSocialCreatePageProps) {
       title="Create Social Link"
       description="Add a new social profile or contact link for the website"
       icon={Share2}
-      color="blue"
     >
       <SiteSocialForm
         mode="create"

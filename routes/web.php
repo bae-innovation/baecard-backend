@@ -183,19 +183,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('permission:product.product.view')
             ->name('index');
         Route::get('create', [ProductController::class, 'createPage'])
-            ->middleware('permission:product.product.create,product.product.update,product.product.delete')
+            ->middleware('permission:product.product.create')
             ->name('create');
         Route::post('/', [ProductController::class, 'store'])
-            ->middleware('permission:product.product.create,product.product.update,product.product.delete')
+            ->middleware('permission:product.product.create')
             ->name('store');
         Route::get('{product}/edit', [ProductController::class, 'editPage'])
-            ->middleware('permission:product.product.create,product.product.update,product.product.delete')
+            ->middleware('permission:product.product.update')
             ->name('edit');
         Route::put('{product}', [ProductController::class, 'update'])
-            ->middleware('permission:product.product.create,product.product.update,product.product.delete')
+            ->middleware('permission:product.product.update')
             ->name('update');
         Route::delete('{product}', [ProductController::class, 'destroy'])
-            ->middleware('permission:product.product.create,product.product.update,product.product.delete')
+            ->middleware('permission:product.product.delete')
             ->name('destroy');
     });
 
@@ -204,43 +204,56 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('permission:vendor.vendor.view')
         ->name('vendors.index');
     Route::get('vendors/create', [VendorController::class, 'createPage'])
-        ->middleware('permission:vendor.vendor.manage')
+        ->middleware('permission:vendor.vendor.create')
         ->name('vendors.create');
     Route::post('vendors', [VendorController::class, 'store'])
-        ->middleware('permission:vendor.vendor.manage')
+        ->middleware('permission:vendor.vendor.create')
         ->name('vendors.store');
     Route::get('vendors/{vendor}/edit', [VendorController::class, 'editPage'])
-        ->middleware('permission:vendor.vendor.manage')
+        ->middleware('permission:vendor.vendor.update')
         ->name('vendors.edit');
     Route::put('vendors/{vendor}', [VendorController::class, 'update'])
-        ->middleware('permission:vendor.vendor.manage')
+        ->middleware('permission:vendor.vendor.update')
         ->name('vendors.update');
     Route::delete('vendors/{vendor}', [VendorController::class, 'destroy'])
-        ->middleware('permission:vendor.vendor.manage')
+        ->middleware('permission:vendor.vendor.delete')
         ->name('vendors.destroy');
 
-    // Orders
+    // Website orders (from public checkout)
     Route::get('orders', [OrderController::class, 'indexPage'])
-        ->middleware('permission:order.order.view')
+        ->middleware('permission:order.website_order.view')
         ->name('orders.index');
-    Route::get('orders/create', [OrderController::class, 'createPage'])
-        ->middleware('permission:order.order.manage')
-        ->name('orders.create');
-    Route::post('orders', [OrderController::class, 'store'])
-        ->middleware('permission:order.order.manage')
-        ->name('orders.store');
-    Route::get('orders/{order}/edit', [OrderController::class, 'editPage'])
-        ->middleware('permission:order.order.manage')
-        ->name('orders.edit');
-    Route::put('orders/{order}', [OrderController::class, 'update'])
-        ->middleware('permission:order.order.manage')
+    Route::put('orders/{order}', [OrderController::class, 'updateWebsite'])
+        ->middleware('permission:order.website_order.update')
         ->name('orders.update');
-    Route::post('orders/{order}/payments', [OrderController::class, 'addPayment'])
-        ->middleware('permission:order.order.manage')
+    Route::post('orders/{order}/payments', [OrderController::class, 'addWebsitePayment'])
+        ->middleware('permission:order.website_order.update')
         ->name('orders.payments.store');
-    Route::delete('orders/{order}', [OrderController::class, 'destroy'])
-        ->middleware('permission:order.order.manage')
-        ->name('orders.destroy');
+
+    // Custom orders (created in admin)
+    Route::prefix('custom-orders')->name('custom-orders.')->group(function () {
+        Route::get('/', [OrderController::class, 'customIndexPage'])
+            ->middleware('permission:order.custom_order.view')
+            ->name('index');
+        Route::get('create', [OrderController::class, 'createPage'])
+            ->middleware('permission:order.custom_order.create')
+            ->name('create');
+        Route::post('/', [OrderController::class, 'store'])
+            ->middleware('permission:order.custom_order.create')
+            ->name('store');
+        Route::get('{order}/edit', [OrderController::class, 'editPage'])
+            ->middleware('permission:order.custom_order.update')
+            ->name('edit');
+        Route::put('{order}', [OrderController::class, 'updateCustom'])
+            ->middleware('permission:order.custom_order.update')
+            ->name('update');
+        Route::post('{order}/payments', [OrderController::class, 'addCustomPayment'])
+            ->middleware('permission:order.custom_order.update')
+            ->name('payments.store');
+        Route::delete('{order}', [OrderController::class, 'destroyCustom'])
+            ->middleware('permission:order.custom_order.delete')
+            ->name('destroy');
+    });
 
     // Contacts
     Route::get('contacts', [ContactController::class, 'indexPage'])

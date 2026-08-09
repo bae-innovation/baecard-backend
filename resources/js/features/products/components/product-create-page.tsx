@@ -20,7 +20,6 @@ export function ProductCreatePage() {
       title="Create Product"
       description="Add a new NFC card product to your catalog"
       icon={Package}
-      color="emerald"
     >
       <ProductForm
         mode="create"

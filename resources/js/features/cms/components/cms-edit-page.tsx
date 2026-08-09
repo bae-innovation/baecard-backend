@@ -45,7 +45,6 @@ export function CmsEditPage({ key: entryKey, schema, entry, defaults }: CmsEditP
       title={label}
       description={catalog?.description ?? `Editing CMS entry: ${entryKey}`}
       icon={FileEdit}
-      color="blue"
     >
       <div className="mb-6 flex flex-wrap items-center justify-end gap-2">
         {catalog?.previewPath ? (

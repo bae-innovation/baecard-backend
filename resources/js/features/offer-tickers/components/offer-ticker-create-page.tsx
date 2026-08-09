@@ -20,7 +20,6 @@ export function OfferTickerCreatePage() {
       title="Create Offer Ticker"
       description="Add a new promo message for the home page marquee"
       icon={Megaphone}
-      color="violet"
     >
       <OfferTickerForm
         mode="create"
