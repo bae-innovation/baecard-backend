@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\SettingService;
-use App\Support\RoleAbility;
+use App\Support\PermissionResolver;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -47,7 +47,7 @@ class HandleInertiaRequests extends Middleware
                     ? $user->load('roles:id,name')
                     : null,
                 'permissions' => $user
-                    ? RoleAbility::permissionsForUser($user)
+                    ? PermissionResolver::permissionsForUser($user)
                     : [],
             ],
             'flash' => [

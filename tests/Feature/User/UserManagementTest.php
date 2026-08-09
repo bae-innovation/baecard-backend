@@ -1,13 +1,13 @@
 <?php
 
 use App\Models\User;
-use Database\Seeders\RoleSeeder;
+use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(RoleSeeder::class);
+    $this->seed(RbacSeeder::class);
 
     $this->superAdmin = User::factory()->create([
         'email' => 'superadmin@test.com',

@@ -10,7 +10,7 @@ import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 
 export function AppointmentCreatePage() {
   const { hasAbility } = useAuth();
-  const canManage = hasAbility('appointments.manage');
+  const canManage = hasPermission('appointment.appointment.manage');
   const [processing, setProcessing] = React.useState(false);
   useForm({});
 

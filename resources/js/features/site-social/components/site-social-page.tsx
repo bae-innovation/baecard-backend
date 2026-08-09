@@ -40,7 +40,7 @@ type SiteSocialPageProps = {
 
 export function SiteSocialPage({ siteSocialLinks }: SiteSocialPageProps) {
   const { hasAbility } = useAuth();
-  const canManage = hasAbility('site_social.manage');
+  const canManage = hasPermission('cms.site_social.manage');
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(siteSocialLinks, ['siteSocialLinks']);
   const [globalFilter, setGlobalFilter] = React.useState('');

@@ -11,7 +11,7 @@ use App\Models\Appointment;
 use App\Models\Customer;
 use App\Services\AppointmentService;
 use App\Support\InertiaData;
-use App\Support\RoleAbility;
+use App\Support\PermissionResolver;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -28,7 +28,7 @@ class AppointmentController extends Controller
         $user = $request->user();
         $query = Appointment::with(['customer:id,name,email', 'creator:id,name']);
 
-        if ($user && ! RoleAbility::allows($user, 'appointments.view')) {
+        if ($user && ! PermissionResolver::allows($user, 'appointment.appointment.view')) {
             $query->where('customer_id', $user->id);
         }
 
@@ -41,7 +41,7 @@ class AppointmentController extends Controller
 
     public function createPage(Request $request)
     {
-        $canManage = RoleAbility::allows($request->user(), 'appointments.manage');
+        $canManage = PermissionResolver::allows($request->user(), 'appointment.appointment.manage');
 
         return Inertia::render('Appointments/Create', [
             'customers' => $canManage
@@ -54,7 +54,7 @@ class AppointmentController extends Controller
     public function editPage(Request $request, Appointment $appointment)
     {
         $appointment->load(['customer:id,name,email', 'creator:id,name']);
-        $canManage = RoleAbility::allows($request->user(), 'appointments.manage');
+        $canManage = PermissionResolver::allows($request->user(), 'appointment.appointment.manage');
 
         return Inertia::render('Appointments/Edit', [
             'appointment' => $appointment,

@@ -76,10 +76,10 @@ Route::prefix('api')->group(function () {
 
         Route::middleware('verified')->group(function () {
             Route::prefix('customer-social')->group(function () {
-                Route::middleware('ability:users.view')->get('list/{customerId}', [CustomerSocialController::class, 'index']);
-                Route::middleware('ability:users.view')->post('create', [CustomerSocialController::class, 'store']);
-                Route::middleware('ability:users.view')->put('update/{id}', [CustomerSocialController::class, 'update']);
-                Route::middleware('ability:users.view')->delete('delete/{id}', [CustomerSocialController::class, 'destroy']);
+                Route::middleware('permission:customer.customer.view')->get('list/{customerId}', [CustomerSocialController::class, 'index']);
+                Route::middleware('permission:customer.customer.view')->post('create', [CustomerSocialController::class, 'store']);
+                Route::middleware('permission:customer.customer.view')->put('update/{id}', [CustomerSocialController::class, 'update']);
+                Route::middleware('permission:customer.customer.view')->delete('delete/{id}', [CustomerSocialController::class, 'destroy']);
             });
         });
     });
@@ -174,147 +174,185 @@ Route::middleware('auth')->group(function () {
 */
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'indexPage'])
-        ->middleware('ability:dashboard.view')
+        ->middleware('permission:dashboard.analytics.view')
         ->name('dashboard');
 
     // Products (admin — public catalog lives at GET /products)
     Route::prefix('admin/products')->name('products.')->group(function () {
         Route::get('/', [ProductController::class, 'indexPage'])
-            ->middleware('ability:products.view')
+            ->middleware('permission:product.product.view')
             ->name('index');
         Route::get('create', [ProductController::class, 'createPage'])
-            ->middleware('ability:products.manage')
+            ->middleware('permission:product.product.create,product.product.update,product.product.delete')
             ->name('create');
         Route::post('/', [ProductController::class, 'store'])
-            ->middleware('ability:products.manage')
+            ->middleware('permission:product.product.create,product.product.update,product.product.delete')
             ->name('store');
         Route::get('{product}/edit', [ProductController::class, 'editPage'])
-            ->middleware('ability:products.manage')
+            ->middleware('permission:product.product.create,product.product.update,product.product.delete')
             ->name('edit');
         Route::put('{product}', [ProductController::class, 'update'])
-            ->middleware('ability:products.manage')
+            ->middleware('permission:product.product.create,product.product.update,product.product.delete')
             ->name('update');
         Route::delete('{product}', [ProductController::class, 'destroy'])
-            ->middleware('ability:products.manage')
+            ->middleware('permission:product.product.create,product.product.update,product.product.delete')
             ->name('destroy');
     });
 
     // Vendors
     Route::get('vendors', [VendorController::class, 'indexPage'])
-        ->middleware('ability:vendors.view')
+        ->middleware('permission:vendor.vendor.view')
         ->name('vendors.index');
     Route::get('vendors/create', [VendorController::class, 'createPage'])
-        ->middleware('ability:vendors.manage')
+        ->middleware('permission:vendor.vendor.manage')
         ->name('vendors.create');
     Route::post('vendors', [VendorController::class, 'store'])
-        ->middleware('ability:vendors.manage')
+        ->middleware('permission:vendor.vendor.manage')
         ->name('vendors.store');
     Route::get('vendors/{vendor}/edit', [VendorController::class, 'editPage'])
-        ->middleware('ability:vendors.manage')
+        ->middleware('permission:vendor.vendor.manage')
         ->name('vendors.edit');
     Route::put('vendors/{vendor}', [VendorController::class, 'update'])
-        ->middleware('ability:vendors.manage')
+        ->middleware('permission:vendor.vendor.manage')
         ->name('vendors.update');
     Route::delete('vendors/{vendor}', [VendorController::class, 'destroy'])
-        ->middleware('ability:vendors.manage')
+        ->middleware('permission:vendor.vendor.manage')
         ->name('vendors.destroy');
 
     // Orders
     Route::get('orders', [OrderController::class, 'indexPage'])
-        ->middleware('ability:orders.view')
+        ->middleware('permission:order.order.view')
         ->name('orders.index');
     Route::get('orders/create', [OrderController::class, 'createPage'])
-        ->middleware('ability:orders.manage')
+        ->middleware('permission:order.order.manage')
         ->name('orders.create');
     Route::post('orders', [OrderController::class, 'store'])
-        ->middleware('ability:orders.manage')
+        ->middleware('permission:order.order.manage')
         ->name('orders.store');
     Route::get('orders/{order}/edit', [OrderController::class, 'editPage'])
-        ->middleware('ability:orders.manage')
+        ->middleware('permission:order.order.manage')
         ->name('orders.edit');
     Route::put('orders/{order}', [OrderController::class, 'update'])
-        ->middleware('ability:orders.manage')
+        ->middleware('permission:order.order.manage')
         ->name('orders.update');
     Route::post('orders/{order}/payments', [OrderController::class, 'addPayment'])
-        ->middleware('ability:orders.manage')
+        ->middleware('permission:order.order.manage')
         ->name('orders.payments.store');
     Route::delete('orders/{order}', [OrderController::class, 'destroy'])
-        ->middleware('ability:orders.manage')
+        ->middleware('permission:order.order.manage')
         ->name('orders.destroy');
 
     // Contacts
     Route::get('contacts', [ContactController::class, 'indexPage'])
-        ->middleware('ability:contacts.view,contacts.view_own')
+        ->middleware('permission:contact.contact.view,contact.contact.view_own')
         ->name('contacts.index');
     Route::post('contacts', [ContactController::class, 'store'])
-        ->middleware('ability:contacts.create')
+        ->middleware('permission:contact.contact.create')
         ->name('contacts.store');
     Route::patch('contacts/{contact}/mark-read', [ContactController::class, 'markRead'])
-        ->middleware('ability:contacts.view')
+        ->middleware('permission:contact.contact.view')
         ->name('contacts.mark-read');
     Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])
-        ->middleware('ability:contacts.delete')
+        ->middleware('permission:contact.contact.delete')
         ->name('contacts.destroy');
 
     // Reviews
     Route::get('reviews', [ReviewController::class, 'indexPage'])
-        ->middleware('ability:reviews.view,reviews.view_own')
+        ->middleware('permission:review.review.view,review.review.view_own')
         ->name('reviews.index');
     Route::post('reviews', [ReviewController::class, 'store'])
-        ->middleware('ability:reviews.manage,reviews.create')
+        ->middleware('permission:review.review.manage,review.review.create')
         ->name('reviews.store');
     Route::patch('reviews/{review}', [ReviewController::class, 'update'])
-        ->middleware('ability:reviews.manage')
+        ->middleware('permission:review.review.manage')
         ->name('reviews.update');
     Route::patch('reviews/{review}/toggle-visibility', [ReviewController::class, 'toggleVisibility'])
-        ->middleware('ability:reviews.manage')
+        ->middleware('permission:review.review.manage')
         ->name('reviews.toggle-visibility');
     Route::delete('reviews/{review}', [ReviewController::class, 'destroy'])
-        ->middleware('ability:reviews.manage')
+        ->middleware('permission:review.review.manage')
         ->name('reviews.destroy');
 
     // Appointments
     Route::get('appointments', [AppointmentController::class, 'indexPage'])
-        ->middleware('ability:appointments.view,appointments.view_own')
+        ->middleware('permission:appointment.appointment.view,appointment.appointment.view_own')
         ->name('appointments.index');
     Route::get('appointments/create', [AppointmentController::class, 'createPage'])
-        ->middleware('ability:appointments.manage,appointments.view_own')
+        ->middleware('permission:appointment.appointment.manage,appointment.appointment.view_own')
         ->name('appointments.create');
     Route::post('appointments', [AppointmentController::class, 'store'])
-        ->middleware('ability:appointments.manage,appointments.view_own')
+        ->middleware('permission:appointment.appointment.manage,appointment.appointment.view_own')
         ->name('appointments.store');
     Route::get('appointments/{appointment}/edit', [AppointmentController::class, 'editPage'])
-        ->middleware('ability:appointments.manage')
+        ->middleware('permission:appointment.appointment.manage')
         ->name('appointments.edit');
     Route::put('appointments/{appointment}', [AppointmentController::class, 'update'])
-        ->middleware('ability:appointments.manage')
+        ->middleware('permission:appointment.appointment.manage')
         ->name('appointments.update');
     Route::delete('appointments/{appointment}', [AppointmentController::class, 'destroy'])
-        ->middleware('ability:appointments.manage')
+        ->middleware('permission:appointment.appointment.manage')
         ->name('appointments.destroy');
 
-    // Legacy redirect
     Route::redirect('users', '/access-control/users')
-        ->middleware('ability:users.view');
+        ->middleware('permission:rbac.user.view');
 
-    // Customers
+    // Access control
+    Route::get('access-control/permissions', [\App\Http\Controllers\Api\Role\PermissionController::class, 'indexPage'])
+        ->middleware('permission:rbac.permission.view')
+        ->name('access-control.permissions.index');
+
+    Route::get('access-control/roles/create', [RoleController::class, 'createPage'])
+        ->middleware('permission:rbac.role.create')
+        ->name('access-control.roles.create');
+    Route::get('access-control/roles/{role}/edit', [RoleController::class, 'editPage'])
+        ->middleware('permission:rbac.role.update')
+        ->name('access-control.roles.edit');
+    Route::get('access-control/roles', [RoleController::class, 'indexPage'])
+        ->middleware('permission:rbac.role.view')
+        ->name('access-control.roles.index');
+    Route::post('access-control/roles', [RoleController::class, 'store'])
+        ->middleware('permission:rbac.role.create')
+        ->name('access-control.roles.store');
+    Route::put('access-control/roles/{role}', [RoleController::class, 'update'])
+        ->middleware('permission:rbac.role.update')
+        ->name('access-control.roles.update');
+    Route::delete('access-control/roles/{role}', [RoleController::class, 'destroy'])
+        ->middleware('permission:rbac.role.delete')
+        ->name('access-control.roles.destroy');
+
+    Route::get('access-control/users', [UserController::class, 'accessControlIndexPage'])
+        ->middleware('permission:rbac.user.view')
+        ->name('access-control.users.index');
+    Route::post('access-control/users', [UserController::class, 'store'])
+        ->middleware('permission:rbac.user.create')
+        ->name('access-control.users.store');
+    Route::put('access-control/users/{user}', [UserController::class, 'update'])
+        ->middleware('permission:rbac.user.update')
+        ->name('access-control.users.update');
+    Route::delete('access-control/users/{user}', [UserController::class, 'destroy'])
+        ->middleware('permission:rbac.user.delete')
+        ->name('access-control.users.destroy');
+    Route::patch('access-control/users/{user}/assign-role', [UserController::class, 'assignRole'])
+        ->middleware('permission:rbac.user.assign_role')
+        ->name('access-control.users.assign-role');
+
     Route::get('customers', [CustomerController::class, 'indexPage'])
-        ->middleware('ability:users.view')
+        ->middleware('permission:customer.customer.view')
         ->name('customers.index');
     Route::get('customers/{customer}', [CustomerController::class, 'show'])
-        ->middleware('ability:users.view')
+        ->middleware('permission:customer.customer.view')
         ->name('customers.show');
     Route::post('customers', [CustomerController::class, 'store'])
-        ->middleware('ability:users.create')
+        ->middleware('permission:customer.customer.create')
         ->name('customers.store');
     Route::put('customers/{customer}', [CustomerController::class, 'update'])
-        ->middleware('ability:users.update')
+        ->middleware('permission:customer.customer.update')
         ->name('customers.update');
     Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])
-        ->middleware('ability:users.delete')
+        ->middleware('permission:customer.customer.delete')
         ->name('customers.destroy');
 
-    Route::middleware('ability:users.view')->group(function () {
+    Route::middleware('permission:customer.customer.view')->group(function () {
         Route::post('customers/{customer}/social-links', [CustomerSocialController::class, 'store'])
             ->name('customers.social-links.store');
         Route::put('customers/{customer}/social-links/{id}', [CustomerSocialController::class, 'update'])
@@ -325,140 +363,110 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Cards (code + QR workflow)
     Route::get('cards', [CardCodeController::class, 'indexPage'])
-        ->middleware('ability:dashboard.card.view')
+        ->middleware('permission:card.card.view')
         ->name('cards.index');
     Route::get('cards/generate', [CardCodeController::class, 'generateCode'])
-        ->middleware('ability:dashboard.card.manage')
+        ->middleware('permission:card.card.manage')
         ->name('cards.generate');
     Route::post('cards', [CardCodeController::class, 'store'])
-        ->middleware('ability:dashboard.card.manage')
+        ->middleware('permission:card.card.manage')
         ->name('cards.store');
     Route::get('cards/search-users', [CardCodeController::class, 'searchUsers'])
-        ->middleware('ability:dashboard.card.manage')
+        ->middleware('permission:card.card.manage')
         ->name('cards.search-users');
     Route::delete('cards/{cardCode}', [CardCodeController::class, 'destroy'])
-        ->middleware('ability:dashboard.card.manage')
+        ->middleware('permission:card.card.manage')
         ->name('cards.destroy');
     Route::patch('cards/{cardCode}/assign-user', [CardCodeController::class, 'assignUser'])
-        ->middleware('ability:dashboard.card.manage')
+        ->middleware('permission:card.card.manage')
         ->name('cards.assign-user');
 
     Route::redirect('cards/codes', '/cards');
     Route::redirect('cards/codes/generate', '/cards/generate');
     Route::redirect('cards/codes/search-users', '/cards/search-users');
 
-    // Access control
-    Route::get('access-control/roles', [RoleController::class, 'indexPage'])
-        ->middleware('ability:roles.manage')
-        ->name('access-control.roles.index');
-    Route::post('access-control/roles', [RoleController::class, 'store'])
-        ->middleware('ability:roles.manage')
-        ->name('access-control.roles.store');
-    Route::put('access-control/roles/{role}', [RoleController::class, 'update'])
-        ->middleware('ability:roles.manage')
-        ->name('access-control.roles.update');
-    Route::delete('access-control/roles/{role}', [RoleController::class, 'destroy'])
-        ->middleware('ability:roles.manage')
-        ->name('access-control.roles.destroy');
-
-    Route::get('access-control/users', [UserController::class, 'accessControlIndexPage'])
-        ->middleware('ability:users.view')
-        ->name('access-control.users.index');
-    Route::post('access-control/users', [UserController::class, 'store'])
-        ->middleware('ability:users.create')
-        ->name('access-control.users.store');
-    Route::put('access-control/users/{user}', [UserController::class, 'update'])
-        ->middleware('ability:users.update')
-        ->name('access-control.users.update');
-    Route::delete('access-control/users/{user}', [UserController::class, 'destroy'])
-        ->middleware('ability:users.delete')
-        ->name('access-control.users.destroy');
-    Route::patch('access-control/users/{user}/assign-role', [UserController::class, 'assignRole'])
-        ->middleware('ability:users.assign_role')
-        ->name('access-control.users.assign-role');
-
     Route::redirect('settings', '/settings/general')
-        ->middleware('ability:settings.manage')
+        ->middleware('permission:settings.general.manage')
         ->name('settings.index');
     Route::get('settings/{group}', [SettingsController::class, 'show'])
-        ->middleware('ability:settings.manage')
+        ->middleware('permission:settings.general.manage')
         ->whereIn('group', ['general'])
         ->name('settings.show');
     Route::match(['post', 'patch'], 'settings/{group}', [SettingsController::class, 'update'])
-        ->middleware('ability:settings.manage')
+        ->middleware('permission:settings.general.manage')
         ->whereIn('group', ['general', 'branding', 'business', 'social', 'email'])
         ->name('settings.update');
 
     Route::prefix('admin/offer-tickers')->name('offer-tickers.')->group(function () {
         Route::get('/', [OfferTickerController::class, 'indexPage'])
-            ->middleware('ability:offer_tickers.view')
+            ->middleware('permission:cms.offer_ticker.view')
             ->name('index');
         Route::get('create', [OfferTickerController::class, 'createPage'])
-            ->middleware('ability:offer_tickers.manage')
+            ->middleware('permission:cms.offer_ticker.manage')
             ->name('create');
         Route::post('/', [OfferTickerController::class, 'store'])
-            ->middleware('ability:offer_tickers.manage')
+            ->middleware('permission:cms.offer_ticker.manage')
             ->name('store');
         Route::get('{offerTicker}/edit', [OfferTickerController::class, 'editPage'])
-            ->middleware('ability:offer_tickers.manage')
+            ->middleware('permission:cms.offer_ticker.manage')
             ->name('edit');
         Route::put('{offerTicker}', [OfferTickerController::class, 'update'])
-            ->middleware('ability:offer_tickers.manage')
+            ->middleware('permission:cms.offer_ticker.manage')
             ->name('update');
         Route::patch('{offerTicker}/toggle-active', [OfferTickerController::class, 'toggleActive'])
-            ->middleware('ability:offer_tickers.manage')
+            ->middleware('permission:cms.offer_ticker.manage')
             ->name('toggle-active');
         Route::delete('{offerTicker}', [OfferTickerController::class, 'destroy'])
-            ->middleware('ability:offer_tickers.manage')
+            ->middleware('permission:cms.offer_ticker.manage')
             ->name('destroy');
     });
 
     Route::prefix('admin/site-social')->name('site-social.')->group(function () {
         Route::get('/', [SiteSocialController::class, 'indexPage'])
-            ->middleware('ability:site_social.view')
+            ->middleware('permission:cms.site_social.view')
             ->name('index');
         Route::get('create', [SiteSocialController::class, 'createPage'])
-            ->middleware('ability:site_social.manage')
+            ->middleware('permission:cms.site_social.manage')
             ->name('create');
         Route::post('/', [SiteSocialController::class, 'store'])
-            ->middleware('ability:site_social.manage')
+            ->middleware('permission:cms.site_social.manage')
             ->name('store');
         Route::get('{siteSocialLink}/edit', [SiteSocialController::class, 'editPage'])
-            ->middleware('ability:site_social.manage')
+            ->middleware('permission:cms.site_social.manage')
             ->name('edit');
         Route::put('{siteSocialLink}', [SiteSocialController::class, 'update'])
-            ->middleware('ability:site_social.manage')
+            ->middleware('permission:cms.site_social.manage')
             ->name('update');
         Route::patch('{siteSocialLink}/toggle-active', [SiteSocialController::class, 'toggleActive'])
-            ->middleware('ability:site_social.manage')
+            ->middleware('permission:cms.site_social.manage')
             ->name('toggle-active');
         Route::patch('{siteSocialLink}/toggle-floating', [SiteSocialController::class, 'toggleFloating'])
-            ->middleware('ability:site_social.manage')
+            ->middleware('permission:cms.site_social.manage')
             ->name('toggle-floating');
         Route::delete('{siteSocialLink}', [SiteSocialController::class, 'destroy'])
-            ->middleware('ability:site_social.manage')
+            ->middleware('permission:cms.site_social.manage')
             ->name('destroy');
     });
 
     Route::redirect('admin/cms', '/admin/cms/index')
-        ->middleware('ability:cms.view')
+        ->middleware('permission:cms.section.view')
         ->name('admin.cms.redirect');
     Route::get('admin/cms/index', [CmsController::class, 'indexPage'])
-        ->middleware('ability:cms.view')
+        ->middleware('permission:cms.section.view')
         ->name('admin.cms.index');
     Route::get('admin/cms/{key}', [CmsController::class, 'editPage'])
-        ->middleware('ability:cms.view')
+        ->middleware('permission:cms.section.view')
         ->where('key', '[a-z0-9._]+')
         ->name('admin.cms.edit');
     Route::put('admin/cms/{key}', [CmsController::class, 'update'])
-        ->middleware('ability:cms.manage')
+        ->middleware('permission:cms.section.manage')
         ->where('key', '[a-z0-9._]+')
         ->name('admin.cms.update');
     Route::post('admin/cms/upload', [CmsController::class, 'upload'])
-        ->middleware('ability:cms.manage')
+        ->middleware('permission:cms.section.manage')
         ->name('admin.cms.upload');
 
-    Route::middleware('ability:profile.manage')->group(function () {
+    Route::middleware('permission:profile.social.manage,profile.service.manage,profile.template.manage')->group(function () {
         Route::get('profile/social', [ProfileSocialController::class, 'indexPage'])
             ->name('profile.social.index');
         Route::post('profile/social', [ProfileSocialController::class, 'store'])

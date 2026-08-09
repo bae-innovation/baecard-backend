@@ -41,7 +41,7 @@ type OfferTickersPageProps = {
 
 export function OfferTickersPage({ offerTickers }: OfferTickersPageProps) {
   const { hasAbility } = useAuth();
-  const canManage = hasAbility('offer_tickers.manage');
+  const canManage = hasPermission('cms.offer_ticker.manage');
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(offerTickers, ['offerTickers']);
   const [globalFilter, setGlobalFilter] = React.useState('');

@@ -63,8 +63,8 @@ type AppointmentsPageProps = {
 
 export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
   const { hasAbility } = useAuth();
-  const canManage = hasAbility('appointments.manage');
-  const canCreate = canManage || hasAbility('appointments.view_own');
+  const canManage = hasPermission('appointment.appointment.manage');
+  const canCreate = canManage || hasPermission('appointment.appointment.view_own');
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(appointments, ['appointments']);
   const [globalFilter, setGlobalFilter] = React.useState('');

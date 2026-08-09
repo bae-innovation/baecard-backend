@@ -1,105 +1,105 @@
 import type { Permissions } from '@/schemas/auth.schema';
 
-/** Mirrors baecard-backend/config/role_abilities.php */
-const ROLE_ABILITIES: Record<string, readonly string[]> = {
-  'dashboard.view': ['SuperAdmin', 'Admin'],
-  'users.view': ['SuperAdmin', 'Admin', 'Marketing'],
-  'users.create': ['SuperAdmin', 'Admin'],
-  'users.update': ['SuperAdmin', 'Admin'],
-  'users.delete': ['SuperAdmin', 'Admin'],
-  'users.assign_role': ['SuperAdmin', 'Admin'],
-  'roles.manage': ['SuperAdmin', 'Admin'],
-  'dashboard.card.view': ['SuperAdmin', 'Admin', 'Marketing'],
-  'dashboard.card.manage': ['SuperAdmin', 'Admin'],
-  'dashboard.card.generate': ['SuperAdmin', 'Admin'],
-  'dashboard.card.regenerate': ['SuperAdmin'],
-  'contacts.view': ['SuperAdmin', 'Admin'],
-  'contacts.view_own': ['User'],
-  'contacts.create': ['User'],
-  'contacts.delete': ['SuperAdmin', 'Admin'],
-  'products.view': ['SuperAdmin', 'Admin', 'Marketing', 'User'],
-  'products.manage': ['SuperAdmin', 'Admin', 'Marketing'],
-  'reviews.view': ['SuperAdmin', 'Admin'],
-  'reviews.view_own': ['User'],
-  'reviews.create': ['User'],
-  'reviews.manage': ['SuperAdmin', 'Admin'],
-  'vendors.view': ['SuperAdmin', 'Admin', 'Marketing'],
-  'vendors.manage': ['SuperAdmin', 'Admin', 'Marketing'],
-  'orders.view': ['SuperAdmin', 'Admin', 'Marketing'],
-  'orders.manage': ['SuperAdmin', 'Admin'],
-  'appointments.view': ['SuperAdmin', 'Admin', 'Marketing'],
-  'appointments.manage': ['SuperAdmin', 'Admin', 'Marketing'],
-  'appointments.view_own': ['User'],
-  'profile.manage': ['User'],
-  'settings.manage': ['SuperAdmin', 'Admin'],
-  'cms.view': ['SuperAdmin', 'Admin'],
-  'cms.manage': ['SuperAdmin', 'Admin'],
-  'offer_tickers.view': ['SuperAdmin', 'Admin', 'Marketing'],
-  'offer_tickers.manage': ['SuperAdmin', 'Admin', 'Marketing'],
-  'site_social.view': ['SuperAdmin', 'Admin', 'Marketing'],
-  'site_social.manage': ['SuperAdmin', 'Admin', 'Marketing'],
-};
+export function hasPermission(
+  permissions: readonly { name: string }[],
+  permission: string,
+): boolean {
+  const names = permissions.map((item) => item.name);
 
-export function derivePermissionsFromRoles(
-  roleNames: readonly string[],
-): Permissions {
-  const roleSet = new Set(roleNames);
-  const permissions: Permissions = [];
-  let id = 1;
+  return matchesPermission(names, permission);
+}
 
-  for (const [ability, allowedRoles] of Object.entries(ROLE_ABILITIES)) {
-    if (allowedRoles.some((role) => roleSet.has(role))) {
-      permissions.push({ id: id++, name: ability });
+export function hasAnyPermission(
+  permissions: readonly { name: string }[],
+  required: readonly string[],
+): boolean {
+  return required.some((permission) => hasPermission(permissions, permission));
+}
+
+export function matchesPermission(
+  userPermissions: readonly string[],
+  required: string,
+): boolean {
+  if (userPermissions.includes(required)) {
+    return true;
+  }
+
+  if (userPermissions.includes('*')) {
+    return true;
+  }
+
+  const parts = required.split('.');
+
+  for (let index = parts.length - 1; index > 0; index -= 1) {
+    const wildcard = `${parts.slice(0, index).join('.')}.*`;
+
+    if (userPermissions.includes(wildcard)) {
+      return true;
     }
   }
 
-  return permissions;
+  return false;
 }
 
+export function hasPermissionForUser(
+  permissions: readonly { name: string }[],
+  permission: string,
+): boolean {
+  return hasPermission(permissions, permission);
+}
+
+export function hasAnyPermissionForUser(
+  permissions: readonly { name: string }[],
+  required: readonly string[],
+): boolean {
+  return hasAnyPermission(permissions, required);
+}
+
+/** @deprecated Use hasPermission */
 export function hasAbility(
   permissions: readonly { name: string }[],
   ability: string,
 ): boolean {
-  return permissions.some((permission) => permission.name === ability);
+  return hasPermission(permissions, ability);
 }
 
-/** Use stored permissions, or derive from roles when the persisted session is stale. */
-export function resolvePermissions(
+/** @deprecated Use hasAnyPermission */
+export function hasAnyAbility(
   permissions: readonly { name: string }[],
-  roleNames: readonly string[] | undefined,
-): Permissions {
-  const derived = derivePermissionsFromRoles(roleNames ?? []);
-
-  if (permissions.length === 0) {
-    return derived;
-  }
-
-  if ((roleNames?.length ?? 0) === 0) {
-    return permissions as Permissions;
-  }
-
-  const abilityNames = new Set<string>([
-    ...permissions.map((permission) => permission.name),
-    ...derived.map((permission) => permission.name),
-  ]);
-
-  return [...abilityNames].map((name, index) => ({ id: index + 1, name }));
-}
-
-export function hasAbilityForUser(
-  permissions: readonly { name: string }[],
-  roleNames: readonly string[] | undefined,
-  ability: string,
-): boolean {
-  return hasAbility(resolvePermissions(permissions, roleNames), ability);
-}
-
-export function hasAnyAbilityForUser(
-  permissions: readonly { name: string }[],
-  roleNames: readonly string[] | undefined,
   abilities: readonly string[],
 ): boolean {
-  return abilities.some((ability) =>
-    hasAbilityForUser(permissions, roleNames, ability),
-  );
+  return hasAnyPermission(permissions, abilities);
+}
+
+/** @deprecated Use hasPermissionForUser */
+export function hasAbilityForUser(
+  permissions: readonly { name: string }[],
+  _roleNames: readonly string[] | undefined,
+  ability: string,
+): boolean {
+  return hasPermission(permissions, ability);
+}
+
+/** @deprecated Use hasAnyPermissionForUser */
+export function hasAnyAbilityForUser(
+  permissions: readonly { name: string }[],
+  _roleNames: readonly string[] | undefined,
+  abilities: readonly string[],
+): boolean {
+  return hasAnyPermission(permissions, abilities);
+}
+
+/** @deprecated Permissions now come from the database only. */
+export function derivePermissionsFromRoles(
+  _roleNames: readonly string[],
+): Permissions {
+  return [];
+}
+
+/** @deprecated Permissions now come from the database only. */
+export function resolvePermissions(
+  permissions: readonly { name: string }[],
+  _roleNames: readonly string[] | undefined,
+): Permissions {
+  return permissions as Permissions;
 }

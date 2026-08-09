@@ -9,7 +9,7 @@ use App\Http\Requests\Review\UpdateReviewRequest;
 use App\Models\Review;
 use App\Services\ReviewService;
 use App\Support\InertiaData;
-use App\Support\RoleAbility;
+use App\Support\PermissionResolver;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -26,9 +26,9 @@ class ReviewController extends Controller
         $user = $request->user();
         $query = Review::with(['user:id,name']);
 
-        if ($user && RoleAbility::allows($user, 'reviews.view')) {
+        if ($user && PermissionResolver::allows($user, 'review.review.view')) {
             // Staff sees all reviews.
-        } elseif ($user && RoleAbility::allows($user, 'reviews.view_own')) {
+        } elseif ($user && PermissionResolver::allows($user, 'review.review.view_own')) {
             $query->where('user_id', $user->id);
         } else {
             $query->where('is_visible', true);
@@ -45,7 +45,7 @@ class ReviewController extends Controller
     {
         $user = request()->user();
 
-        if ($user && RoleAbility::allows($user, 'reviews.view')) {
+        if ($user && PermissionResolver::allows($user, 'review.review.view')) {
             return $this->reviewService->listAdmin();
         }
 

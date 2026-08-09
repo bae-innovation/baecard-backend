@@ -4,6 +4,7 @@ export const roleSchema = z.object({
   id: z.number(),
   name: z.string(),
   guard_name: z.string().optional(),
+  permissions_count: z.number().optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 });

@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Appointment;
-use App\Support\RoleAbility;
+use App\Support\PermissionResolver;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 
@@ -16,7 +16,7 @@ class AppointmentService
         $user = request()->user();
         $query = Appointment::with(['customer:id,name,email', 'creator:id,name']);
 
-        if ($user && ! RoleAbility::allows($user, 'appointments.view')) {
+        if ($user && ! PermissionResolver::allows($user, 'appointment.appointment.view')) {
             $query->where('customer_id', $user->id);
         }
 
@@ -75,7 +75,7 @@ class AppointmentService
             return $this->errorResponse('Customer is required.', null, 422);
         }
 
-        if ($user && ! RoleAbility::allows($user, 'appointments.manage') && $user->id !== (int) $customerId) {
+        if ($user && ! PermissionResolver::allows($user, 'appointment.appointment.manage') && $user->id !== (int) $customerId) {
             return $this->forbiddenResponse('You can only create appointments for yourself.');
         }
 
@@ -112,7 +112,7 @@ class AppointmentService
             return $this->forbiddenResponse('You are not allowed to update this appointment.');
         }
 
-        if ($user && ! RoleAbility::allows($user, 'appointments.manage')) {
+        if ($user && ! PermissionResolver::allows($user, 'appointment.appointment.manage')) {
             unset($data['customer_id'], $data['status']);
         }
 
@@ -145,7 +145,7 @@ class AppointmentService
 
     private function canAccess($user, Appointment $appointment): bool
     {
-        if (RoleAbility::allows($user, 'appointments.view')) {
+        if (PermissionResolver::allows($user, 'appointment.appointment.view')) {
             return true;
         }
 
@@ -154,6 +154,6 @@ class AppointmentService
 
     private function canManage($user, Appointment $appointment): bool
     {
-        return RoleAbility::allows($user, 'appointments.manage');
+        return PermissionResolver::allows($user, 'appointment.appointment.manage');
     }
 }

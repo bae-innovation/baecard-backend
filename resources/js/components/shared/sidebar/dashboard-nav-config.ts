@@ -1,9 +1,11 @@
 import type { NavItem } from '@/components/shared/sidebar/nav-main';
 import {
+  BarChart3,
   Briefcase,
   Calendar,
   CreditCard,
   Globe,
+  KeyRound,
   LayoutDashboard,
   LayoutTemplate,
   Megaphone,
@@ -28,56 +30,71 @@ const buildTemplateNav = (activeTemplate?: number): NavItem[] => [
     url: '/profile/templates/1',
     icon: LayoutTemplate,
     activeIndicator: activeTemplate === 1,
-    requiredAbilities: ['profile.manage'],
+    requiredPermissions: ['profile.template.manage'],
   },
   {
     title: 'Classic Dark',
     url: '/profile/templates/2',
     icon: LayoutTemplate,
     activeIndicator: activeTemplate === 2,
-    requiredAbilities: ['profile.manage'],
+    requiredPermissions: ['profile.template.manage'],
   },
   {
     title: 'Modern Light',
     url: '/profile/templates/3',
     icon: LayoutTemplate,
     activeIndicator: activeTemplate === 3,
-    requiredAbilities: ['profile.manage'],
+    requiredPermissions: ['profile.template.manage'],
   },
   {
     title: 'Modern Dark',
     url: '/profile/templates/4',
     icon: LayoutTemplate,
     activeIndicator: activeTemplate === 4,
-    requiredAbilities: ['profile.manage'],
+    requiredPermissions: ['profile.template.manage'],
   },
 ];
 
 const TEMPLATE_NAV: NavItem[] = [
   {
     title: 'Dashboard',
-    url: '/dashboard',
+    url: '.',
     icon: LayoutDashboard,
-    requiredAbilities: ['dashboard.view'],
+    isActive: true,
+    requiredPermissions: ['dashboard.analytics.view'],
+    items: [
+      {
+        title: 'Analytics',
+        url: '/dashboard',
+        icon: BarChart3,
+        requiredPermissions: ['dashboard.analytics.view'],
+      },
+    ],
   },
   {
     title: 'Access Control',
     url: '.',
     icon: Shield,
     isActive: true,
-    requiredAbilities: ['users.view', 'roles.manage'],
+    requiredPermissions: ['rbac.role.view', 'rbac.user.view', 'rbac.permission.view'],
     items: [
       {
         title: 'Roles',
         url: '/access-control/roles',
         icon: ShieldCheck,
-        requiredAbilities: ['roles.manage'],
+        requiredPermissions: ['rbac.role.view'],
       },
       {
         title: 'Users',
         url: '/access-control/users',
         icon: UserCog,
-        requiredAbilities: ['users.view'],
+        requiredPermissions: ['rbac.user.view'],
+      },
+      {
+        title: 'Permissions',
+        url: '/access-control/permissions',
+        icon: KeyRound,
+        requiredPermissions: ['rbac.permission.view'],
       },
     ],
   },
@@ -85,13 +102,13 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Customer Management',
     url: '.',
     icon: UserRound,
-    requiredAbilities: ['users.view'],
+    requiredPermissions: ['customer.customer.view'],
     items: [
       {
         title: 'Customers',
         url: '/customers',
         icon: UserRound,
-        requiredAbilities: ['users.view'],
+        requiredPermissions: ['customer.customer.view'],
       },
     ],
   },
@@ -99,13 +116,13 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Products',
     url: '.',
     icon: Package,
-    requiredAbilities: ['products.view'],
+    requiredPermissions: ['product.product.view'],
     items: [
       {
         title: 'Products',
         url: '/admin/products',
         icon: Package,
-        requiredAbilities: ['products.view'],
+        requiredPermissions: ['product.product.view'],
       },
     ],
   },
@@ -113,13 +130,13 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Vendors',
     url: '.',
     icon: Store,
-    requiredAbilities: ['vendors.view'],
+    requiredPermissions: ['vendor.vendor.view'],
     items: [
       {
         title: 'Vendors',
         url: '/vendors',
         icon: Store,
-        requiredAbilities: ['vendors.view'],
+        requiredPermissions: ['vendor.vendor.view'],
       },
     ],
   },
@@ -127,13 +144,13 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Orders',
     url: '.',
     icon: ShoppingCart,
-    requiredAbilities: ['orders.view'],
+    requiredPermissions: ['order.order.view'],
     items: [
       {
         title: 'Order List',
         url: '/orders',
         icon: ShoppingCart,
-        requiredAbilities: ['orders.view'],
+        requiredPermissions: ['order.order.view'],
       },
     ],
   },
@@ -141,13 +158,13 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Card Management',
     url: '.',
     icon: CreditCard,
-    requiredAbilities: ['dashboard.card.view'],
+    requiredPermissions: ['card.card.view'],
     items: [
       {
         title: 'Cards',
         url: '/cards',
         icon: CreditCard,
-        requiredAbilities: ['dashboard.card.view'],
+        requiredPermissions: ['card.card.view'],
       },
     ],
   },
@@ -155,13 +172,13 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Appointments',
     url: '.',
     icon: Calendar,
-    requiredAbilities: ['appointments.view', 'appointments.view_own'],
+    requiredPermissions: ['appointment.appointment.view', 'appointment.appointment.view_own'],
     items: [
       {
         title: 'Appointments',
         url: '/appointments',
         icon: Calendar,
-        requiredAbilities: ['appointments.view', 'appointments.view_own'],
+        requiredPermissions: ['appointment.appointment.view', 'appointment.appointment.view_own'],
       },
     ],
   },
@@ -169,13 +186,13 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Contacts',
     url: '.',
     icon: MessageSquare,
-    requiredAbilities: ['contacts.view', 'contacts.view_own'],
+    requiredPermissions: ['contact.contact.view', 'contact.contact.view_own'],
     items: [
       {
         title: 'Contact Messages',
         url: '/contacts',
         icon: MessageSquare,
-        requiredAbilities: ['contacts.view', 'contacts.view_own'],
+        requiredPermissions: ['contact.contact.view', 'contact.contact.view_own'],
       },
     ],
   },
@@ -183,13 +200,13 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Reviews',
     url: '.',
     icon: Star,
-    requiredAbilities: ['reviews.view', 'reviews.view_own'],
+    requiredPermissions: ['review.review.view', 'review.review.view_own'],
     items: [
       {
         title: 'Reviews',
         url: '/reviews',
         icon: Star,
-        requiredAbilities: ['reviews.view', 'reviews.view_own'],
+        requiredPermissions: ['review.review.view', 'review.review.view_own'],
       },
     ],
   },
@@ -197,19 +214,19 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Profile Management',
     url: '.',
     icon: UserRound,
-    requiredAbilities: ['profile.manage'],
+    requiredPermissions: ['profile.social.manage', 'profile.service.manage', 'profile.template.manage'],
     items: [
       {
         title: 'Social Links',
         url: '/profile/social',
         icon: Share2,
-        requiredAbilities: ['profile.manage'],
+        requiredPermissions: ['profile.social.manage'],
       },
       {
         title: 'My Services',
         url: '/profile/services',
         icon: Briefcase,
-        requiredAbilities: ['profile.manage'],
+        requiredPermissions: ['profile.service.manage'],
       },
     ],
   },
@@ -217,32 +234,32 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Template Management',
     url: '.',
     icon: LayoutTemplate,
-    requiredAbilities: ['profile.manage'],
+    requiredPermissions: ['profile.template.manage'],
     items: buildTemplateNav(),
   },
   {
     title: 'Website CMS',
     url: '.',
     icon: Globe,
-    requiredAbilities: ['cms.view', 'offer_tickers.view', 'site_social.view'],
+    requiredPermissions: ['cms.section.view', 'cms.offer_ticker.view', 'cms.site_social.view'],
     items: [
       {
         title: 'CMS Sections',
         url: '/admin/cms/index',
         icon: Globe,
-        requiredAbilities: ['cms.view'],
+        requiredPermissions: ['cms.section.view'],
       },
       {
         title: 'Offer Ticker',
         url: '/admin/offer-tickers',
         icon: Megaphone,
-        requiredAbilities: ['offer_tickers.view'],
+        requiredPermissions: ['cms.offer_ticker.view'],
       },
       {
         title: 'Social Management',
         url: '/admin/site-social',
         icon: Share2,
-        requiredAbilities: ['site_social.view'],
+        requiredPermissions: ['cms.site_social.view'],
       },
     ],
   },
@@ -250,13 +267,13 @@ const TEMPLATE_NAV: NavItem[] = [
     title: 'Settings',
     url: '.',
     icon: Settings,
-    requiredAbilities: ['settings.manage'],
+    requiredPermissions: ['settings.general.manage'],
     items: [
       {
         title: 'General',
         url: '/settings/general',
         icon: Globe,
-        requiredAbilities: ['settings.manage'],
+        requiredPermissions: ['settings.general.manage'],
       },
     ],
   },
@@ -298,18 +315,21 @@ export function getDashboardNav(activeTemplate?: number): NavItem[] {
   );
 }
 
-export function filterNavByAbilities(
+export function filterNavByPermissions(
   items: ReadonlyArray<NavItem>,
-  hasAnyAbility: (abilities: readonly string[]) => boolean,
+  hasAnyPermission: (permissions: readonly string[]) => boolean,
 ): NavItem[] {
   return items
     .map((item) => {
       const filteredChildren = item.items
-        ? filterNavByAbilities(item.items, hasAnyAbility)
+        ? filterNavByPermissions(item.items, hasAnyPermission)
         : undefined;
 
+      const required =
+        item.requiredPermissions ?? item.requiredAbilities ?? [];
+
       if (!item.alwaysVisible) {
-        if (item.requiredAbilities && !hasAnyAbility(item.requiredAbilities)) {
+        if (required.length > 0 && !hasAnyPermission(required)) {
           return null;
         }
 
@@ -325,3 +345,6 @@ export function filterNavByAbilities(
     })
     .filter((item): item is NavItem => item !== null);
 }
+
+/** @deprecated Use filterNavByPermissions */
+export const filterNavByAbilities = filterNavByPermissions;

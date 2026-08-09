@@ -59,8 +59,8 @@ type ReviewsPageProps = {
 
 export function ReviewsPage({ reviews }: ReviewsPageProps) {
   const { hasAbility, user } = useAuth();
-  const canManage = hasAbility('reviews.manage');
-  const canCreate = canManage || hasAbility('reviews.create');
+  const canManage = hasPermission('review.review.manage');
+  const canCreate = canManage || hasPermission('review.review.create');
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(reviews, ['reviews']);
   const [globalFilter, setGlobalFilter] = React.useState('');

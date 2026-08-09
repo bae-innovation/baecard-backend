@@ -23,7 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'ability' => \App\Http\Middleware\EnsureRoleAbility::class,
+            'permission' => \App\Http\Middleware\EnsurePermission::class,
+            'ability' => \App\Http\Middleware\EnsurePermission::class,
         ]);
 
         $middleware->redirectGuestsTo(function (Request $request) {

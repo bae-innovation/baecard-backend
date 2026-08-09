@@ -1,51 +1,47 @@
 import { usePage } from '@inertiajs/react';
 
 import type { SharedPageProps } from '@/types/inertia';
-import { hasAbilityForUser, hasAnyAbilityForUser } from '@/lib/permissions';
+import {
+  hasAnyPermissionForUser,
+  hasPermissionForUser,
+  matchesPermission,
+} from '@/lib/permissions';
 
 export function useAuth() {
-    const { auth } = usePage<{ auth: SharedPageProps['auth'] }>().props;
+  const { auth } = usePage<{ auth: SharedPageProps['auth'] }>().props;
+  const permissionNames = auth.permissions.map((permission) => permission.name);
 
-    return {
-        user: auth.user,
-        permissions: auth.permissions,
-        isAuthenticated: () => auth.user !== null,
-        hasAbility: (ability: string) =>
-            hasAbilityForUser(
-                auth.permissions,
-                auth.user?.roles?.map((role) => role.name),
-                ability,
-            ),
-        hasAnyAbility: (abilities: readonly string[]) =>
-            hasAnyAbilityForUser(
-                auth.permissions,
-                auth.user?.roles?.map((role) => role.name),
-                abilities,
-            ),
-        homeHref: resolveHomeHref(
-            auth.permissions,
-            auth.user?.roles?.map((role) => role.name),
-            auth.user?.active_template,
-        ),
-    };
+  return {
+    user: auth.user,
+    permissions: auth.permissions,
+    isAuthenticated: () => auth.user !== null,
+    hasPermission: (permission: string) =>
+      hasPermissionForUser(auth.permissions, permission),
+    hasAnyPermission: (permissions: readonly string[]) =>
+      hasAnyPermissionForUser(auth.permissions, permissions),
+    hasAbility: (permission: string) =>
+      hasPermissionForUser(auth.permissions, permission),
+    hasAnyAbility: (permissions: readonly string[]) =>
+      hasAnyPermissionForUser(auth.permissions, permissions),
+    homeHref: resolveHomeHref(permissionNames, auth.user?.active_template),
+  };
 }
 
 function resolveHomeHref(
-    permissions: readonly { name: string }[],
-    roleNames: readonly string[] | undefined,
-    activeTemplate: number | null | undefined,
+  permissions: readonly string[],
+  activeTemplate: number | null | undefined,
 ): string {
-    if (hasAbilityForUser(permissions, roleNames, 'dashboard.view')) {
-        return '/dashboard';
-    }
+  if (matchesPermission(permissions, 'dashboard.analytics.view')) {
+    return '/dashboard';
+  }
 
-    if (hasAbilityForUser(permissions, roleNames, 'orders.view')) {
-        return '/orders';
-    }
+  if (matchesPermission(permissions, 'order.order.view')) {
+    return '/orders';
+  }
 
-    if (hasAbilityForUser(permissions, roleNames, 'profile.manage')) {
-        return `/profile/templates/${activeTemplate ?? 1}`;
-    }
+  if (matchesPermission(permissions, 'profile.template.manage')) {
+    return `/profile/templates/${activeTemplate ?? 1}`;
+  }
 
-    return '/user/account';
+  return '/user/account';
 }

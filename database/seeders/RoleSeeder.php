@@ -3,23 +3,26 @@
 namespace Database\Seeders;
 
 use App\Enums\UserRole;
+use App\Support\PermissionCatalog;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 
 class RoleSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         foreach (UserRole::values() as $roleName) {
-            Role::firstOrCreate([
-                'name' => $roleName,
-                'guard_name' => UserRole::GUARD,
-            ]);
+            Role::query()->updateOrCreate(
+                [
+                    'name' => $roleName,
+                    'guard_name' => UserRole::GUARD,
+                ],
+                [
+                    'is_protected' => in_array($roleName, PermissionCatalog::PROTECTED_ROLES, true),
+                ],
+            );
         }
 
-        $this->command->info('Roles seeded successfully.');
+        $this->command?->info('Roles seeded successfully.');
     }
 }

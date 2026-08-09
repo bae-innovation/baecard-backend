@@ -62,7 +62,7 @@ type OrdersPageProps = {
 
 export function OrdersPage({ orders }: OrdersPageProps) {
   const { hasAbility } = useAuth();
-  const canManage = hasAbility('orders.manage');
+  const canManage = hasPermission('order.order.manage');
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(orders, ['orders']);
   const [globalFilter, setGlobalFilter] = React.useState('');

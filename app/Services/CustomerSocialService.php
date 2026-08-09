@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\CustomerSocial;
-use App\Support\RoleAbility;
+use App\Support\PermissionResolver;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 
@@ -87,6 +87,6 @@ class CustomerSocialService
             return true;
         }
 
-        return RoleAbility::allows($user, 'users.view');
+        return PermissionResolver::allows($user, 'customer.customer.view');
     }
 }

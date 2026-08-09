@@ -8,7 +8,7 @@ use App\Http\Requests\Contact\StoreContactRequest;
 use App\Models\Contact;
 use App\Services\ContactService;
 use App\Support\InertiaData;
-use App\Support\RoleAbility;
+use App\Support\PermissionResolver;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -25,7 +25,7 @@ class ContactController extends Controller
         $user = $request->user();
         $query = Contact::query()->latest();
 
-        if ($user && ! RoleAbility::allows($user, 'contacts.view')) {
+        if ($user && ! PermissionResolver::allows($user, 'contact.contact.view')) {
             $query->where('user_id', $user->id);
         }
 

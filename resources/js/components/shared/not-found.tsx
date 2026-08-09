@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
 export function NotFound() {
-  const { homeHref, hasAbility } = useAuth();
+  const { homeHref, hasPermission } = useAuth();
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
       <div className="mx-auto max-w-2xl px-4 py-8 text-center">
@@ -32,7 +32,7 @@ export function NotFound() {
             Quick access to main sections:
           </p>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {hasAbility('dashboard.view') ? (
+            {hasPermission('dashboard.analytics.view') ? (
               <Link
                 href="/dashboard"
                 className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
@@ -41,7 +41,7 @@ export function NotFound() {
                 <span className="text-sm font-medium">Dashboard</span>
               </Link>
             ) : null}
-            {hasAbility('users.view') ? (
+            {hasPermission('rbac.user.view') ? (
               <Link
                 href="/access-control/users"
                 className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
@@ -50,7 +50,7 @@ export function NotFound() {
                 <span className="text-sm font-medium">Users</span>
               </Link>
             ) : null}
-            {hasAbility('settings.manage') ? (
+            {hasPermission('settings.general.manage') ? (
               <Link
                 href="/settings/general"
                 className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
@@ -59,7 +59,7 @@ export function NotFound() {
                 <span className="text-sm font-medium">Settings</span>
               </Link>
             ) : null}
-            {hasAbility('orders.view') ? (
+            {hasPermission('order.order.view') ? (
               <Link
                 href="/orders"
                 className="flex flex-col items-center rounded-lg bg-white p-4 shadow-md hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"

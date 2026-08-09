@@ -12,7 +12,7 @@ import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 
 export function CmsEditPage({ key: entryKey, schema, entry, defaults }: CmsEditPageProps) {
   const { hasAbility } = useAuth();
-  const canManage = hasAbility('cms.manage');
+  const canManage = hasPermission('cms.section.manage');
   const catalog = getCatalogEntry(entryKey);
 
   const [label, setLabel] = React.useState(entry?.label ?? catalog?.label ?? entryKey);

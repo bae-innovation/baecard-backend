@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import {
   createColumnHelper,
   getCoreRowModel,
@@ -23,7 +23,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DeleteRoleDialog } from '@/features/roles/components/delete-role-dialog';
-import { RoleFormDialog } from '@/features/roles/components/role-form-dialog';
 import type { Role } from '@/features/roles/schemas/role.schema';
 import { useAuth } from '@/hooks/useAuth';
 import { useInertiaPagination } from '@/hooks/useInertiaPagination';
@@ -31,6 +30,7 @@ import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 import type { LaravelPaginator } from '@/types/inertia';
 
 const columnHelper = createColumnHelper<Role>();
+const PROTECTED_ROLES = new Set(['SuperAdmin', 'User']);
 
 function formatDate(value?: string) {
   if (!value) return '—';
@@ -45,30 +45,17 @@ type RolesPageProps = {
 };
 
 export function RolesPage({ roles }: RolesPageProps) {
-  const { hasAbility } = useAuth();
-  const canManage = hasAbility('roles.manage');
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission('rbac.role.create');
+  const canUpdate = hasPermission('rbac.role.update');
+  const canDelete = hasPermission('rbac.role.delete');
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(roles, ['roles']);
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [rowSelection, setRowSelection] = React.useState({});
-  const [formOpen, setFormOpen] = React.useState(false);
-  const [formMode, setFormMode] = React.useState<'create' | 'edit'>('create');
-  const [selectedRole, setSelectedRole] = React.useState<Role | null>(null);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [selectedRole, setSelectedRole] = React.useState<Role | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
-
-  const openCreate = React.useCallback(() => {
-    setFormMode('create');
-    setSelectedRole(null);
-    setFormOpen(true);
-  }, []);
-
-  const openEdit = React.useCallback((role: Role) => {
-    setFormMode('edit');
-    setSelectedRole(role);
-    setFormOpen(true);
-  }, []);
 
   const openDelete = React.useCallback((role: Role) => {
     setSelectedRole(role);
@@ -83,7 +70,7 @@ export function RolesPage({ roles }: RolesPageProps) {
         cell: ({ getValue, row }) => (
           <div className="flex items-center gap-2">
             <span className="font-medium text-foreground">{getValue()}</span>
-            {row.original.name === 'SuperAdmin' ? (
+            {PROTECTED_ROLES.has(row.original.name) ? (
               <Badge variant="secondary" className="text-xs">
                 Protected
               </Badge>
@@ -91,10 +78,10 @@ export function RolesPage({ roles }: RolesPageProps) {
           </div>
         ),
       }),
-      columnHelper.accessor('guard_name', {
-        header: 'Guard',
+      columnHelper.accessor('permissions_count', {
+        header: 'Permissions',
         cell: ({ getValue }) => (
-          <span className="text-muted-foreground">{getValue() ?? 'sanctum'}</span>
+          <span className="text-muted-foreground">{getValue() ?? 0}</span>
         ),
       }),
       columnHelper.accessor('created_at', {
@@ -103,40 +90,33 @@ export function RolesPage({ roles }: RolesPageProps) {
           <span className="text-muted-foreground">{formatDate(getValue())}</span>
         ),
       }),
-      columnHelper.accessor('updated_at', {
-        header: 'Updated',
-        cell: ({ getValue }) => (
-          <span className="text-muted-foreground">{formatDate(getValue())}</span>
-        ),
-      }),
       createDataTableActionsColumn<Role>({
         cell: ({ row }) => {
           const role = row.original;
-          const isProtected = role.name === 'SuperAdmin';
+          const isProtected = PROTECTED_ROLES.has(role.name);
 
           return (
             <DataTableRowActionsMenu label={`Actions for ${role.name}`}>
-              {canManage ? (
-                <>
-                  <TableDropdownAction icon={Pencil} onClick={() => openEdit(role)}>
-                    Edit
-                  </TableDropdownAction>
-                  <TableDropdownAction
-                    icon={Trash2}
-                    className="text-destructive focus:text-destructive"
-                    disabled={isProtected}
-                    onClick={() => openDelete(role)}
-                  >
-                    Delete
-                  </TableDropdownAction>
-                </>
+              {canUpdate && !isProtected ? (
+                <TableDropdownAction icon={Pencil} asChild>
+                  <Link href={`/access-control/roles/${role.id}/edit`}>Edit</Link>
+                </TableDropdownAction>
+              ) : null}
+              {canDelete && !isProtected ? (
+                <TableDropdownAction
+                  icon={Trash2}
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => openDelete(role)}
+                >
+                  Delete
+                </TableDropdownAction>
               ) : null}
             </DataTableRowActionsMenu>
           );
         },
       }),
     ],
-    [canManage, openDelete, openEdit],
+    [canDelete, canUpdate, openDelete],
   );
 
   const table = useReactTable({
@@ -160,12 +140,14 @@ export function RolesPage({ roles }: RolesPageProps) {
           title="Roles"
           icon={ShieldCheck}
           color="violet"
-          description="Manage platform roles and define who can access each area."
+          description="Manage platform roles and assign permissions."
         />
-        {canManage ? (
-          <Button type="button" className="shrink-0" onClick={openCreate}>
-            <Plus className="size-4" />
-            Create role
+        {canCreate ? (
+          <Button type="button" className="shrink-0" asChild>
+            <Link href="/access-control/roles/create">
+              <Plus className="size-4" />
+              Create role
+            </Link>
           </Button>
         ) : null}
       </div>
@@ -201,51 +183,8 @@ export function RolesPage({ roles }: RolesPageProps) {
           />
         }
         footer={
-          <DataTableFooter
-            table={table}
-            totalRecords={roles.total}
-            compactLayout
-          />
+          <DataTableFooter table={table} totalRecords={roles.total} compactLayout />
         }
-      />
-
-      <RoleFormDialog
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        mode={formMode}
-        role={selectedRole}
-        isSubmitting={isSubmitting}
-        onSubmit={async (values) => {
-          setIsSubmitting(true);
-          if (formMode === 'create') {
-            router.post('/access-control/roles', values, {
-              preserveScroll: true,
-              only: ['roles'],
-              onSuccess: () => {
-                showMutationSuccess('Role created successfully');
-                setFormOpen(false);
-              },
-              onError: () => showMutationError(null, 'Failed to create role'),
-              onFinish: () => setIsSubmitting(false),
-            });
-            return;
-          }
-          if (!selectedRole) {
-            setIsSubmitting(false);
-            return;
-          }
-          router.put(`/access-control/roles/${selectedRole.id}`, values, {
-            preserveScroll: true,
-            only: ['roles'],
-            onSuccess: () => {
-              showMutationSuccess('Role updated successfully');
-              setFormOpen(false);
-              setSelectedRole(null);
-            },
-            onError: () => showMutationError(null, 'Failed to update role'),
-            onFinish: () => setIsSubmitting(false),
-          });
-        }}
       />
 
       <DeleteRoleDialog

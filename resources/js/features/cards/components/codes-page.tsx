@@ -101,7 +101,7 @@ function WorkflowBadge({ card }: { card: CardCode }) {
 
 export function CodesPage({ codes }: CodesPageProps) {
   const { hasAbility } = useAuth();
-  const canManage = hasAbility('dashboard.card.manage');
+  const canManage = hasPermission('card.card.manage');
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(codes, ['codes']);
   const { copy, isCopied } = useCopyToClipboardWithStatus();

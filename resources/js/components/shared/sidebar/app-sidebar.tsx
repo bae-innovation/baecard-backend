@@ -1,5 +1,5 @@
 import {
-  filterNavByAbilities,
+  filterNavByPermissions,
   getDashboardNav,
 } from '@/components/shared/sidebar/dashboard-nav-config';
 import { NavMain } from '@/components/shared/sidebar/nav-main';
@@ -15,8 +15,8 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { hasAnyAbility, user } = useAuth();
-  const navMain = filterNavByAbilities(getDashboardNav(user?.active_template), hasAnyAbility);
+  const { hasAnyPermission, user } = useAuth();
+  const navMain = filterNavByPermissions(getDashboardNav(user?.active_template), hasAnyPermission);
 
   return (
     <Sidebar collapsible="icon" {...props}>

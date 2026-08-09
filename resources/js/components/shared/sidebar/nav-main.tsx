@@ -45,7 +45,9 @@ export type NavItem = {
   icon?: LucideIcon;
   isActive?: boolean;
   badge?: number;
-  /** Show when the user has any of these abilities. Omit to always show. */
+  /** Show when the user has any of these permissions. Omit to always show. */
+  requiredPermissions?: readonly string[];
+  /** @deprecated Use requiredPermissions */
   requiredAbilities?: readonly string[];
   /** Always show in the sidebar regardless of abilities. */
   alwaysVisible?: boolean;

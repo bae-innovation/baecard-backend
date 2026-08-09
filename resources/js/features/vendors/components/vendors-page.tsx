@@ -56,7 +56,7 @@ type VendorsPageProps = {
 
 export function VendorsPage({ vendors }: VendorsPageProps) {
   const { hasAbility } = useAuth();
-  const canManage = hasAbility('vendors.manage');
+  const canManage = hasPermission('vendor.vendor.manage');
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(vendors, ['vendors']);
   const [globalFilter, setGlobalFilter] = React.useState('');

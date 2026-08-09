@@ -79,9 +79,9 @@ type ContactsPageProps = {
 
 export function ContactsPage({ contacts }: ContactsPageProps) {
   const { hasAbility, user } = useAuth();
-  const isStaff = hasAbility('contacts.view');
-  const canCreate = hasAbility('contacts.create');
-  const canDelete = hasAbility('contacts.delete');
+  const isStaff = hasPermission('contact.contact.view');
+  const canCreate = hasPermission('contact.contact.create');
+  const canDelete = hasPermission('contact.contact.delete');
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(contacts, ['contacts']);
   const [globalFilter, setGlobalFilter] = React.useState('');

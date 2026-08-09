@@ -2,7 +2,7 @@
 
 use App\Models\CardCode;
 use App\Models\User;
-use Database\Seeders\RoleSeeder;
+use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\URL;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -10,7 +10,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(RoleSeeder::class);
+    $this->seed(RbacSeeder::class);
 
     $this->admin = User::factory()->create([
         'email_verified_at' => now(),

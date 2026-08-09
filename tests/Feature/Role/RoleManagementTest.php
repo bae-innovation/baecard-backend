@@ -1,131 +1,98 @@
 <?php
 
+use App\Models\Role;
 use App\Models\User;
-use Database\Seeders\RoleSeeder;
+use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(RoleSeeder::class);
+    $this->seed(RbacSeeder::class);
 
     $this->superAdmin = User::factory()->create([
         'email' => 'superadmin@test.com',
-        'password' => bcrypt('password123'),
         'email_verified_at' => now(),
     ]);
     $this->superAdmin->assignRole('SuperAdmin');
-    $this->superAdminToken = $this->superAdmin->createToken('auth-token')->plainTextToken;
 });
 
 describe('Role Management - As SuperAdmin', function () {
     it('can list roles', function () {
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->superAdminToken,
-        ])->getJson('/api/role/list');
+        $this->actingAs($this->superAdmin)
+            ->get('/access-control/roles')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('AccessControl/Roles'));
+    });
 
-        $response->assertStatus(200)
-            ->assertJsonStructure([
-                'success',
-                'message',
-                'data',
+    it('can open the create role page', function () {
+        $this->actingAs($this->superAdmin)
+            ->get('/access-control/roles/create')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('AccessControl/RoleForm')
+                ->where('mode', 'create'));
+    });
+
+    it('can create a role with permissions', function () {
+        $this->actingAs($this->superAdmin)
+            ->post('/access-control/roles', [
+                'name' => 'Editor',
+                'permissions' => ['order.order.view', 'product.product.view'],
             ])
-            ->assertJson([
-                'success' => true,
-                'message' => 'Roles retrieved successfully.',
-            ]);
-    });
-
-    it('can show a specific role', function () {
-        $role = Role::where('guard_name', 'sanctum')->first();
-
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->superAdminToken,
-        ])->getJson('/api/role/show/' . $role->id);
-
-        $response->assertStatus(200)
-            ->assertJson([
-                'success' => true,
-                'message' => 'Role retrieved successfully.',
-            ]);
-    });
-
-    it('can create a role', function () {
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->superAdminToken,
-        ])->postJson('/api/role/create', [
-            'name' => 'Editor',
-        ]);
-
-        $response->assertStatus(201)
-            ->assertJson([
-                'success' => true,
-                'message' => 'Role created successfully.',
-            ]);
+            ->assertRedirect(route('access-control.roles.index'));
 
         $this->assertDatabaseHas('roles', ['name' => 'Editor', 'guard_name' => 'sanctum']);
     });
 
     it('can update a role', function () {
-        $role = Role::create(['name' => 'Editor', 'guard_name' => 'sanctum']);
-
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->superAdminToken,
-        ])->putJson('/api/role/update/' . $role->id, [
-            'name' => 'Senior Editor',
+        $role = Role::query()->create([
+            'name' => 'Editor',
+            'guard_name' => 'sanctum',
+            'is_protected' => false,
         ]);
+        $role->syncPermissions(['order.order.view']);
 
-        $response->assertStatus(200)
-            ->assertJson([
-                'success' => true,
-                'message' => 'Role updated successfully.',
-            ]);
+        $this->actingAs($this->superAdmin)
+            ->put("/access-control/roles/{$role->id}", [
+                'name' => 'Senior Editor',
+                'permissions' => ['order.order.view', 'product.product.view'],
+            ])
+            ->assertRedirect(route('access-control.roles.index'));
 
         $this->assertDatabaseHas('roles', ['id' => $role->id, 'name' => 'Senior Editor']);
     });
 
     it('can delete a role', function () {
-        $role = Role::create(['name' => 'Editor', 'guard_name' => 'sanctum']);
+        $role = Role::query()->create([
+            'name' => 'Editor',
+            'guard_name' => 'sanctum',
+            'is_protected' => false,
+        ]);
 
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->superAdminToken,
-        ])->deleteJson('/api/role/delete/' . $role->id);
-
-        $response->assertStatus(200)
-            ->assertJson([
-                'success' => true,
-                'message' => 'Role deleted successfully.',
-            ]);
+        $this->actingAs($this->superAdmin)
+            ->delete("/access-control/roles/{$role->id}")
+            ->assertRedirect(route('access-control.roles.index'));
 
         $this->assertDatabaseMissing('roles', ['id' => $role->id]);
     });
 
     it('cannot delete SuperAdmin role', function () {
-        $role = Role::where('name', 'SuperAdmin')->where('guard_name', 'sanctum')->first();
+        $role = Role::query()->where('name', 'SuperAdmin')->firstOrFail();
 
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->superAdminToken,
-        ])->deleteJson('/api/role/delete/' . $role->id);
-
-        $response->assertStatus(400)
-            ->assertJson([
-                'success' => false,
-                'message' => 'The SuperAdmin role cannot be deleted.',
-            ]);
+        $this->actingAs($this->superAdmin)
+            ->delete("/access-control/roles/{$role->id}")
+            ->assertSessionHasErrors();
     });
 });
 
 describe('Role Management - Unauthorized', function () {
-    it('fails to access role management without SuperAdmin role', function () {
+    it('fails to access role management without staff permissions', function () {
         $user = User::factory()->create(['email_verified_at' => now()]);
         $user->assignRole('User');
-        $token = $user->createToken('auth-token')->plainTextToken;
 
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
-        ])->getJson('/api/role/list');
-
-        $response->assertStatus(403);
+        $this->actingAs($user)
+            ->get('/access-control/roles')
+            ->assertForbidden();
     });
 });

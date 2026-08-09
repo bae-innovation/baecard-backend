@@ -5,13 +5,13 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\User;
-use Database\Seeders\RoleSeeder;
+use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(RoleSeeder::class);
+    $this->seed(RbacSeeder::class);
 
     $this->admin = User::factory()->create([
         'email' => 'admin@example.com',

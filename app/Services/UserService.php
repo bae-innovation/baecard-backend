@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Services\ImageUploadService;
-use App\Support\RoleAbility;
+use App\Support\PermissionResolver;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -171,7 +171,7 @@ class UserService
         return DB::transaction(function () use ($id, $roleName) {
             $actor = request()->user();
 
-            if (! $actor || ! RoleAbility::allows($actor, 'users.assign_role')) {
+            if (! $actor || ! PermissionResolver::allows($actor, 'rbac.user.assign_role')) {
                 return $this->forbiddenResponse('You are not allowed to assign roles.');
             }
 

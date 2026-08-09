@@ -65,11 +65,11 @@ export function AccessControlUsersPage({ users, roles }: AccessControlUsersPageP
   const { user, hasAbility } = useAuth();
   const actorRoles = user?.roles ?? [];
   const actorRoleNames = actorRoles.map((role) => role.name);
-  const canCreate = hasAbility('users.create');
-  const canUpdate = hasAbility('users.update');
-  const canDelete = hasAbility('users.delete');
+  const canCreate = hasPermission('rbac.user.create');
+  const canUpdate = hasPermission('rbac.user.update');
+  const canDelete = hasPermission('rbac.user.delete');
   const canAssign =
-    hasAbility('users.assign_role') && canAssignRoles(actorRoleNames);
+    hasPermission('rbac.user.assign_role') && canAssignRoles(actorRoleNames);
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(users, ['users']);
   const [globalFilter, setGlobalFilter] = React.useState('');

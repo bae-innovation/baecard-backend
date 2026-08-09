@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Review;
-use App\Support\RoleAbility;
+use App\Support\PermissionResolver;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 
@@ -82,7 +82,7 @@ class ReviewService
     {
         $user = request()->user();
 
-        if (! $user || ! RoleAbility::allows($user, 'reviews.manage')) {
+        if (! $user || ! PermissionResolver::allows($user, 'review.review.manage')) {
             return $this->forbiddenResponse('You are not allowed to update reviews.');
         }
 
@@ -112,7 +112,7 @@ class ReviewService
     {
         $user = request()->user();
 
-        if (! $user || ! RoleAbility::allows($user, 'reviews.manage')) {
+        if (! $user || ! PermissionResolver::allows($user, 'review.review.manage')) {
             return $this->forbiddenResponse('You are not allowed to update review visibility.');
         }
 
@@ -131,7 +131,7 @@ class ReviewService
     {
         $user = request()->user();
 
-        if (! $user || ! RoleAbility::allows($user, 'reviews.manage')) {
+        if (! $user || ! PermissionResolver::allows($user, 'review.review.manage')) {
             return $this->forbiddenResponse('You are not allowed to delete reviews.');
         }
 
@@ -149,7 +149,7 @@ class ReviewService
 
     private function defaultVisibilityForCreate(?\App\Models\User $user, array $data): bool
     {
-        if ($user && RoleAbility::allows($user, 'reviews.manage')) {
+        if ($user && PermissionResolver::allows($user, 'review.review.manage')) {
             return (bool) ($data['is_visible'] ?? true);
         }
 

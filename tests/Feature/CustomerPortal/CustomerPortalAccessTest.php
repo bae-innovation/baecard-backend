@@ -4,14 +4,14 @@ use App\Models\Appointment;
 use App\Models\Contact;
 use App\Models\Review;
 use App\Models\User;
-use App\Support\RoleAbility;
-use Database\Seeders\RoleSeeder;
+use App\Support\PermissionResolver;
+use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(RoleSeeder::class);
+    $this->seed(RbacSeeder::class);
 
     $this->customer = User::factory()->create([
         'email' => 'customer@example.com',
@@ -27,21 +27,23 @@ beforeEach(function () {
 });
 
 it('derives customer portal abilities for the User role', function () {
-    $permissions = RoleAbility::permissionsForUser($this->customer);
+    $permissions = PermissionResolver::permissionsForUser($this->customer);
+    $names = collect($permissions)->pluck('name')->all();
 
-    expect(collect($permissions)->pluck('name')->all())
-        ->toContain('products.view')
-        ->toContain('appointments.view_own')
-        ->toContain('contacts.view_own')
-        ->toContain('contacts.create')
-        ->toContain('reviews.view_own')
-        ->toContain('reviews.create')
-        ->not->toContain('users.view')
-        ->not->toContain('vendors.view')
-        ->not->toContain('orders.view')
-        ->not->toContain('dashboard.view')
-        ->not->toContain('dashboard.card.view')
-        ->not->toContain('settings.manage');
+    expect($names)
+        ->toContain('product.product.view')
+        ->toContain('appointment.appointment.view_own')
+        ->toContain('contact.contact.view_own')
+        ->toContain('contact.contact.create')
+        ->toContain('review.review.view_own')
+        ->toContain('review.review.create')
+        ->toContain('profile.template.manage')
+        ->toContain('product.product.view')
+        ->not->toContain('rbac.user.view')
+        ->not->toContain('order.order.view')
+        ->not->toContain('dashboard.analytics.view')
+        ->not->toContain('card.card.view')
+        ->not->toContain('settings.general.manage');
 });
 
 it('allows customers to view admin products but not manage them', function () {

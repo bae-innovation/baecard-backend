@@ -6,7 +6,7 @@ use App\Enums\UserRole;
 use App\Mail\ResetPasswordMail;
 use App\Models\User;
 use App\Support\CardCodePath;
-use App\Support\RoleAbility;
+use App\Support\PermissionResolver;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
@@ -125,15 +125,15 @@ class AuthService
      */
     public function homeRouteFor(User $user): string
     {
-        if (RoleAbility::allows($user, 'dashboard.view')) {
+        if (PermissionResolver::allows($user, 'dashboard.analytics.view')) {
             return route('dashboard');
         }
 
-        if (RoleAbility::allows($user, 'orders.view')) {
+        if (PermissionResolver::allows($user, 'order.order.view')) {
             return route('orders.index');
         }
 
-        if (RoleAbility::allows($user, 'profile.manage')) {
+        if (PermissionResolver::allows($user, 'profile.template.manage')) {
             $template = max(1, min(4, (int) ($user->active_template ?? 1)));
 
             return route('profile.template.show', ['template' => $template]);

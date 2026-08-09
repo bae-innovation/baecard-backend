@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Contact;
-use App\Support\RoleAbility;
+use App\Support\PermissionResolver;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -82,7 +82,7 @@ class ContactService
         $query = Contact::query();
         $user = request()->user();
 
-        if ($user && ! RoleAbility::allows($user, 'contacts.view')) {
+        if ($user && ! PermissionResolver::allows($user, 'contact.contact.view')) {
             $query->where(function (Builder $inner) use ($user) {
                 $inner->where('user_id', $user->id)
                     ->orWhere('email', $user->email);

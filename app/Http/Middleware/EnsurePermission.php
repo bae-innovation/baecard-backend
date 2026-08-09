@@ -2,18 +2,18 @@
 
 namespace App\Http\Middleware;
 
-use App\Support\RoleAbility;
+use App\Support\PermissionResolver;
 use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureRoleAbility
+class EnsurePermission
 {
     /**
-     * Check if the authenticated user's role is allowed for this ability.
+     * Check if the authenticated user has any of the given permissions.
      */
-    public function handle(Request $request, Closure $next, string ...$abilities): Response
+    public function handle(Request $request, Closure $next, string ...$permissions): Response
     {
         $user = $request->user();
 
@@ -21,10 +21,8 @@ class EnsureRoleAbility
             throw new AuthorizationException('Forbidden');
         }
 
-        foreach ($abilities as $ability) {
-            if (RoleAbility::allows($user, $ability)) {
-                return $next($request);
-            }
+        if (PermissionResolver::allowsAny($user, $permissions)) {
+            return $next($request);
         }
 
         throw new AuthorizationException('Forbidden');

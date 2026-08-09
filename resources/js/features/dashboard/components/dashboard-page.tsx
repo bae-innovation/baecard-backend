@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import {
+  BarChart3,
   DollarSign,
-  LayoutDashboard,
   MessageSquare,
   Package,
   ShoppingCart,
@@ -37,8 +37,8 @@ export function DashboardPage({ stats }: DashboardPageProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6 py-4">
       <PageTitle
-        title="Dashboard"
-        icon={LayoutDashboard}
+        title="Analytics"
+        icon={BarChart3}
         color="indigo"
         description="Overview of sales, revenue, reviews, and recent activity."
       />

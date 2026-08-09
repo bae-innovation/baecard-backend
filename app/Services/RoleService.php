@@ -2,23 +2,26 @@
 
 namespace App\Services;
 
+use App\Models\Role;
+use App\Support\PermissionCatalog;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
+use Illuminate\Validation\ValidationException;
 
 class RoleService
 {
     use ApiResponseTrait;
-
-    private const GUARD = 'sanctum';
 
     /**
      * List all roles with pagination.
      */
     public function list(): JsonResponse
     {
-        $roles = Role::where('guard_name', self::GUARD)->paginate(10);
+        $roles = Role::query()
+            ->where('guard_name', PermissionCatalog::GUARD)
+            ->withCount('permissions')
+            ->paginate(10);
 
         return $this->successResponse($roles, 'Roles retrieved successfully.');
     }
@@ -28,9 +31,12 @@ class RoleService
      */
     public function find(int $id): JsonResponse
     {
-        $role = Role::where('guard_name', self::GUARD)->find($id);
+        $role = Role::query()
+            ->where('guard_name', PermissionCatalog::GUARD)
+            ->with('permissions:id,name')
+            ->find($id);
 
-        if (!$role) {
+        if (! $role) {
             return $this->notFoundResponse('Role not found.');
         }
 
@@ -43,12 +49,21 @@ class RoleService
     public function create(array $data): JsonResponse
     {
         return DB::transaction(function () use ($data) {
-            $role = Role::create([
+            $this->assertAssignablePermissions($data['permissions'] ?? []);
+
+            $role = Role::query()->create([
                 'name' => $data['name'],
-                'guard_name' => self::GUARD,
+                'guard_name' => PermissionCatalog::GUARD,
+                'is_protected' => false,
             ]);
 
-            return $this->successResponse($role, 'Role created successfully.', 201);
+            $role->syncPermissions($data['permissions'] ?? []);
+
+            return $this->successResponse(
+                $role->load('permissions:id,name'),
+                'Role created successfully.',
+                201,
+            );
         });
     }
 
@@ -58,15 +73,27 @@ class RoleService
     public function update(int $id, array $data): JsonResponse
     {
         return DB::transaction(function () use ($id, $data) {
-            $role = Role::where('guard_name', self::GUARD)->find($id);
+            $role = Role::query()
+                ->where('guard_name', PermissionCatalog::GUARD)
+                ->find($id);
 
-            if (!$role) {
+            if (! $role) {
                 return $this->notFoundResponse('Role not found.');
             }
 
-            $role->update(['name' => $data['name']]);
+            if ($role->isProtected()) {
+                return $this->errorResponse('This system role cannot be modified.', null, 400);
+            }
 
-            return $this->successResponse($role->fresh(), 'Role updated successfully.');
+            $this->assertAssignablePermissions($data['permissions'] ?? []);
+
+            $role->update(['name' => $data['name']]);
+            $role->syncPermissions($data['permissions'] ?? []);
+
+            return $this->successResponse(
+                $role->fresh()->load('permissions:id,name'),
+                'Role updated successfully.',
+            );
         });
     }
 
@@ -76,19 +103,57 @@ class RoleService
     public function delete(int $id): JsonResponse
     {
         return DB::transaction(function () use ($id) {
-            $role = Role::where('guard_name', self::GUARD)->find($id);
+            $role = Role::query()
+                ->where('guard_name', PermissionCatalog::GUARD)
+                ->find($id);
 
-            if (!$role) {
+            if (! $role) {
                 return $this->notFoundResponse('Role not found.');
             }
 
-            if ($role->name === 'SuperAdmin') {
-                return $this->errorResponse('The SuperAdmin role cannot be deleted.', null, 400);
+            if ($role->isProtected()) {
+                return $this->errorResponse('This system role cannot be deleted.', null, 400);
             }
 
             $role->delete();
 
             return $this->successResponse(null, 'Role deleted successfully.');
         });
+    }
+
+    /**
+     * @param  list<string>  $permissions
+     */
+    public function assertAssignablePermissions(array $permissions): void
+    {
+        if (in_array(PermissionCatalog::GLOBAL_WILDCARD, $permissions, true)) {
+            throw ValidationException::withMessages([
+                'permissions' => 'The global wildcard permission cannot be assigned through the UI.',
+            ]);
+        }
+
+        $allowed = PermissionCatalog::assignableNames();
+        $invalid = array_values(array_diff($permissions, $allowed));
+
+        if ($invalid !== []) {
+            throw ValidationException::withMessages([
+                'permissions' => 'One or more selected permissions are invalid.',
+            ]);
+        }
+
+        $customerOnly = PermissionCatalog::customerPortalPermissions();
+        $forbidden = array_values(array_intersect($permissions, $customerOnly));
+
+        if ($forbidden !== []) {
+            throw ValidationException::withMessages([
+                'permissions' => 'Customer portal permissions cannot be assigned to staff roles.',
+            ]);
+        }
+
+        if (in_array('profile.*', $permissions, true)) {
+            throw ValidationException::withMessages([
+                'permissions' => 'Customer portal wildcards cannot be assigned to staff roles.',
+            ]);
+        }
     }
 }

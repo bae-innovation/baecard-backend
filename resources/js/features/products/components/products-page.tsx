@@ -59,8 +59,12 @@ type ProductsPageProps = {
 };
 
 export function ProductsPage({ products }: ProductsPageProps) {
-  const { hasAbility } = useAuth();
-  const canManage = hasAbility('products.manage');
+  const { hasAnyPermission } = useAuth();
+  const canManage = hasAnyPermission([
+    'product.product.create',
+    'product.product.update',
+    'product.product.delete',
+  ]);
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(products, ['products']);
   const [globalFilter, setGlobalFilter] = React.useState('');

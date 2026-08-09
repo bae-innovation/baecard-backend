@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Review;
 
-use App\Support\RoleAbility;
+use App\Support\PermissionResolver;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreReviewRequest extends FormRequest
@@ -23,7 +23,7 @@ class StoreReviewRequest extends FormRequest
 
         $user = $this->user();
 
-        if ($user && ! RoleAbility::allows($user, 'reviews.manage')) {
+        if ($user && ! PermissionResolver::allows($user, 'review.review.manage')) {
             $this->merge([
                 'name' => $user->name,
                 'email' => $user->email,

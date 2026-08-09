@@ -15,7 +15,7 @@ type AppointmentEditPageProps = {
 
 export function AppointmentEditPage({ appointment }: AppointmentEditPageProps) {
   const { hasAbility, user } = useAuth();
-  const canManage = hasAbility('appointments.manage');
+  const canManage = hasPermission('appointment.appointment.manage');
   const [processing, setProcessing] = React.useState(false);
   useForm({});
 
