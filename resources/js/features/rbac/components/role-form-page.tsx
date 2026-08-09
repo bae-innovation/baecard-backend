@@ -88,7 +88,11 @@ export function RoleFormPage({
         title={mode === 'create' ? 'Create Role' : 'Edit Role'}
         icon={ShieldCheck}
         color="violet"
-        description="Assign permissions to define what this role can access."
+        description={
+          mode === 'create'
+            ? 'Assign permissions to define what this role can access.'
+            : 'Update the role name and permissions.'
+        }
       />
 
       <div className="max-w-xl space-y-2">

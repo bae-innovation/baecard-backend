@@ -9,6 +9,7 @@ export const roleSchema = z.object({
   id: z.number(),
   name: z.string(),
   guard_name: z.string().optional(),
+  is_protected: z.boolean().optional(),
   permissions_count: z.number().optional(),
   permissions: z.array(rolePermissionSchema).optional(),
   created_at: z.string().optional(),

@@ -5,7 +5,7 @@ import {
   getFilteredRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Eye, KeyRound, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { Eye, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
 import {
@@ -24,7 +24,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DeleteRoleDialog } from '@/features/roles/components/delete-role-dialog';
 import { RoleDetailDialog } from '@/features/roles/components/role-detail-dialog';
-import { RoleFormDialog } from '@/features/roles/components/role-form-dialog';
 import type { Role } from '@/features/roles/schemas/role.schema';
 import { useAuth } from '@/hooks/useAuth';
 import { useInertiaPagination } from '@/hooks/useInertiaPagination';
@@ -32,7 +31,6 @@ import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 import type { LaravelPaginator } from '@/types/inertia';
 
 const columnHelper = createColumnHelper<Role>();
-const PROTECTED_ROLES = new Set(['SuperAdmin', 'User']);
 
 function formatDate(value?: string) {
   if (!value) return '—';
@@ -42,28 +40,30 @@ function formatDate(value?: string) {
   }).format(new Date(value));
 }
 
-function permissionNamesForRole(role: Role): string[] {
-  return (role.permissions ?? []).map((permission) => permission.name);
-}
-
 type RolesPageProps = {
   roles: LaravelPaginator<Role>;
 };
 
 export function RolesPage({ roles }: RolesPageProps) {
-  const { hasPermission } = useAuth();
-  const canCreate = hasPermission('rbac.role.create');
-  const canUpdate = hasPermission('rbac.role.update');
-  const canDelete = hasPermission('rbac.role.delete');
+  const {
+    canViewRoles,
+    canCreateRoles,
+    canUpdateRoles,
+    canDeleteRoles,
+  } = useAuth();
+  const canView = canViewRoles();
+  const canCreate = canCreateRoles();
+  const canUpdate = canUpdateRoles();
+  const canDelete = canDeleteRoles();
+  const showActionsColumn = canView || canUpdate || canDelete;
+
   const { data, pagination, pageCount, setPagination, reload, isFetching } =
     useInertiaPagination(roles, ['roles']);
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [rowSelection, setRowSelection] = React.useState({});
   const [detailOpen, setDetailOpen] = React.useState(false);
-  const [editOpen, setEditOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [selectedRole, setSelectedRole] = React.useState<Role | null>(null);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
 
   const openDetails = React.useCallback((role: Role) => {
@@ -72,8 +72,7 @@ export function RolesPage({ roles }: RolesPageProps) {
   }, []);
 
   const openEdit = React.useCallback((role: Role) => {
-    setSelectedRole(role);
-    setEditOpen(true);
+    router.visit(`/access-control/roles/${role.id}/edit`);
   }, []);
 
   const openDelete = React.useCallback((role: Role) => {
@@ -81,19 +80,15 @@ export function RolesPage({ roles }: RolesPageProps) {
     setDeleteOpen(true);
   }, []);
 
-  const openPermissions = React.useCallback((role: Role) => {
-    router.visit(`/access-control/roles/${role.id}/edit`);
-  }, []);
-
-  const columns = React.useMemo(
-    () => [
-      createDataTableSelectionColumn<Role>(),
+  const columns = React.useMemo(() => {
+    const baseColumns = [
+      ...(canDelete ? [createDataTableSelectionColumn<Role>()] : []),
       columnHelper.accessor('name', {
         header: 'Role',
         cell: ({ getValue, row }) => (
           <div className="flex items-center gap-2">
             <span className="font-medium text-foreground">{getValue()}</span>
-            {PROTECTED_ROLES.has(row.original.name) ? (
+            {row.original.is_protected ? (
               <Badge variant="secondary" className="text-xs">
                 Protected
               </Badge>
@@ -113,52 +108,81 @@ export function RolesPage({ roles }: RolesPageProps) {
           <span className="text-muted-foreground">{formatDate(getValue())}</span>
         ),
       }),
+    ];
+
+    if (!showActionsColumn) {
+      return baseColumns;
+    }
+
+    return [
+      ...baseColumns,
       createDataTableActionsColumn<Role>({
         meta: { actionsLayout: 'wide' },
         cell: ({ row }) => {
           const role = row.original;
-          const isProtected = PROTECTED_ROLES.has(role.name);
+          const isProtected = Boolean(role.is_protected);
+          const menuItems: React.ReactNode[] = [];
+
+          if (canView) {
+            menuItems.push(
+              <TableDropdownAction
+                key="view"
+                icon={Eye}
+                onClick={() => openDetails(role)}
+              >
+                View details
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canUpdate) {
+            menuItems.push(
+              <TableDropdownAction
+                key="edit"
+                icon={Pencil}
+                disabled={isProtected}
+                onClick={() => openEdit(role)}
+              >
+                Edit
+              </TableDropdownAction>,
+            );
+          }
+
+          if (canDelete) {
+            menuItems.push(
+              <TableDropdownAction
+                key="delete"
+                icon={Trash2}
+                className="text-destructive focus:text-destructive"
+                disabled={isProtected}
+                onClick={() => openDelete(role)}
+              >
+                Delete
+              </TableDropdownAction>,
+            );
+          }
+
+          if (menuItems.length === 0) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
 
           return (
             <DataTableRowActionsMenu label={`Actions for ${role.name}`}>
-              <TableDropdownAction icon={Eye} onClick={() => openDetails(role)}>
-                View details
-              </TableDropdownAction>
-              {canUpdate ? (
-                <TableDropdownAction
-                  icon={Pencil}
-                  disabled={isProtected}
-                  onClick={() => openEdit(role)}
-                >
-                  Edit
-                </TableDropdownAction>
-              ) : null}
-              {canUpdate ? (
-                <TableDropdownAction
-                  icon={KeyRound}
-                  disabled={isProtected}
-                  onClick={() => openPermissions(role)}
-                >
-                  Change permissions
-                </TableDropdownAction>
-              ) : null}
-              {canDelete ? (
-                <TableDropdownAction
-                  icon={Trash2}
-                  className="text-destructive focus:text-destructive"
-                  disabled={isProtected}
-                  onClick={() => openDelete(role)}
-                >
-                  Delete
-                </TableDropdownAction>
-              ) : null}
+              {menuItems}
             </DataTableRowActionsMenu>
           );
         },
       }),
-    ],
-    [canDelete, canUpdate, openDelete, openDetails, openEdit, openPermissions],
-  );
+    ];
+  }, [
+    canDelete,
+    canUpdate,
+    canView,
+    openDelete,
+    openDetails,
+    openEdit,
+    showActionsColumn,
+  ]);
 
   const table = useReactTable({
     data,
@@ -168,7 +192,7 @@ export function RolesPage({ roles }: RolesPageProps) {
     onPaginationChange: setPagination,
     onGlobalFilterChange: setGlobalFilter,
     onRowSelectionChange: setRowSelection,
-    enableRowSelection: true,
+    enableRowSelection: canDelete,
     manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -230,64 +254,37 @@ export function RolesPage({ roles }: RolesPageProps) {
         }
       />
 
-      <RoleDetailDialog
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        role={selectedRole}
-      />
+      {canView ? (
+        <RoleDetailDialog
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          role={selectedRole}
+        />
+      ) : null}
 
-      <RoleFormDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        mode="edit"
-        role={selectedRole}
-        isSubmitting={isSubmitting}
-        onSubmit={async (values) => {
-          if (!selectedRole) return;
-
-          setIsSubmitting(true);
-          router.put(
-            `/access-control/roles/${selectedRole.id}`,
-            {
-              name: values.name,
-              permissions: permissionNamesForRole(selectedRole),
-            },
-            {
+      {canDelete ? (
+        <DeleteRoleDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          role={selectedRole}
+          isDeleting={isDeleting}
+          onConfirm={async () => {
+            if (!selectedRole) return;
+            setIsDeleting(true);
+            router.delete(`/access-control/roles/${selectedRole.id}`, {
               preserveScroll: true,
               only: ['roles'],
               onSuccess: () => {
-                showMutationSuccess('Role updated successfully');
-                setEditOpen(false);
+                showMutationSuccess('Role deleted successfully');
+                setDeleteOpen(false);
                 setSelectedRole(null);
               },
-              onError: () => showMutationError(null, 'Failed to update role'),
-              onFinish: () => setIsSubmitting(false),
-            },
-          );
-        }}
-      />
-
-      <DeleteRoleDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        role={selectedRole}
-        isDeleting={isDeleting}
-        onConfirm={async () => {
-          if (!selectedRole) return;
-          setIsDeleting(true);
-          router.delete(`/access-control/roles/${selectedRole.id}`, {
-            preserveScroll: true,
-            only: ['roles'],
-            onSuccess: () => {
-              showMutationSuccess('Role deleted successfully');
-              setDeleteOpen(false);
-              setSelectedRole(null);
-            },
-            onError: () => showMutationError(null, 'Failed to delete role'),
-            onFinish: () => setIsDeleting(false),
-          });
-        }}
-      />
+              onError: () => showMutationError(null, 'Failed to delete role'),
+              onFinish: () => setIsDeleting(false),
+            });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

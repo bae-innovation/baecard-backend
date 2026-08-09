@@ -1,5 +1,31 @@
 import type { Permissions } from '@/schemas/auth.schema';
 
+export const RBAC_ROLE_VIEW_PERMISSIONS = ['rbac.role.view', 'rbac.*'] as const;
+
+export function canViewRoles(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasAnyPermission(permissions, RBAC_ROLE_VIEW_PERMISSIONS);
+}
+
+export function canCreateRoles(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'rbac.role.create');
+}
+
+export function canUpdateRoles(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'rbac.role.update');
+}
+
+export function canDeleteRoles(
+  permissions: readonly { name: string }[],
+): boolean {
+  return hasPermission(permissions, 'rbac.role.delete');
+}
+
 export const DASHBOARD_ACCESS_PERMISSIONS = [
   'dashboard.analytics.view',
   'dashboard.*',

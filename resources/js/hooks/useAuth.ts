@@ -3,6 +3,10 @@ import { usePage } from '@inertiajs/react';
 import type { SharedPageProps } from '@/types/inertia';
 import {
   DASHBOARD_ACCESS_PERMISSIONS,
+  canCreateRoles,
+  canDeleteRoles,
+  canUpdateRoles,
+  canViewRoles,
   hasAnyPermissionForUser,
   hasPermissionForUser,
   isCustomerRole,
@@ -29,6 +33,10 @@ export function useAuth() {
     canViewDashboard: () =>
       !isCustomerRole(roleNames) &&
       hasAnyPermissionForUser(auth.permissions, DASHBOARD_ACCESS_PERMISSIONS),
+    canViewRoles: () => canViewRoles(auth.permissions),
+    canCreateRoles: () => canCreateRoles(auth.permissions),
+    canUpdateRoles: () => canUpdateRoles(auth.permissions),
+    canDeleteRoles: () => canDeleteRoles(auth.permissions),
     homeHref: resolveHomeHref(
       auth.permissions.map((permission) => permission.name),
       auth.user?.active_template,

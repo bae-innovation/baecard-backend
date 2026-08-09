@@ -308,7 +308,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('permission:rbac.role.update')
         ->name('access-control.roles.edit');
     Route::get('access-control/roles', [RoleController::class, 'indexPage'])
-        ->middleware('permission:rbac.role.view')
+        ->middleware('permission:rbac.role.view,rbac.*')
         ->name('access-control.roles.index');
     Route::post('access-control/roles', [RoleController::class, 'store'])
         ->middleware('permission:rbac.role.create')

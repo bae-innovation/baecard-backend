@@ -17,10 +17,7 @@ class RoleHasPermissionSeeder extends Seeder
         $this->syncRole(UserRole::SuperAdmin->value, [PermissionCatalog::GLOBAL_WILDCARD]);
         $this->syncRole(UserRole::Admin->value, PermissionCatalog::adminPermissions());
         $this->syncRole(UserRole::Marketing->value, PermissionCatalog::marketingPermissions());
-        $this->syncRole(UserRole::User->value, array_merge(
-            PermissionCatalog::customerPortalPermissions(),
-            ['product.product.view'],
-        ));
+        $this->syncRole(UserRole::User->value, PermissionCatalog::customerRolePermissions());
 
         $this->command?->info('Role permissions seeded successfully.');
     }

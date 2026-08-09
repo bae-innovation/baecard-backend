@@ -89,7 +89,7 @@ const TEMPLATE_NAV: NavItem[] = [
         title: 'Roles',
         url: '/access-control/roles',
         icon: ShieldCheck,
-        requiredPermissions: ['rbac.role.view'],
+        requiredPermissions: ['rbac.role.view', 'rbac.*'],
       },
       {
         title: 'Users',

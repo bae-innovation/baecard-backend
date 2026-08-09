@@ -13,8 +13,6 @@ import {
 import { Separator } from '@/components/ui/separator';
 import type { Role } from '@/features/roles/schemas/role.schema';
 
-const PROTECTED_ROLES = new Set(['SuperAdmin', 'User']);
-
 type RoleDetailDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -31,7 +29,7 @@ function formatDate(value?: string) {
 
 export function RoleDetailDialog({ open, onOpenChange, role }: RoleDetailDialogProps) {
   const permissions = role?.permissions ?? [];
-  const isProtected = role ? PROTECTED_ROLES.has(role.name) : false;
+  const isProtected = Boolean(role?.is_protected);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

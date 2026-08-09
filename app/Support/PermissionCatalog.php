@@ -8,7 +8,7 @@ class PermissionCatalog
 
     public const GLOBAL_WILDCARD = '*';
 
-    public const PROTECTED_ROLES = ['SuperAdmin', 'User'];
+    public const PROTECTED_ROLES = ['SuperAdmin'];
 
     /**
      * Permissions that grant access to the admin analytics dashboard.
@@ -20,6 +20,19 @@ class PermissionCatalog
         return [
             'dashboard.analytics.view',
             'dashboard.*',
+        ];
+    }
+
+    /**
+     * Permissions that grant access to the roles list page.
+     *
+     * @return list<string>
+     */
+    public static function roleViewPermissions(): array
+    {
+        return [
+            'rbac.role.view',
+            'rbac.*',
         ];
     }
 
@@ -130,6 +143,19 @@ class PermissionCatalog
             'review.review.view_own',
             'review.review.create',
         ];
+    }
+
+    /**
+     * Permissions assignable to the customer User role.
+     *
+     * @return list<string>
+     */
+    public static function customerRolePermissions(): array
+    {
+        return array_merge(
+            self::customerPortalPermissions(),
+            ['product.product.view'],
+        );
     }
 
     /**

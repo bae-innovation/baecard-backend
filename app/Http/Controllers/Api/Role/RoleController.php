@@ -11,6 +11,8 @@ use App\Services\PermissionService;
 use App\Services\RoleService;
 use App\Support\InertiaData;
 use App\Support\PermissionCatalog;
+use App\Support\PermissionResolver;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -25,6 +27,10 @@ class RoleController extends Controller
 
     public function indexPage(Request $request)
     {
+        if (! PermissionResolver::allowsAny($request->user(), PermissionCatalog::roleViewPermissions())) {
+            throw new AuthorizationException('Forbidden');
+        }
+
         return Inertia::render('AccessControl/Roles', [
             'roles' => InertiaData::paginate(
                 Role::query()
@@ -37,8 +43,13 @@ class RoleController extends Controller
         ]);
     }
 
-    public function createPage()
+    public function createPage(Request $request)
     {
+        if (! PermissionResolver::allows($request->user(), 'rbac.role.create')
+            && ! PermissionResolver::allows($request->user(), 'rbac.*')) {
+            throw new AuthorizationException('Forbidden');
+        }
+
         return Inertia::render('AccessControl/RoleForm', [
             'mode' => 'create',
             'role' => null,
@@ -47,8 +58,13 @@ class RoleController extends Controller
         ]);
     }
 
-    public function editPage(Role $role)
+    public function editPage(Request $request, Role $role)
     {
+        if (! PermissionResolver::allows($request->user(), 'rbac.role.update')
+            && ! PermissionResolver::allows($request->user(), 'rbac.*')) {
+            throw new AuthorizationException('Forbidden');
+        }
+
         if ($role->isProtected()) {
             abort(403, 'This system role cannot be modified.');
         }

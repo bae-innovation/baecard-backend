@@ -95,3 +95,17 @@ it('prevents editing protected system roles', function () {
         ->get("/access-control/roles/{$roleId}/edit")
         ->assertForbidden();
 });
+
+it('allows editing the User role', function () {
+    $admin = User::factory()->create(['email_verified_at' => now()]);
+    $admin->assignRole(UserRole::Admin->value);
+
+    $roleId = \App\Models\Role::query()->where('name', UserRole::User->value)->value('id');
+
+    $this->actingAs($admin)
+        ->get("/access-control/roles/{$roleId}/edit")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('AccessControl/RoleForm')
+            ->where('mode', 'edit'));
+});

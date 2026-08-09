@@ -140,20 +140,5 @@ class RoleService
                 'permissions' => 'One or more selected permissions are invalid.',
             ]);
         }
-
-        $customerOnly = PermissionCatalog::customerPortalPermissions();
-        $forbidden = array_values(array_intersect($permissions, $customerOnly));
-
-        if ($forbidden !== []) {
-            throw ValidationException::withMessages([
-                'permissions' => 'Customer portal permissions cannot be assigned to staff roles.',
-            ]);
-        }
-
-        if (in_array('profile.*', $permissions, true)) {
-            throw ValidationException::withMessages([
-                'permissions' => 'Customer portal wildcards cannot be assigned to staff roles.',
-            ]);
-        }
     }
 }
