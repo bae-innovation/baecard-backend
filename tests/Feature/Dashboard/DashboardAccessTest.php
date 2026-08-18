@@ -124,7 +124,7 @@ it('redirects customers to their profile template after login', function () {
     $this->post('/login', [
         'email' => $this->customer->email,
         'password' => 'password',
-    ])->assertRedirect('/profile/templates/2');
+    ])->assertRedirect(route('profile.templates.index'));
 });
 
 it('redirects customers to their active template even when extra permissions exist', function () {
@@ -134,7 +134,7 @@ it('redirects customers to their active template even when extra permissions exi
     $this->post('/login', [
         'email' => $this->customer->email,
         'password' => 'password',
-    ])->assertRedirect('/profile/templates/3');
+    ])->assertRedirect(route('profile.templates.index'));
 });
 
 it('redirects admins to the dashboard after login', function () {

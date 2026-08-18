@@ -121,27 +121,32 @@ Route::middleware('guest')->group(function () {
 
     Route::get('forgot-password', fn () => Inertia::render('Auth/ForgotPassword'))->name('password.request');
     Route::post('forgot-password', [ForgotPasswordController::class, 'store'])->name('password.email');
-
-    Route::get('reset-password', function (Request $request) {
-        return Inertia::render('Auth/ResetPassword', [
-            'email' => $request->query('email'),
-            'token' => $request->query('token'),
-        ]);
-    })->name('password.reset');
-
-    Route::post('reset-password', [ForgotPasswordController::class, 'reset']);
 });
+
+Route::get('reset-password', function (Request $request) {
+    $token = $request->query('token');
+    $email = $request->query('email');
+
+    return Inertia::render('Auth/ResetPassword', [
+        'email' => $email,
+        'token' => $token,
+        'isInvite' => filled($token) && filled($email),
+    ]);
+})->name('password.reset');
+
+Route::post('reset-password', [ForgotPasswordController::class, 'reset']);
 
 Route::post('logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
 
+Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verifyWeb'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify.web');
+
 Route::middleware('auth')->group(function () {
     Route::get('email/verify', [EmailVerificationController::class, 'notice'])
         ->name('verification.notice');
-    Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verifyWeb'])
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify.web');
     Route::post('email/verification-notification', [EmailVerificationController::class, 'resend'])
         ->middleware('throttle:6,1')
         ->name('verification.send');

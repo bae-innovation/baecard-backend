@@ -11,9 +11,10 @@ import { AuthLayout } from '@/Layouts/AuthLayout';
 type ResetPasswordProps = {
   token?: string;
   email?: string;
+  isInvite?: boolean;
 };
 
-export default function ResetPassword({ token, email }: ResetPasswordProps) {
+export default function ResetPassword({ token, email, isInvite = false }: ResetPasswordProps) {
   const [isSuccess, setIsSuccess] = React.useState(false);
   const { data, setData, post, processing, errors } = useForm({
     email: email ?? '',
@@ -31,28 +32,44 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
     event.preventDefault();
     post('/reset-password', {
       onSuccess: () => {
-        setIsSuccess(true);
-        toast.success('Password reset successfully. You can sign in now.');
+        if (!isInvite) {
+          setIsSuccess(true);
+        }
+        toast.success(
+          isInvite
+            ? 'Password set successfully. Sign in with your new password.'
+            : 'Password reset successfully. You can sign in now.',
+        );
       },
       onError: () =>
-        toast.error('Unable to reset password. The link may have expired.'),
+        toast.error(
+          isInvite
+            ? 'Unable to set your password. The link may have expired.'
+            : 'Unable to reset password. The link may have expired.',
+        ),
     });
   }
 
   return (
     <AuthLayout
-      title="Reset password"
-      description="Choose a new password for your account."
+      title={isInvite ? 'Set your password' : 'Reset password'}
+      description={
+        isInvite
+          ? 'Choose a password for your account to complete setup.'
+          : 'Choose a new password for your account.'
+      }
       icon={LockKeyhole}
       footer={
-        <p>
-          <Link
-            href="/login"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Back to sign in
-          </Link>
-        </p>
+        isInvite ? undefined : (
+          <p>
+            <Link
+              href="/login"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Back to sign in
+            </Link>
+          </p>
+        )
       }
     >
       {isSuccess ? (
@@ -79,33 +96,38 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
               type="email"
               value={data.email}
               onChange={(e) => setData('email', e.target.value)}
-              disabled={processing || !!email}
+              readOnly={Boolean(isInvite && email)}
+              disabled={processing || Boolean(isInvite && email)}
+              className={isInvite && email ? 'cursor-not-allowed bg-muted/50' : undefined}
             />
             {errors.email ? (
               <p className="text-sm text-destructive">{errors.email}</p>
             ) : null}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="token">Reset token</Label>
-            <Input
-              id="token"
-              value={data.token}
-              onChange={(e) => setData('token', e.target.value)}
-              disabled={processing || !!token}
-            />
-            {errors.token ? (
-              <p className="text-sm text-destructive">{errors.token}</p>
-            ) : null}
-          </div>
+          {!isInvite ? (
+            <div className="space-y-2">
+              <Label htmlFor="token">Reset token</Label>
+              <Input
+                id="token"
+                value={data.token}
+                onChange={(e) => setData('token', e.target.value)}
+                disabled={processing || !!token}
+              />
+              {errors.token ? (
+                <p className="text-sm text-destructive">{errors.token}</p>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="space-y-2">
-            <Label htmlFor="password">New password</Label>
+            <Label htmlFor="password">{isInvite ? 'Password' : 'New password'}</Label>
             <Input
               id="password"
               type="password"
               value={data.password}
               onChange={(e) => setData('password', e.target.value)}
+              autoComplete="new-password"
               disabled={processing}
             />
             {errors.password ? (
@@ -120,6 +142,7 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
               type="password"
               value={data.password_confirmation}
               onChange={(e) => setData('password_confirmation', e.target.value)}
+              autoComplete="new-password"
               disabled={processing}
             />
             {errors.password_confirmation ? (
@@ -131,8 +154,10 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
             {processing ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Resetting password...
+                {isInvite ? 'Saving password...' : 'Resetting password...'}
               </>
+            ) : isInvite ? (
+              'Set password'
             ) : (
               'Reset password'
             )}

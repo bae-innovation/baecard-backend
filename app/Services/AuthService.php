@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\UserRole;
 use App\Exceptions\MailDeliveryException;
+use App\Mail\CardAccountInviteMail;
 use App\Mail\ResetPasswordMail;
+use App\Models\CardCode;
 use App\Models\User;
 use App\Support\CardCodePath;
 use App\Support\EmailVerification;
@@ -160,7 +162,7 @@ class AuthService
 
         $template = max(1, min(4, (int) ($profile?->active_template ?? 1)));
 
-        return route('profile.template.show', ['template' => $template]);
+        return route('profile.templates.index');
     }
 
     /**
@@ -227,6 +229,49 @@ class AuthService
             $user->load('roles'),
             'User retrieved successfully.'
         );
+    }
+
+    /**
+     * Send card account invite email for admin-provisioned, unverified customers.
+     */
+    public function sendCardAccountInvite(
+        User $user,
+        CardCode $cardCode,
+        bool $raiseOnFailure = false,
+    ): bool {
+        if ($user->hasVerifiedEmail()) {
+            return false;
+        }
+
+        $token = Password::broker()->createToken($user);
+        $verifyUrl = EmailVerification::signedUrl(
+            $user,
+            CardCodePath::pathForCode($cardCode->code),
+        );
+        $resetPasswordUrl = MailConfig::resetPasswordUrl($token, $user->email);
+
+        try {
+            Mail::to($user->email)->send(new CardAccountInviteMail(
+                name: $user->name ?? 'there',
+                cardCode: $cardCode->code,
+                cardName: $cardCode->display_name ?: ($user->name ?? 'Your card'),
+                verifyUrl: $verifyUrl,
+                resetPasswordUrl: $resetPasswordUrl,
+            ));
+        } catch (TransportExceptionInterface $exception) {
+            report($exception);
+
+            if ($raiseOnFailure) {
+                throw new MailDeliveryException(
+                    EmailVerification::deliveryFailureMessage($exception),
+                    previous: $exception,
+                );
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     /**

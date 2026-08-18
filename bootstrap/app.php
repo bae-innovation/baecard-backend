@@ -37,6 +37,16 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return route('login');
         });
+
+        $middleware->redirectUsersTo(function (Request $request) {
+            $user = $request->user();
+
+            if ($user instanceof \App\Models\User) {
+                return app(\App\Services\AuthService::class)->homeRouteFor($user);
+            }
+
+            return route('home');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(function (Request $request, \Throwable $e) {

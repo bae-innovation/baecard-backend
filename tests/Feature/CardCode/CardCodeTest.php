@@ -3,8 +3,12 @@
 use App\Models\CardCode;
 use App\Models\Order;
 use App\Models\User;
+use App\Mail\CardAccountInviteMail;
+use App\Support\CardCodePath;
+use App\Support\EmailVerification;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -68,6 +72,98 @@ it('moves a pending order to processing when a card is created', function () {
     ])->assertRedirect(route('cards.index'));
 
     expect($order->fresh()->status)->toBe('processing');
+});
+
+it('sends account invite email when admin creates a card for an unverified customer', function () {
+    Mail::fake();
+
+    $customer = User::factory()->create(['email_verified_at' => null]);
+    $customer->assignRole('User');
+    $order = createCardOrder($customer);
+
+    $this->actingAs($this->admin)->post('/cards', [
+        'code' => 'INV001',
+        'order_id' => $order->id,
+    ])->assertRedirect(route('cards.index'));
+
+    Mail::assertSent(CardAccountInviteMail::class, function (CardAccountInviteMail $mail) use ($customer) {
+        return $mail->hasTo($customer->email)
+            && $mail->cardCode === 'INV001';
+    });
+});
+
+it('does not send account invite email when the customer is already verified', function () {
+    Mail::fake();
+
+    $customer = User::factory()->create(['email_verified_at' => now()]);
+    $customer->assignRole('User');
+    $order = createCardOrder($customer);
+
+    $this->actingAs($this->admin)->post('/cards', [
+        'code' => 'INV003',
+        'order_id' => $order->id,
+    ])->assertRedirect(route('cards.index'));
+
+    Mail::assertNothingSent();
+});
+
+it('allows authenticated customers to open the set-password page from an invite link', function () {
+    $customer = User::factory()->create(['email_verified_at' => now()]);
+    $customer->assignRole('User');
+    $token = \Illuminate\Support\Facades\Password::broker()->createToken($customer);
+
+    $response = $this->actingAs($customer)->get(route('password.reset', [
+        'token' => $token,
+        'email' => $customer->email,
+    ]));
+
+    $response->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Auth/ResetPassword')
+            ->where('isInvite', true)
+            ->where('email', $customer->email));
+});
+
+it('redirects to login after setting a password from an invite link', function () {
+    $customer = User::factory()->create(['email_verified_at' => now()]);
+    $customer->assignRole('User');
+    $token = \Illuminate\Support\Facades\Password::broker()->createToken($customer);
+
+    $response = $this->actingAs($customer)->post('/reset-password', [
+        'email' => $customer->email,
+        'token' => $token,
+        'password' => 'new-password-123',
+        'password_confirmation' => 'new-password-123',
+    ]);
+
+    $response->assertRedirect(route('login'));
+    $this->assertGuest();
+});
+
+it('activates an admin-created card when the guest clicks the invite verify link', function () {
+    $customer = User::factory()->create(['email_verified_at' => null]);
+    $customer->assignRole('User');
+    $order = createCardOrder($customer);
+
+    $this->actingAs($this->admin)->post('/cards', [
+        'code' => 'INV002',
+        'order_id' => $order->id,
+    ])->assertRedirect(route('cards.index'));
+
+    $verificationUrl = EmailVerification::signedUrl(
+        $customer,
+        CardCodePath::pathForCode('INV002'),
+    );
+
+    $response = $this->get($verificationUrl);
+
+    $response->assertRedirect('/INV002');
+    expect($customer->fresh()->hasVerifiedEmail())->toBeTrue();
+    $this->assertDatabaseHas('card_codes', [
+        'code' => 'INV002',
+        'user_id' => $customer->id,
+        'status' => CardCode::STATUS_PUBLISHED,
+    ]);
 });
 
 it('does not change order status when it is no longer pending', function () {

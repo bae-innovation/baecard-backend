@@ -9,15 +9,21 @@ use Illuminate\Support\Facades\URL;
 
 class EmailVerification
 {
-    public static function signedUrl(MustVerifyEmail $user): string
+    public static function signedUrl(MustVerifyEmail $user, ?string $redirect = null): string
     {
+        $parameters = [
+            'id' => $user->getKey(),
+            'hash' => sha1($user->getEmailForVerification()),
+        ];
+
+        if ($redirect !== null && $redirect !== '') {
+            $parameters['redirect'] = $redirect;
+        }
+
         return URL::temporarySignedRoute(
             'verification.verify.web',
             Carbon::now()->addMinutes(Config::get('auth.verification.expire', 60)),
-            [
-                'id' => $user->getKey(),
-                'hash' => sha1($user->getEmailForVerification()),
-            ],
+            $parameters,
         );
     }
 

@@ -25,6 +25,7 @@ class CardCodeService
     public function __construct(
         protected CustomerResolver $customerResolver,
         protected OrderService $orderService,
+        protected AuthService $authService,
     ) {}
 
     public function listPaginated(int $perPage = 15): LengthAwarePaginator
@@ -92,6 +93,8 @@ class CardCodeService
             ]);
 
             $this->advanceOrderStatusAfterCardCreated($order);
+
+            $this->sendAccountInviteIfNeeded($cardCode);
 
             return $this->successResponse(
                 $cardCode->fresh()->load([
@@ -255,8 +258,12 @@ class CardCodeService
             'status' => CardCode::STATUS_PENDING,
         ]);
 
+        $cardCode = $cardCode->fresh()->load('user:id,name,email,phone');
+
+        $this->sendAccountInviteIfNeeded($cardCode);
+
         return $this->successResponse(
-            $cardCode->fresh()->load('user:id,name,email,phone'),
+            $cardCode,
             'User assigned to card code successfully.',
         );
     }
@@ -402,6 +409,19 @@ class CardCodeService
         }
 
         $order->update(['status' => 'confirmed']);
+    }
+
+    private function sendAccountInviteIfNeeded(CardCode $cardCode): void
+    {
+        $cardCode->loadMissing('user');
+
+        $user = $cardCode->user;
+
+        if (! $user || $user->hasVerifiedEmail()) {
+            return;
+        }
+
+        $this->authService->sendCardAccountInvite($user, $cardCode);
     }
 
     private function buildRandomCode(): string

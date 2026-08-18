@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Exceptions\MailDeliveryException;
 use App\Services\AuthService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 
@@ -55,9 +56,15 @@ class ForgotPasswordController extends Controller
             return back()->with('error', $data['message'] ?? 'Unable to reset password.');
         }
 
+        if (Auth::check()) {
+            $this->authService->logoutWeb();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
         return redirect()
             ->route('login')
-            ->with('success', 'Password reset successfully. You can sign in now.');
+            ->with('success', 'Password set successfully. Sign in with your new password.');
     }
 
     /**
