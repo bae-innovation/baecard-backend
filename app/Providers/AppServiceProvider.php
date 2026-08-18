@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        View::composer(['app', 'mail.layouts.baecard', 'mail.auth.*'], function ($view) {
+        View::composer(['app'], function ($view) {
             $view->with('appSettings', app(SettingService::class)->getAppSettings());
         });
     }

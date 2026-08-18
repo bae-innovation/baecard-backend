@@ -46,6 +46,13 @@ export type SharedPageProps = {
     flash: {
         success?: string | null;
         error?: string | null;
+        verificationUrl?: string | null;
+        devResetUrl?: string | null;
+    };
+    mail?: {
+        driver: string;
+        usesLogDriver: boolean;
+        exposeDevLinks: boolean;
     };
 };
 

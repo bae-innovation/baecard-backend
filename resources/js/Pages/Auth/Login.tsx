@@ -14,12 +14,15 @@ type LoginPageProps = {
   cardCode?: {
     code: string;
     name: string;
+    email?: string;
   } | null;
 };
 
 export default function Login({ redirect, cardCode }: LoginPageProps) {
+  const lockedEmail = cardCode?.email ?? '';
+
   const { data, setData, post, processing, errors } = useForm({
-    email: '',
+    email: lockedEmail,
     password: '',
     redirect: redirect ?? '',
   });
@@ -90,7 +93,9 @@ export default function Login({ redirect, cardCode }: LoginPageProps) {
             onChange={(e) => setData('email', e.target.value)}
             placeholder="you@company.com"
             autoComplete="email"
+            readOnly={Boolean(lockedEmail)}
             disabled={processing}
+            className={lockedEmail ? 'cursor-not-allowed bg-muted/50' : undefined}
           />
           {errors.email ? (
             <p className="text-sm text-destructive">{errors.email}</p>

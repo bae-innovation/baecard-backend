@@ -148,6 +148,52 @@ it('redirects guests with pre-linked pending cards to login', function () {
     ]));
 });
 
+it('shows the assigned user email as read-only context on login for pre-linked cards', function () {
+    $customer = User::factory()->create([
+        'email' => 'cardowner@example.com',
+        'email_verified_at' => now(),
+    ]);
+    $customer->assignRole('User');
+
+    CardCode::create([
+        'code' => 'LOGIN2',
+        'name' => 'Linked Card',
+        'status' => CardCode::STATUS_PENDING,
+        'user_id' => $customer->id,
+    ]);
+
+    $response = $this->get(route('login', ['redirect' => '/LOGIN2']));
+
+    $response->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Auth/Login')
+            ->where('cardCode.code', 'LOGIN2')
+            ->where('cardCode.email', 'cardowner@example.com'));
+});
+
+it('rejects login with a different email for a pre-linked card', function () {
+    $customer = User::factory()->create([
+        'email' => 'cardowner@example.com',
+        'email_verified_at' => now(),
+    ]);
+    $customer->assignRole('User');
+
+    CardCode::create([
+        'code' => 'LOGIN3',
+        'name' => 'Linked Card',
+        'status' => CardCode::STATUS_PENDING,
+        'user_id' => $customer->id,
+    ]);
+
+    $response = $this->post('/login', [
+        'email' => 'someoneelse@example.com',
+        'password' => 'password',
+        'redirect' => '/LOGIN3',
+    ]);
+
+    $response->assertSessionHasErrors('email');
+});
+
 it('activates a pre-linked pending card after login', function () {
     $customer = User::factory()->create(['email_verified_at' => now()]);
     $customer->assignRole('User');

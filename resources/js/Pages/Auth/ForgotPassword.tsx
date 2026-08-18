@@ -1,4 +1,4 @@
-import { Link, useForm } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { Loader2, Mail } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
@@ -7,9 +7,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AuthLayout } from '@/Layouts/AuthLayout';
+import type { SharedPageProps } from '@/types/inertia';
+
+type ForgotPasswordPageProps = SharedPageProps & {
+  mail?: {
+    driver?: string;
+    usesLogDriver?: boolean;
+    exposeDevLinks?: boolean;
+  };
+};
 
 export default function ForgotPassword() {
+  const { flash, mail } = usePage<ForgotPasswordPageProps>().props;
   const [emailSent, setEmailSent] = React.useState(false);
+  const [devResetUrl, setDevResetUrl] = React.useState<string | null>(null);
   const { data, setData, post, processing, errors } = useForm({
     email: '',
   });
@@ -17,13 +28,27 @@ export default function ForgotPassword() {
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     post('/forgot-password', {
-      onSuccess: () => {
+      onSuccess: ({ props }) => {
         setEmailSent(true);
-        toast.success('If that email exists, a reset link has been sent.');
+        const pageProps = props as ForgotPasswordPageProps;
+        setDevResetUrl(pageProps.flash?.devResetUrl ?? null);
+        toast.success(
+          pageProps.mail?.usesLogDriver
+            ? 'Reset link generated. Use the link below or check storage/logs/laravel.log.'
+            : 'If that email exists, a reset link has been sent.',
+        );
       },
-      onError: () => toast.error('Unable to send reset link. Please try again.'),
+      onError: (formErrors) => {
+        const message =
+          typeof formErrors.email === 'string'
+            ? formErrors.email
+            : 'Unable to send reset link. Please try again.';
+        toast.error(message);
+      },
     });
   }
+
+  const resetUrl = devResetUrl ?? flash.devResetUrl ?? null;
 
   return (
     <AuthLayout
@@ -55,6 +80,23 @@ export default function ForgotPassword() {
               will receive a password reset link shortly.
             </p>
           </div>
+
+          {resetUrl ? (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-left text-sm text-blue-950">
+              <p className="font-medium">Mail driver: {mail?.driver ?? 'log'}</p>
+              <p className="mt-1 text-blue-900">
+                Email is not sent to a real inbox in this mode. Use this link to reset
+                your password now:
+              </p>
+              <a
+                href={resetUrl}
+                className="mt-3 inline-block font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Open reset password link
+              </a>
+            </div>
+          ) : null}
+
           <Button variant="outline" className="w-full" asChild>
             <Link href="/login">Return to sign in</Link>
           </Button>

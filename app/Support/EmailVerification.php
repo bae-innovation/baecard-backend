@@ -26,13 +26,17 @@ class EmailVerification
         $message = $exception->getMessage();
 
         if (str_contains($message, 'Disabled by user from hPanel')) {
-            return 'Email could not be sent from this machine. Hostinger SMTP works on your production server (sogaimpact.com), not from localhost. Use the verify link on this page, or test on production.';
+            return 'Email could not be sent because outgoing mail is disabled in Hostinger hPanel. Enable SMTP for admin@baecard.info under Emails, then try again.';
+        }
+
+        if (str_contains($message, 'Sender blocked') || str_contains($message, '550 5.7.1')) {
+            return 'Email could not be delivered because the sender domain is blocked or lacks proper SPF/DKIM setup. Check baecard.info email authentication in hPanel, then try again.';
         }
 
         if (config('mail.default') === 'log') {
-            return 'Mail is set to log mode, so nothing is sent to your inbox. Set MAIL_MAILER=smtp in .env after enabling Hostinger SMTP.';
+            return 'Mail is set to log mode. The auth link is shown on screen and written to storage/logs/laravel.log.';
         }
 
-        return 'We could not send the verification email. Check your mail settings and try again.';
+        return 'We could not send the email. Check your mail settings and try again.';
     }
 }

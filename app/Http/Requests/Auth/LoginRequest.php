@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\CardCode;
+use App\Support\CardCodePath;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LoginRequest extends FormRequest
@@ -39,5 +41,32 @@ class LoginRequest extends FormRequest
             'email.email' => 'Please enter a valid email address.',
             'password.required' => 'The password field is required.',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $redirect = $this->input('redirect') ?: $this->query('redirect');
+
+            if (! CardCodePath::isCardCodePath($redirect)) {
+                return;
+            }
+
+            $cardCode = CardCode::query()
+                ->with('user:id,email')
+                ->where('code', CardCodePath::codeFromPath($redirect))
+                ->first();
+
+            if (
+                $cardCode?->user_id !== null
+                && $cardCode->user
+                && $this->input('email') !== $cardCode->user->email
+            ) {
+                $validator->errors()->add(
+                    'email',
+                    'This card is linked to another account. Sign in with the assigned account.',
+                );
+            }
+        });
     }
 }

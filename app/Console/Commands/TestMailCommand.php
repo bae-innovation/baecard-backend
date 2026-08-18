@@ -2,16 +2,15 @@
 
 namespace App\Console\Commands;
 
-use App\Mail\VerifyEmailMail;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class TestMailCommand extends Command
 {
-    protected $signature = 'mail:test {email : The recipient email address} {--verify : Send the verification email template}';
+    protected $signature = 'mail:test {email : The recipient email address}';
 
-    protected $description = 'Send a test email using the configured mail driver';
+    protected $description = 'Send a plain test email using the configured mail driver';
 
     public function handle(): int
     {
@@ -19,20 +18,13 @@ class TestMailCommand extends Command
         $driver = (string) config('mail.default');
 
         $this->info("Mail driver: {$driver}");
-        $this->info("SMTP host: ".config('mail.mailers.smtp.host'));
-        $this->info("From: ".config('mail.from.address'));
+        $this->info('SMTP host: '.config('mail.mailers.smtp.host'));
+        $this->info('From: '.config('mail.from.address'));
 
         try {
-            if ($this->option('verify')) {
-                Mail::to($email)->send(new VerifyEmailMail(
-                    name: 'Test User',
-                    url: url('/email/verify/test/test-hash'),
-                ));
-            } else {
-                Mail::raw('This is a test email from BAE Card.', function ($message) use ($email) {
-                    $message->to($email)->subject('BAE Card mail test');
-                });
-            }
+            Mail::raw('This is a plain test email from '.config('app.name', 'BAE Card').'.', function ($message) use ($email) {
+                $message->to($email)->subject(config('app.name', 'BAE Card').' mail test');
+            });
 
             if ($driver === 'log') {
                 $this->warn('Driver is "log" — the message was written to storage/logs/laravel.log, not your inbox.');

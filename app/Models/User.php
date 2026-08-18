@@ -3,12 +3,10 @@
 namespace App\Models;
 
 use App\Exceptions\MailDeliveryException;
-use App\Mail\VerifyEmailMail;
+use App\Notifications\Auth\VerifyEmailNotification;
 use App\Support\EmailVerification;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -85,11 +83,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendVerificationEmail(bool $raiseOnFailure = true): bool
     {
         try {
-            Mail::to($this->getEmailForVerification())->send(new VerifyEmailMail(
-                name: $this->name ?? 'there',
-                url: EmailVerification::signedUrl($this),
-                expireMinutes: (int) Config::get('auth.verification.expire', 60),
-            ));
+            $this->notify(new VerifyEmailNotification);
 
             return true;
         } catch (TransportExceptionInterface $exception) {

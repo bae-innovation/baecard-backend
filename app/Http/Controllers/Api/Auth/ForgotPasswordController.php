@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
+use App\Exceptions\MailDeliveryException;
 use App\Services\AuthService;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
 
 class ForgotPasswordController extends Controller
 {
@@ -22,9 +24,22 @@ class ForgotPasswordController extends Controller
      */
     public function store(ForgotPasswordRequest $request)
     {
-        $this->authService->forgotPassword($request->validated());
+        try {
+            $response = $this->authService->forgotPassword($request->validated());
+        } catch (MailDeliveryException $exception) {
+            throw ValidationException::withMessages([
+                'email' => $exception->getMessage(),
+            ]);
+        }
 
-        return back()->with('success', __(Password::RESET_LINK_SENT));
+        $payload = json_decode($response->getContent(), true);
+        $redirect = back()->with('success', __(Password::RESET_LINK_SENT));
+
+        if (! empty($payload['data']['devResetUrl'])) {
+            $redirect->with('devResetUrl', $payload['data']['devResetUrl']);
+        }
+
+        return $redirect;
     }
 
     /**

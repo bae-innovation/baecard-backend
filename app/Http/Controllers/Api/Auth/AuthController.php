@@ -162,7 +162,7 @@ class AuthController extends Controller
     }
 
     /**
-     * @return array{code: string, name: string}|null
+     * @return array{code: string, name: string, email?: string}|null
      */
     protected function cardContextFromRedirect(?string $redirect): ?array
     {
@@ -178,9 +178,17 @@ class AuthController extends Controller
             return null;
         }
 
-        return [
+        $cardCode->loadMissing('user:id,email');
+
+        $context = [
             'code' => $cardCode->code,
             'name' => $cardCode->name,
         ];
+
+        if ($cardCode->user_id !== null && $cardCode->user) {
+            $context['email'] = $cardCode->user->email;
+        }
+
+        return $context;
     }
 }

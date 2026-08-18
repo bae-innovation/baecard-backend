@@ -5,27 +5,32 @@ import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AuthLayout } from '@/Layouts/AuthLayout';
+import type { SharedPageProps } from '@/types/inertia';
 
-type VerifyEmailPageProps = {
+type VerifyEmailPageProps = SharedPageProps & {
   redirect?: string;
   cardCode?: {
     code: string;
     name: string;
   } | null;
   verificationUrl?: string | null;
-  mailDriver?: string | null;
-  mailDeliveryBlocked?: boolean;
+  mail?: {
+    driver?: string;
+    usesLogDriver?: boolean;
+    exposeDevLinks?: boolean;
+  };
 };
 
 export default function VerifyEmail({
   redirect,
   cardCode,
   verificationUrl,
-  mailDriver,
-  mailDeliveryBlocked,
+  mail,
 }: VerifyEmailPageProps) {
-  const { auth } = usePage().props as { auth?: { user?: { email?: string } } };
+  const { auth, flash } = usePage<VerifyEmailPageProps>().props;
   const [isSending, setIsSending] = React.useState(false);
+
+  const verifyUrl = verificationUrl ?? flash.verificationUrl ?? null;
 
   const handleResend = () => {
     setIsSending(true);
@@ -78,33 +83,27 @@ export default function VerifyEmail({
           <span className="font-medium text-foreground">
             {auth?.user?.email ?? 'your email address'}
           </span>
-          . Open the email and click the button to activate your card
-          {redirect ? ' and continue' : ''}.
+          . Open the email and click the button to continue
+          {redirect ? ' with your card activation' : ''}.
         </p>
 
-        {verificationUrl ? (
+        {verifyUrl ? (
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
             <p className="font-medium">
-              {mailDeliveryBlocked ? 'Running on localhost' : 'Local development mode'}
+              {mail?.usesLogDriver ? 'Log mail mode' : 'Development link'}
             </p>
             <p className="mt-1 text-blue-900">
-              {mailDeliveryBlocked ? (
+              {mail?.usesLogDriver ? (
                 <>
-                  You are on <code className="rounded bg-blue-100 px-1">127.0.0.1</code>. Hostinger
-                  SMTP only sends from your production server (
-                  <span className="font-medium">sogaimpact.com</span>), not from your PC — so no email
-                  will reach <span className="font-medium">{auth?.user?.email}</span> while testing
-                  locally. Click below to verify, or test on production for real email delivery.
+                  Mail driver is <code className="rounded bg-blue-100 px-1">{mail.driver}</code>,
+                  so nothing is delivered to your inbox. Use this link to verify now:
                 </>
               ) : (
-                <>
-                  Mail is set to <code className="rounded bg-blue-100 px-1">{mailDriver}</code>, so
-                  nothing is delivered to your inbox. Use this link to verify now:
-                </>
+                <>You can also verify using this direct link:</>
               )}
             </p>
             <a
-              href={verificationUrl}
+              href={verifyUrl}
               className="mt-3 inline-block font-medium text-primary underline-offset-4 hover:underline"
             >
               Verify email now

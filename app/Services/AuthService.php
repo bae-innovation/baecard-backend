@@ -3,9 +3,12 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Exceptions\MailDeliveryException;
 use App\Mail\ResetPasswordMail;
 use App\Models\User;
 use App\Support\CardCodePath;
+use App\Support\EmailVerification;
+use App\Support\MailConfig;
 use App\Support\PermissionResolver;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Auth\Events\PasswordReset;
@@ -17,6 +20,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class AuthService
 {
@@ -234,7 +238,29 @@ class AuthService
 
         if ($user) {
             $token = Password::broker()->createToken($user);
-            Mail::to($user->email)->send(new ResetPasswordMail($token, $user->email, $user->name));
+            $resetUrl = MailConfig::resetPasswordUrl($token, $user->email);
+
+            try {
+                Mail::to($user->email)->send(new ResetPasswordMail(
+                    $token,
+                    $user->email,
+                    $user->name ?? 'there',
+                ));
+            } catch (TransportExceptionInterface $exception) {
+                report($exception);
+
+                throw new MailDeliveryException(
+                    EmailVerification::deliveryFailureMessage($exception),
+                    previous: $exception,
+                );
+            }
+
+            if (MailConfig::shouldExposeDevLinks()) {
+                return $this->successResponse(
+                    ['devResetUrl' => $resetUrl],
+                    __(Password::RESET_LINK_SENT),
+                );
+            }
         }
 
         return $this->successResponse(null, __(Password::RESET_LINK_SENT));

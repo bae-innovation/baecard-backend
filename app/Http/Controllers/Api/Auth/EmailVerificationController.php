@@ -9,6 +9,7 @@ use App\Services\AuthService;
 use App\Services\CardCodeService;
 use App\Support\EmailVerification;
 use App\Support\CardCodePath;
+use App\Support\MailConfig;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
@@ -67,14 +68,12 @@ class EmailVerificationController extends Controller
                 'code' => $cardCode->code,
                 'name' => $cardCode->name,
             ] : null,
-            'verificationUrl' => app()->environment('local')
-                && $request->user()
+            'verificationUrl' => $request->user()
                 && ! $request->user()->hasVerifiedEmail()
+                && MailConfig::shouldExposeDevLinks()
                 ? EmailVerification::signedUrl($request->user())
                 : null,
-            'mailDriver' => app()->environment('local') ? config('mail.default') : null,
-            'mailDeliveryBlocked' => app()->environment('local')
-                && config('mail.default') === 'smtp',
+            'mail' => MailConfig::inertiaMeta(),
         ]);
     }
 
@@ -92,10 +91,21 @@ class EmailVerificationController extends Controller
         } catch (\App\Exceptions\MailDeliveryException $exception) {
             return back()
                 ->with('error', $exception->getMessage())
-                ->with('verificationUrl', EmailVerification::signedUrl($request->user()));
+                ->with(
+                    'verificationUrl',
+                    MailConfig::shouldExposeDevLinks()
+                        ? EmailVerification::signedUrl($request->user())
+                        : null,
+                );
         }
 
-        return back()->with('success', 'Verification link sent to your email.');
+        $redirect = back()->with('success', 'Verification link sent to your email.');
+
+        if (MailConfig::shouldExposeDevLinks()) {
+            $redirect->with('verificationUrl', EmailVerification::signedUrl($request->user()));
+        }
+
+        return $redirect;
     }
 
     /**
