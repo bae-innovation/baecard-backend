@@ -1,5 +1,8 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Building2,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   Home,
   Mail,
@@ -199,6 +202,34 @@ export function ProfileAvatar({
   );
 }
 
+function ProfileSocialLinkItem({ link }: { link: ProfileSocialLink }) {
+  const label = PLATFORM_LABELS[link.platform] ?? link.platform;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <a
+          href={link.url}
+          target="_blank"
+          rel="noreferrer"
+          title={link.url}
+          aria-label={label}
+          className="group relative shrink-0 rounded-full transition duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-95"
+        >
+          <PlatformIcon
+            platform={link.platform}
+            size="lg"
+            className="size-11 rounded-full shadow-md ring-2 ring-white/60 sm:size-12"
+          />
+        </a>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[240px] break-all">
+        {link.url}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function ProfileSocialSlider({
   links,
   show = true,
@@ -208,49 +239,113 @@ export function ProfileSocialSlider({
   show?: boolean;
   theme: ProfileThemeTokens;
 }) {
-  if (!show) {
-    return null;
-  }
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
 
   const socialLinks = links.filter(
     (link) => isSocialPlatform(link.platform) && link.url.trim() !== '',
   );
 
+  const updateScrollState = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) {
+      return;
+    }
+
+    const overflow = el.scrollWidth > el.clientWidth + 1;
+    setHasOverflow(overflow);
+    setCanScrollPrev(el.scrollLeft > 0);
+    setCanScrollNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) {
+      return;
+    }
+
+    updateScrollState();
+
+    el.addEventListener('scroll', updateScrollState, { passive: true });
+    const resizeObserver = new ResizeObserver(updateScrollState);
+    resizeObserver.observe(el);
+
+    return () => {
+      el.removeEventListener('scroll', updateScrollState);
+      resizeObserver.disconnect();
+    };
+  }, [socialLinks.length, updateScrollState]);
+
+  const scrollByPage = (direction: 'prev' | 'next') => {
+    const el = scrollRef.current;
+    if (!el) {
+      return;
+    }
+
+    const step = Math.max(el.clientWidth * 0.75, 56);
+    el.scrollBy({
+      left: direction === 'prev' ? -step : step,
+      behavior: 'smooth',
+    });
+  };
+
+  if (!show) {
+    return null;
+  }
+
   if (socialLinks.length === 0) {
     return null;
   }
 
+  const showDesktopNav = hasOverflow;
+
   return (
     <div className={cn('-mx-4 sm:-mx-5', theme.socialBar)}>
       <TooltipProvider delayDuration={150}>
-        <div className="flex gap-2.5 overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-3 sm:px-5">
-          {socialLinks.map((link, index) => {
-            const label = PLATFORM_LABELS[link.platform] ?? link.platform;
+        <div className="flex items-center gap-1 py-3 sm:gap-0">
+          {showDesktopNav ? (
+            <button
+              type="button"
+              onClick={() => scrollByPage('prev')}
+              disabled={!canScrollPrev}
+              aria-label="Previous social links"
+              className={cn(
+                'hidden shrink-0 items-center justify-center rounded-full transition disabled:pointer-events-none disabled:opacity-30 sm:inline-flex sm:size-9',
+                theme.contactIcon,
+              )}
+            >
+              <ChevronLeft className="size-5" strokeWidth={2.25} />
+            </button>
+          ) : null}
 
-            return (
-              <Tooltip key={`${link.platform}-${index}`}>
-                <TooltipTrigger asChild>
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    title={link.url}
-                    aria-label={label}
-                    className="group relative shrink-0 rounded-full transition duration-200 hover:-translate-y-0.5 hover:scale-105 active:scale-95"
-                  >
-                    <PlatformIcon
-                      platform={link.platform}
-                      size="lg"
-                      className="size-11 rounded-full shadow-md ring-2 ring-white/60 sm:size-12"
-                    />
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[240px] break-all">
-                  {link.url}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
+          <div
+            ref={scrollRef}
+            className={cn(
+              'flex min-w-0 flex-1 gap-2.5 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-3 sm:px-2',
+              'overflow-x-auto overscroll-x-contain sm:overflow-x-hidden',
+            )}
+          >
+            {socialLinks.map((link, index) => (
+              <ProfileSocialLinkItem key={`${link.platform}-${index}`} link={link} />
+            ))}
+          </div>
+
+          {showDesktopNav ? (
+            <button
+              type="button"
+              onClick={() => scrollByPage('next')}
+              disabled={!canScrollNext}
+              aria-label="Next social links"
+              className={cn(
+                'hidden shrink-0 items-center justify-center rounded-full transition disabled:pointer-events-none disabled:opacity-30 sm:inline-flex sm:size-9',
+                theme.contactIcon,
+              )}
+            >
+              <ChevronRight className="size-5" strokeWidth={2.25} />
+            </button>
+          ) : null}
         </div>
       </TooltipProvider>
     </div>
