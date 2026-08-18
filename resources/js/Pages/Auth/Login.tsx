@@ -45,27 +45,29 @@ export default function Login({ redirect, cardCode }: LoginPageProps) {
       }
       icon={KeyRound}
       footer={
-        <p>
-          {redirect ? (
-            <>
-              Need an account?{' '}
-              <Link
-                href={`/register?redirect=${encodeURIComponent(redirect)}`}
-                className="font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Register here
-              </Link>
-              {' · '}
-            </>
-          ) : null}
-          Forgot your password?{' '}
-          <Link
-            href="/forgot-password"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Reset it here
-          </Link>
-        </p>
+        cardCode ? undefined : (
+          <p>
+            {redirect ? (
+              <>
+                Need an account?{' '}
+                <Link
+                  href={`/register?redirect=${encodeURIComponent(redirect)}`}
+                  className="font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  Register here
+                </Link>
+                {' · '}
+              </>
+            ) : null}
+            Forgot your password?{' '}
+            <Link
+              href="/forgot-password"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Reset it here
+            </Link>
+          </p>
+        )
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -103,15 +105,19 @@ export default function Login({ redirect, cardCode }: LoginPageProps) {
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          {cardCode ? (
             <Label htmlFor="password">Password</Label>
-            <Link
-              href="/forgot-password"
-              className="text-xs font-medium text-primary underline-offset-4 hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          )}
           <Input
             id="password"
             type="password"
