@@ -162,7 +162,7 @@ class AuthService
 
         $template = max(1, min(4, (int) ($profile?->active_template ?? 1)));
 
-        return route('profile.templates.index');
+        return route('profile.home');
     }
 
     /**

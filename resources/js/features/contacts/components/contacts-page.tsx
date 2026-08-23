@@ -33,6 +33,8 @@ import { DeleteContactDialog } from '@/features/contacts/components/delete-conta
 import type { Contact, ContactMetadata } from '@/features/contacts/schemas/contact.schema';
 import { useAuth } from '@/hooks/useAuth';
 import { useInertiaPagination } from '@/hooks/useInertiaPagination';
+import { useOwnerAppShell } from '@/owner/hooks/use-owner-app-shell';
+import { ContactsAppPage } from '@/owner/pages/contacts-app-page';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 import type { LaravelPaginator } from '@/types/inertia';
 
@@ -78,6 +80,16 @@ type ContactsPageProps = {
 };
 
 export function ContactsPage({ contacts }: ContactsPageProps) {
+  const isOwnerApp = useOwnerAppShell();
+
+  if (isOwnerApp) {
+    return <ContactsAppPage contacts={contacts} />;
+  }
+
+  return <ContactsTablePage contacts={contacts} />;
+}
+
+function ContactsTablePage({ contacts }: ContactsPageProps) {
   const {
     user,
     canViewContacts,

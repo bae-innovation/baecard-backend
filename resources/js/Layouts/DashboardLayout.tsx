@@ -6,6 +6,7 @@ import { AppSettingsSync } from '@/components/shared/app-settings-sync';
 import { FlashToaster } from '@/components/shared/flash-toaster';
 import { AppSidebar } from '@/components/shared/sidebar/app-sidebar';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
+import { InstallAppButton } from '@/pwa/install-app-button';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -78,7 +79,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <SidebarTrigger className="-ml-1 size-9" />
                     <Separator orientation="vertical" className="mr-2 h-4" />
                     <DashboardBreadcrumb />
-                    <div className="ml-auto flex items-center gap-1">
+                    <div className="ml-auto flex shrink-0 items-center gap-2">
+                        <InstallAppButton variant="outline" size="sm" className="shrink-0" />
                         <ThemeToggle />
                     </div>
                 </header>

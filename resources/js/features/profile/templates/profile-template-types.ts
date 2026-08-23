@@ -9,6 +9,8 @@ export type ProfileTemplateProps = {
   user: PublicProfileUser;
   social_links: ProfileSocialLink[];
   isPreview?: boolean;
+  /** Tighter layout when preview is embedded in the owner app theme picker. */
+  compactPreview?: boolean;
   management?: {
     isActive: boolean;
     activating?: boolean;

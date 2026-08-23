@@ -7,7 +7,7 @@ import type {
   PublicProfileUser,
 } from '@/features/cards/schemas/card-code.schema';
 
-import DashboardLayout from '@/Layouts/DashboardLayout';
+import PortalLayout from '@/Layouts/PortalLayout';
 
 type TemplatePageProps = {
   active_template: number;
@@ -20,4 +20,4 @@ export default function Template(props: TemplatePageProps) {
   return <TemplateManagementPage {...props} />;
 }
 
-Template.layout = (page: ReactNode) => <DashboardLayout>{page}</DashboardLayout>;
+Template.layout = (page: ReactNode) => <PortalLayout>{page}</PortalLayout>;

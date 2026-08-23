@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import { AppointmentsPage } from '@/features/appointments/components/appointments-page';
 import type { Appointment } from '@/features/appointments/schemas/appointment.schema';
-import DashboardLayout from '@/Layouts/DashboardLayout';
+import PortalLayout from '@/Layouts/PortalLayout';
 import type { LaravelPaginator } from '@/types/inertia';
 
 export default function Index({
@@ -13,4 +13,4 @@ export default function Index({
   return <AppointmentsPage appointments={appointments} />;
 }
 
-Index.layout = (page: ReactNode) => <DashboardLayout>{page}</DashboardLayout>;
+Index.layout = (page: ReactNode) => <PortalLayout>{page}</PortalLayout>;
