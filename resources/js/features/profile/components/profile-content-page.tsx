@@ -25,15 +25,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { CountryCallingCodeSelect } from '@/features/profile/components/country-calling-code-select';
 import { PlatformIcon } from '@/features/profile/components/platform-icon';
 import { PROFILE_CONTENT_PROPS } from '@/features/profile/lib/profile-content-props';
+import {
+  buildPhonePlatformUrl,
+  DEFAULT_PHONE_COUNTRY,
+  isPhoneSocialPlatform,
+  parseSocialPhoneValue,
+} from '@/features/profile/lib/social-phone';
 import {
   DEFAULT_PHONE_CODE,
   mergeSocialLinks,
   profileContentFormSchema,
+  serializeSocialLinks,
   type ProfileContent,
   type ProfileContentFormValues,
-  type ProfileSocialLink,
+  type ProfileSocialLinkFormValue,
 } from '@/features/profile/schemas/profile-content.schema';
 import {
   PLATFORM_LABELS,
@@ -53,6 +61,46 @@ type ProfileContentPageProps = {
 function displayName(profile?: ProfileContent) {
   const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim();
   return name || 'there';
+}
+
+function SocialUrlField({
+  value,
+  onChange,
+  placeholder,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  className?: string;
+}) {
+  const fieldRef = React.useRef<HTMLTextAreaElement>(null);
+
+  React.useLayoutEffect(() => {
+    const field = fieldRef.current;
+    if (!field) {
+      return;
+    }
+
+    field.style.height = 'auto';
+    field.style.height = `${field.scrollHeight}px`;
+  }, [value]);
+
+  return (
+    <Textarea
+      ref={fieldRef}
+      rows={1}
+      value={value}
+      placeholder={placeholder}
+      onChange={(event) => onChange(event.target.value.replace(/[\r\n]+/g, ''))}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+        }
+      }}
+      className={`min-h-9 resize-none overflow-hidden break-all py-1.5 ${className ?? ''}`}
+    />
+  );
 }
 
 function PhoneField({
@@ -188,30 +236,79 @@ export function ProfileContentPage({ profile }: ProfileContentPageProps) {
     };
   }, [coverImageFile, coverPreview, profileImageFile, profilePreview]);
 
-  const updateSocialLink = (index: number, patch: Partial<ProfileSocialLink>) => {
+  const updateSocialLink = (index: number, patch: Partial<ProfileSocialLinkFormValue>) => {
     const next = [...(form.getValues('social_links') ?? [])];
     next[index] = { ...next[index], ...patch };
     form.setValue('social_links', next, { shouldDirty: true });
   };
 
+  const changeSocialPlatform = (index: number, platform: ProfilePlatform) => {
+    const current = form.getValues('social_links')?.[index];
+
+    if (!current) {
+      return;
+    }
+
+    if (isPhoneSocialPlatform(platform)) {
+      const parsed = isPhoneSocialPlatform(current.platform)
+        ? { country: current.country ?? DEFAULT_PHONE_COUNTRY, nationalNumber: current.national_number ?? '' }
+        : parseSocialPhoneValue(current.url);
+
+      updateSocialLink(index, {
+        platform,
+        country: parsed.country,
+        national_number: parsed.nationalNumber,
+        url: parsed.nationalNumber
+          ? buildPhonePlatformUrl(platform, parsed.country, parsed.nationalNumber)
+          : '',
+      });
+      return;
+    }
+
+    updateSocialLink(index, {
+      platform,
+      url: isPhoneSocialPlatform(current.platform) ? '' : current.url,
+      national_number: '',
+      country: DEFAULT_PHONE_COUNTRY,
+    });
+  };
+
   const addSocialLink = () => {
     const next = [...(form.getValues('social_links') ?? [])];
-    next.push({ platform: 'website', url: '' });
+    next.push({
+      platform: 'website',
+      url: '',
+      country: DEFAULT_PHONE_COUNTRY,
+      national_number: '',
+    });
     form.setValue('social_links', next, { shouldDirty: true });
   };
 
   const removeSocialLink = (index: number) => {
     const next = [...(form.getValues('social_links') ?? [])];
     next.splice(index, 1);
-    form.setValue('social_links', next.length > 0 ? next : [{ platform: 'facebook', url: '' }], {
-      shouldDirty: true,
-    });
+    form.setValue(
+      'social_links',
+      next.length > 0
+        ? next
+        : [
+            {
+              platform: 'facebook',
+              url: '',
+              country: DEFAULT_PHONE_COUNTRY,
+              national_number: '',
+            },
+          ],
+      {
+        shouldDirty: true,
+      },
+    );
   };
 
   const onSubmit = form.handleSubmit((values) => {
     setIsSubmitting(true);
 
-    const filteredSocialLinks = values.social_links.filter((link) => link.url.trim() !== '');
+    const filteredSocialLinks = serializeSocialLinks(values.social_links);
 
     router.post(
       '/profile/content',
@@ -531,17 +628,21 @@ export function ProfileContentPage({ profile }: ProfileContentPageProps) {
             description="Add the social media links shown on your public card."
           >
             <div className="space-y-3">
-              {socialLinks.map((link, index) => (
-                <div key={`${link.platform}-${index}`} className="flex items-start gap-3">
-                  <div className="flex w-40 shrink-0 items-center gap-2 pt-0.5">
+              {socialLinks.map((link, index) => {
+                const phonePlatform = isPhoneSocialPlatform(link.platform) ? link.platform : null;
+
+                return (
+                <div
+                  key={`${link.platform}-${index}`}
+                  className="flex flex-wrap items-start gap-2 rounded-lg border p-3 sm:flex-nowrap sm:gap-3 sm:rounded-none sm:border-0 sm:p-0"
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-2 sm:w-40 sm:flex-none">
                     <PlatformIcon platform={link.platform} size="sm" />
                     <Select
                       value={link.platform}
-                      onValueChange={(value) =>
-                        updateSocialLink(index, { platform: value as ProfilePlatform })
-                      }
+                      onValueChange={(value) => changeSocialPlatform(index, value as ProfilePlatform)}
                     >
-                      <SelectTrigger className="h-9">
+                      <SelectTrigger className="h-9 min-w-0 flex-1">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -555,23 +656,75 @@ export function ProfileContentPage({ profile }: ProfileContentPageProps) {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Input
-                    value={link.url}
-                    onChange={(event) => updateSocialLink(index, { url: event.target.value })}
-                    placeholder={`Enter ${PLATFORM_LABELS[link.platform].toLowerCase()} profile link`}
-                    className="flex-1"
-                  />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="shrink-0 text-muted-foreground"
+                    className="shrink-0 text-muted-foreground sm:order-last"
                     onClick={() => removeSocialLink(index)}
+                    aria-label={`Remove ${PLATFORM_LABELS[link.platform]} link`}
                   >
                     <Trash2 className="size-4" />
                   </Button>
+                  {phonePlatform ? (
+                    <div className="flex min-w-0 basis-full gap-2 sm:basis-auto sm:flex-1">
+                      <CountryCallingCodeSelect
+                        value={link.country}
+                        onChange={(country) =>
+                          updateSocialLink(index, {
+                            country,
+                            url: buildPhonePlatformUrl(
+                              phonePlatform,
+                              country,
+                              link.national_number,
+                            ),
+                          })
+                        }
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`social_links.${index}.national_number`}
+                        render={({ field }) => (
+                          <FormItem className="min-w-0 flex-1">
+                            <FormControl>
+                              <Input
+                                {...field}
+                                type="tel"
+                                inputMode="numeric"
+                                autoComplete="tel-national"
+                                maxLength={15}
+                                placeholder="Mobile number"
+                                value={field.value ?? ''}
+                                onChange={(event) => {
+                                  const nationalNumber = event.target.value.replace(/\D/g, '');
+                                  field.onChange(nationalNumber);
+                                  updateSocialLink(index, {
+                                    national_number: nationalNumber,
+                                    url: buildPhonePlatformUrl(
+                                      phonePlatform,
+                                      link.country,
+                                      nationalNumber,
+                                    ),
+                                  });
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  ) : (
+                    <SocialUrlField
+                      value={link.url}
+                      onChange={(url) => updateSocialLink(index, { url })}
+                      placeholder={`Enter ${PLATFORM_LABELS[link.platform].toLowerCase()} profile link`}
+                      className="min-w-0 basis-full sm:basis-auto sm:flex-1"
+                    />
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             <Button type="button" variant="outline" onClick={addSocialLink}>

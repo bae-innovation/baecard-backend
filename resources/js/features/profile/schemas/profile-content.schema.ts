@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+import {
+  buildPhonePlatformUrl,
+  DEFAULT_PHONE_COUNTRY,
+  isPhoneSocialPlatform,
+  parseSocialPhoneValue,
+  validateMobileNumber,
+} from '@/features/profile/lib/social-phone';
 import { PROFILE_PLATFORMS } from '@/features/profile/schemas/profile-social.schema';
 
 export const profileSocialLinkSchema = z.object({
@@ -8,6 +15,45 @@ export const profileSocialLinkSchema = z.object({
 });
 
 export type ProfileSocialLink = z.infer<typeof profileSocialLinkSchema>;
+
+export const profileSocialLinkFormSchema = z
+  .object({
+    platform: z.enum(PROFILE_PLATFORMS),
+    url: z.string().max(500),
+    country: z.string().optional(),
+    national_number: z.string().max(15).optional(),
+  })
+  .superRefine((link, ctx) => {
+    if (!isPhoneSocialPlatform(link.platform)) {
+      return;
+    }
+
+    const nationalNumber = (link.national_number ?? '').replace(/\D/g, '');
+
+    if (nationalNumber === '') {
+      if (link.url.trim() !== '' && parseSocialPhoneValue(link.url).nationalNumber === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Enter a valid mobile number',
+          path: ['national_number'],
+        });
+      }
+
+      return;
+    }
+
+    const result = validateMobileNumber(link.country, nationalNumber);
+
+    if (result !== true) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: result,
+        path: ['national_number'],
+      });
+    }
+  });
+
+export type ProfileSocialLinkFormValue = z.infer<typeof profileSocialLinkFormSchema>;
 
 export const profileContentSchema = z.object({
   first_name: z.string().nullable().optional(),
@@ -46,7 +92,7 @@ export const profileContentFormSchema = z.object({
   work_phone_code: z.string().max(8).optional().or(z.literal('')),
   work_phone: z.string().max(32).optional().or(z.literal('')),
   work_address: z.string().max(500).optional().or(z.literal('')),
-  social_links: z.array(profileSocialLinkSchema),
+  social_links: z.array(profileSocialLinkFormSchema),
 });
 
 export type ProfileContentFormValues = z.infer<typeof profileContentFormSchema>;
@@ -60,7 +106,25 @@ export const DEFAULT_SOCIAL_SLOTS: ProfileSocialLink[] = [
   { platform: 'whatsapp', url: '' },
 ];
 
-export function mergeSocialLinks(links?: ProfileSocialLink[] | null): ProfileSocialLink[] {
+function toFormSocialLink(link: ProfileSocialLink): ProfileSocialLinkFormValue {
+  if (!isPhoneSocialPlatform(link.platform)) {
+    return {
+      ...link,
+      country: DEFAULT_PHONE_COUNTRY,
+      national_number: '',
+    };
+  }
+
+  const parsed = parseSocialPhoneValue(link.url);
+
+  return {
+    ...link,
+    country: parsed.country,
+    national_number: parsed.nationalNumber,
+  };
+}
+
+export function mergeSocialLinks(links?: ProfileSocialLink[] | null): ProfileSocialLinkFormValue[] {
   const existing = Array.isArray(links) ? links : [];
   const used = new Set(existing.map((link) => link.platform));
   const merged = [...existing];
@@ -71,5 +135,25 @@ export function mergeSocialLinks(links?: ProfileSocialLink[] | null): ProfileSoc
     }
   }
 
-  return merged.length > 0 ? merged : [...DEFAULT_SOCIAL_SLOTS];
+  const resolved = merged.length > 0 ? merged : [...DEFAULT_SOCIAL_SLOTS];
+
+  return resolved.map(toFormSocialLink);
+}
+
+export function serializeSocialLinks(links: ProfileSocialLinkFormValue[]): ProfileSocialLink[] {
+  return links
+    .map((link) => {
+      if (isPhoneSocialPlatform(link.platform)) {
+        return {
+          platform: link.platform,
+          url: buildPhonePlatformUrl(link.platform, link.country, link.national_number),
+        };
+      }
+
+      return {
+        platform: link.platform,
+        url: link.url.trim(),
+      };
+    })
+    .filter((link) => link.url !== '');
 }
