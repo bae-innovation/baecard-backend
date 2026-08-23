@@ -18,6 +18,7 @@ export function PremiumProfileCard({
   social_links,
   isPreview,
   compactPreview,
+  density = 'default',
   themeId,
   management,
 }: ProfileTemplateProps & {
@@ -84,7 +85,8 @@ export function PremiumProfileCard({
           {sections.showBio ? (
             <p
               className={cn(
-                'mt-3 w-full max-w-sm text-[13px] leading-relaxed sm:text-sm',
+                'mt-3 w-full max-w-sm leading-relaxed',
+                density === 'comfortable' ? 'text-sm' : 'text-[13px] sm:text-sm',
                 isCentered ? 'text-left' : '',
                 theme.bio,
               )}
@@ -98,7 +100,7 @@ export function PremiumProfileCard({
           <ProfileSocialSlider links={social_links} show={sections.showSocial} theme={theme} />
 
           <div className={cn('space-y-3', theme.contactStack || undefined)}>
-            <ProfileProfessionalCard user={user} theme={theme} />
+            <ProfileProfessionalCard user={user} theme={theme} density={density} />
 
             <ProfileContactCards
               user={user}
@@ -106,6 +108,7 @@ export function PremiumProfileCard({
               showEmails={sections.showEmails}
               showAddresses={sections.showAddresses}
               theme={theme}
+              density={density}
             />
           </div>
 

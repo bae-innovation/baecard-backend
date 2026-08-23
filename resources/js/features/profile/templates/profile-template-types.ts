@@ -11,6 +11,8 @@ export type ProfileTemplateProps = {
   isPreview?: boolean;
   /** Tighter layout when preview is embedded in the owner app theme picker. */
   compactPreview?: boolean;
+  /** Larger labels and values when previewing inside the owner PWA. */
+  density?: 'default' | 'comfortable';
   management?: {
     isActive: boolean;
     activating?: boolean;

@@ -18,7 +18,10 @@ export default function OwnerLayout({ children, className }: OwnerLayoutProps) {
       <AppHead />
       <AppSettingsSync />
       <FlashToaster />
-      <div className="flex h-dvh w-full max-h-dvh min-h-0 flex-col overflow-hidden bg-background">
+      <div
+        data-owner-app
+        className="flex h-dvh w-full max-h-dvh min-h-0 flex-col overflow-hidden bg-background"
+      >
         <OwnerTopBar />
         <main
           className={cn(

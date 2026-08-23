@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 
 import { FormPageShell } from '@/components/shared/form-page-shell';
 import { FormSection } from '@/components/shared/form-section';
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -50,13 +49,26 @@ import {
 } from '@/features/profile/schemas/profile-social.schema';
 import { objectToFormData } from '@/lib/object-to-form-data';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { OwnerFormPageShell } from '@/owner/components/owner-form-page-shell';
+import { OwnerFormSection } from '@/owner/components/owner-form-section';
+import { useOwnerAppShell } from '@/owner/hooks/use-owner-app-shell';
+import { ProfileContentAppPage } from '@/owner/pages/profile-content-app-page';
+import { Button } from '@/components/ui/button';
 
 const PHONE_CODES = ['+880', '+1', '+44', '+91', '+61', '+971'];
 const IMAGE_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp';
 
 type ProfileContentPageProps = {
   profile?: ProfileContent;
+};
+
+export type ProfileContentFormVariant = 'dashboard' | 'owner-app';
+
+type ProfileContentFormProps = {
+  profile?: ProfileContent;
+  variant: ProfileContentFormVariant;
 };
 
 function displayName(profile?: ProfileContent) {
@@ -159,6 +171,17 @@ function PhoneField({
 }
 
 export function ProfileContentPage({ profile }: ProfileContentPageProps) {
+  const isOwnerApp = useOwnerAppShell();
+
+  if (isOwnerApp) {
+    return <ProfileContentAppPage profile={profile} />;
+  }
+
+  return <ProfileContentForm profile={profile} variant="dashboard" />;
+}
+
+export function ProfileContentForm({ profile, variant }: ProfileContentFormProps) {
+  const isOwnerApp = variant === 'owner-app';
   const { homeHref } = useAuth();
   const [profileImageFile, setProfileImageFile] = React.useState<File | null>(null);
   const [coverImageFile, setCoverImageFile] = React.useState<File | null>(null);
@@ -347,22 +370,28 @@ export function ProfileContentPage({ profile }: ProfileContentPageProps) {
     );
   });
 
-  return (
-    <FormPageShell
-      backTo={homeHref}
-      backLabel="Back"
-      title={`Welcome ${displayName(profile)}!`}
-      description="Update your personal, professional, and social details for your public Bae Card profile."
-      icon={UserRound}
-    >
-      <Form {...form}>
-        <form onSubmit={onSubmit} className="mx-auto w-full max-w-3xl space-y-6 pb-6">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Profile setup
-          </p>
+  const Section = isOwnerApp ? OwnerFormSection : FormSection;
 
-          <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
-            <div className="relative h-44 bg-muted sm:h-52">
+  const formBody = (
+    <Form {...form}>
+      <form
+        onSubmit={onSubmit}
+        className={cn(
+          'w-full space-y-5 pb-6',
+          !isOwnerApp && 'mx-auto max-w-3xl space-y-6',
+        )}
+      >
+        <p
+          className={cn(
+            'font-medium uppercase tracking-[0.14em] text-muted-foreground',
+            isOwnerApp ? 'text-sm' : 'text-xs tracking-[0.18em]',
+          )}
+        >
+          Profile setup
+        </p>
+
+        <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+          <div className={cn('relative bg-muted', isOwnerApp ? 'h-40' : 'h-44 sm:h-52')}>
               {coverPreview ? (
                 <img src={coverPreview} alt="" className="h-full w-full object-cover" />
               ) : null}
@@ -470,11 +499,11 @@ export function ProfileContentPage({ profile }: ProfileContentPageProps) {
             </div>
           </section>
 
-          <FormSection
+          <Section
             title="Personal information"
             description="Your name, contact details, and bio."
           >
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className={cn('grid gap-4', !isOwnerApp && 'sm:grid-cols-2')}>
               <FormField
                 control={form.control}
                 name="first_name"
@@ -554,13 +583,13 @@ export function ProfileContentPage({ profile }: ProfileContentPageProps) {
                 </FormItem>
               )}
             />
-          </FormSection>
+          </Section>
 
-          <FormSection
+          <Section
             title="Professional information"
             description="Company, role, and work contact details."
           >
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className={cn('grid gap-4', !isOwnerApp && 'sm:grid-cols-2')}>
               <FormField
                 control={form.control}
                 name="company"
@@ -623,9 +652,9 @@ export function ProfileContentPage({ profile }: ProfileContentPageProps) {
                 </FormItem>
               )}
             />
-          </FormSection>
+          </Section>
 
-          <FormSection
+          <Section
             title="Social information"
             description="Add the social media links shown on your public card."
           >
@@ -636,7 +665,10 @@ export function ProfileContentPage({ profile }: ProfileContentPageProps) {
                 return (
                 <div
                   key={`${link.platform}-${index}`}
-                  className="flex flex-wrap items-start gap-2 rounded-lg border p-3 sm:flex-nowrap sm:gap-3 sm:rounded-none sm:border-0 sm:p-0"
+                  className={cn(
+                    'flex flex-wrap items-start gap-2 rounded-lg border p-3',
+                    !isOwnerApp && 'sm:flex-nowrap sm:gap-3 sm:rounded-none sm:border-0 sm:p-0',
+                  )}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-2 sm:w-40 sm:flex-none">
                     <PlatformIcon platform={link.platform} size="sm" />
@@ -733,16 +765,39 @@ export function ProfileContentPage({ profile }: ProfileContentPageProps) {
               <Plus className="mr-2 size-4" />
               Add social link
             </Button>
-          </FormSection>
+          </Section>
 
-          <div className="flex justify-end">
-            <Button type="submit" disabled={isSubmitting}>
+          <div className={cn(isOwnerApp ? 'sticky bottom-0 -mx-4 border-t bg-background px-4 py-3' : 'flex justify-end')}>
+            <Button type="submit" disabled={isSubmitting} className={cn(isOwnerApp && 'w-full')}>
               {isSubmitting ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
               Save profile
             </Button>
           </div>
         </form>
       </Form>
+  );
+
+  if (isOwnerApp) {
+    return (
+      <OwnerFormPageShell
+        title="Edit profile"
+        description="Update the details shown on your public Bae Card."
+        icon={UserRound}
+      >
+        {formBody}
+      </OwnerFormPageShell>
+    );
+  }
+
+  return (
+    <FormPageShell
+      backTo={homeHref}
+      backLabel="Back"
+      title={`Welcome ${displayName(profile)}!`}
+      description="Update your personal, professional, and social details for your public Bae Card profile."
+      icon={UserRound}
+    >
+      {formBody}
     </FormPageShell>
   );
 }

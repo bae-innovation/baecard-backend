@@ -23,6 +23,30 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { showMutationSuccess } from '@/lib/mutation-toast';
 
+type ProfileDensity = 'default' | 'comfortable';
+
+function contactLabelClass(
+  density: ProfileDensity = 'default',
+  extra?: string,
+) {
+  return cn(
+    density === 'comfortable' ? 'text-xs' : 'text-[11px]',
+    'font-medium uppercase tracking-wide',
+    extra,
+  );
+}
+
+function contactValueClass(
+  density: ProfileDensity = 'default',
+  extra?: string,
+) {
+  return cn(
+    density === 'comfortable' ? 'text-sm' : 'text-[13px] sm:text-sm',
+    'truncate font-medium',
+    extra,
+  );
+}
+
 export type ProfileManagementControls = {
   isActive: boolean;
   activating?: boolean;
@@ -339,10 +363,12 @@ function ContactRow({
   entry,
   theme,
   isLast,
+  density = 'default',
 }: {
   entry: ContactEntry;
   theme: ProfileThemeTokens;
   isLast: boolean;
+  density?: ProfileDensity;
 }) {
   const Icon =
     entry.kind === 'phone'
@@ -383,11 +409,11 @@ function ContactRow({
         <Icon className="size-3.5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className={cn('text-[11px] font-medium uppercase tracking-wide', theme.contactMuted)}>
+        <p className={contactLabelClass(density, theme.contactMuted)}>
           {entry.variant === 'work' ? 'Work' : 'Personal'}{' '}
           {entry.kind === 'phone' ? 'phone' : entry.kind === 'email' ? 'email' : 'address'}
         </p>
-        <p className={cn('truncate text-[13px] font-medium sm:text-sm', theme.contactText)}>
+        <p className={contactValueClass(density, theme.contactText)}>
           {entry.value}
         </p>
       </div>
@@ -423,9 +449,11 @@ function ContactRow({
 export function ProfileProfessionalCard({
   user,
   theme,
+  density = 'default',
 }: {
   user: ProfileTemplateProps['user'];
   theme: ProfileThemeTokens;
+  density?: ProfileDensity;
 }) {
   const company = user.company?.trim() || '';
   const designation = user.designation?.trim() || '';
@@ -465,10 +493,10 @@ export function ProfileProfessionalCard({
             )}
           </span>
           <div className="min-w-0 flex-1">
-            <p className={cn('text-[11px] font-medium uppercase tracking-wide', theme.contactMuted)}>
+            <p className={contactLabelClass(density, theme.contactMuted)}>
               {row.label}
             </p>
-            <p className={cn('truncate text-[13px] font-medium sm:text-sm', theme.contactText)}>
+            <p className={contactValueClass(density, theme.contactText)}>
               {row.value}
             </p>
           </div>
@@ -484,12 +512,14 @@ export function ProfileContactCards({
   showEmails = true,
   showAddresses = true,
   theme,
+  density = 'default',
 }: {
   user: ProfileTemplateProps['user'];
   showPhones?: boolean;
   showEmails?: boolean;
   showAddresses?: boolean;
   theme: ProfileThemeTokens;
+  density?: ProfileDensity;
 }) {
   const phones: ContactEntry[] = showPhones
     ? [
@@ -547,6 +577,7 @@ export function ProfileContactCards({
               entry={phone}
               theme={theme}
               isLast={index === phones.length - 1}
+              density={density}
             />
           ))}
         </div>
@@ -560,6 +591,7 @@ export function ProfileContactCards({
               entry={email}
               theme={theme}
               isLast={index === emails.length - 1}
+              density={density}
             />
           ))}
         </div>
@@ -573,6 +605,7 @@ export function ProfileContactCards({
               entry={address}
               theme={theme}
               isLast={index === addresses.length - 1}
+              density={density}
             />
           ))}
         </div>

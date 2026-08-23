@@ -37,7 +37,7 @@ export function OwnerTopBar() {
 
   return (
     <header
-      className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      className="sticky top-0 z-40 flex h-[3.25rem] shrink-0 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80"
       style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
     >
       <OwnerMenuSheet />
