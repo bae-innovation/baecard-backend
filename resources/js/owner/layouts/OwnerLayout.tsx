@@ -18,21 +18,17 @@ export default function OwnerLayout({ children, className }: OwnerLayoutProps) {
       <AppHead />
       <AppSettingsSync />
       <FlashToaster />
-      <div className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-muted/30">
-        <div
-          className="mx-auto flex h-full min-h-0 w-full max-w-md flex-col overflow-hidden border-x bg-background shadow-sm sm:max-w-[430px]"
+      <div className="flex h-dvh w-full max-h-dvh min-h-0 flex-col overflow-hidden bg-background">
+        <OwnerTopBar />
+        <main
+          className={cn(
+            'flex min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-contain touch-pan-y',
+            className,
+          )}
         >
-          <OwnerTopBar />
-          <main
-            className={cn(
-              'flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain touch-pan-y',
-              className,
-            )}
-          >
-            {children}
-          </main>
-          <OwnerBottomNav />
-        </div>
+          {children}
+        </main>
+        <OwnerBottomNav />
       </div>
     </>
   );

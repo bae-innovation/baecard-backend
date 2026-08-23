@@ -13,7 +13,7 @@ export function OwnerBottomNav() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       aria-label="App navigation"
     >
-      <div className="mx-auto flex max-w-md items-stretch justify-around px-1 pt-1">
+      <div className="flex w-full items-stretch justify-around px-1 pt-1">
         {OWNER_NAV_ITEMS.map((item) => {
           const active = item.match(pathname);
           const Icon = item.icon;
