@@ -12,23 +12,6 @@ import type { ProfileTemplateProps } from '@/features/profile/templates/profile-
 import { getProfileTheme } from '@/features/profile/templates/theme-tokens';
 import { cn } from '@/lib/utils';
 
-/** Matches mockup: "Khulna, BD | Motion Designer, Bae Innovation" */
-function formatIdentityLine(user: ProfileTemplateProps['user']): string | null {
-  const location = (user.personal_address || '').trim();
-  const designation = (user.designation || '').trim();
-  const company = (user.company || '').trim();
-
-  const role =
-    designation && company
-      ? `${designation}, ${company}`
-      : designation || company || '';
-
-  // Prefer professional role; fall back to work address as location if needed.
-  const place = location || (user.work_address || '').trim();
-  const parts = [place, role].filter(Boolean);
-  return parts.length > 0 ? parts.join(' | ') : null;
-}
-
 export function PremiumProfileCard({
   card,
   user,
@@ -41,7 +24,6 @@ export function PremiumProfileCard({
 }) {
   const theme = getProfileTheme(themeId);
   const sections = useProfileSections({ card, user, social_links });
-  const identityLine = formatIdentityLine(user);
   const managementControls = management as ProfileManagementControls | undefined;
   const isLive = !isPreview && !managementControls;
   const isCentered = theme.avatarAlign === 'center';
@@ -96,18 +78,6 @@ export function PremiumProfileCard({
           >
             {user.name}
           </h1>
-
-          {identityLine ? (
-            <p
-              className={cn(
-                'mt-1.5 max-w-sm text-[13px] sm:text-sm',
-                isCentered ? 'px-3' : 'pr-2',
-                theme.subtitle,
-              )}
-            >
-              {identityLine}
-            </p>
-          ) : null}
 
           {sections.showBio ? (
             <p
