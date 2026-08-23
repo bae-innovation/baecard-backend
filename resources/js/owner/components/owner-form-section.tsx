@@ -16,14 +16,12 @@ export function OwnerFormSection({
   className,
 }: OwnerFormSectionProps) {
   return (
-    <section className={cn('rounded-2xl border bg-card p-4 shadow-sm', className)}>
-      <div className="mb-4">
-        <h3 className="text-base font-semibold tracking-tight">{title}</h3>
-        {description ? (
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{description}</p>
-        ) : null}
+    <section className={cn('owner-section', className)}>
+      <div className="owner-section-header">
+        <h3 className="owner-h3">{title}</h3>
+        {description ? <p className="owner-section-desc">{description}</p> : null}
       </div>
-      <div className="space-y-4">{children}</div>
+      <div className="owner-section-body">{children}</div>
     </section>
   );
 }

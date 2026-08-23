@@ -67,11 +67,11 @@ export function OwnerMenuSheet() {
         type="button"
         variant="ghost"
         size="icon"
-        className="size-10 shrink-0"
+        className="owner-menu-trigger size-10 shrink-0"
         onClick={() => setOpen(true)}
         aria-label="Open menu"
       >
-        <Menu className="size-5" />
+        <Menu className="owner-icon-header !text-foreground" />
       </Button>
       <SheetContent side="left" className="flex w-[min(100%,280px)] flex-col gap-0 p-0 sm:max-w-xs">
         <SheetHeader className="space-y-0 border-b px-4 py-4 pr-12 text-left">
@@ -81,8 +81,8 @@ export function OwnerMenuSheet() {
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <SheetTitle className="truncate text-base">{user.name}</SheetTitle>
-              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+              <SheetTitle className="owner-h2 truncate">{user.name}</SheetTitle>
+              <p className="owner-muted truncate">{user.email}</p>
             </div>
           </div>
         </SheetHeader>
@@ -91,7 +91,7 @@ export function OwnerMenuSheet() {
           <nav className="px-2 py-3" aria-label="Main menu">
             {menuGroups.map((section) => (
               <div key={section.group} className="mb-4 last:mb-0">
-                <p className="px-2 pb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <p className="owner-menu-group-label px-2">
                   {section.group}
                 </p>
                 <ul className="space-y-0.5">
@@ -107,16 +107,16 @@ export function OwnerMenuSheet() {
                           href={item.url}
                           onClick={() => setOpen(false)}
                           className={cn(
-                            'flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-colors',
+                            'owner-menu-link',
                             active
                               ? 'bg-primary/10 text-primary'
                               : 'text-foreground hover:bg-muted',
                           )}
                         >
                           {Icon ? (
-                            <Icon className="size-5 shrink-0" aria-hidden />
+                            <Icon className="owner-menu-link-icon" aria-hidden />
                           ) : (
-                            <span className="size-4 shrink-0" />
+                            <span className="owner-menu-link-icon shrink-0" />
                           )}
                           <span className="truncate">{item.title}</span>
                         </Link>
@@ -139,7 +139,7 @@ export function OwnerMenuSheet() {
               router.post('/logout');
             }}
           >
-            <LogOut className="size-4" />
+            <LogOut className="owner-icon-inline" />
             Log out
           </Button>
         </div>

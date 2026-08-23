@@ -151,7 +151,7 @@ export function ContactsAppPage({ contacts }: ContactsAppPageProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="owner-page">
       <OwnerAppPageHeader
         title={isStaff ? 'Contact messages' : 'My messages'}
         description={
@@ -162,8 +162,8 @@ export function ContactsAppPage({ contacts }: ContactsAppPageProps) {
         icon={Mail}
         action={
           canCreate ? (
-            <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
-              <Plus className="mr-1.5 size-4" />
+            <Button type="button" onClick={() => setCreateOpen(true)}>
+              <Plus className="owner-icon-inline" />
               New
             </Button>
           ) : null
@@ -191,8 +191,8 @@ export function ContactsAppPage({ contacts }: ContactsAppPageProps) {
           }
           action={
             canCreate && !search ? (
-              <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
-                <Plus className="mr-1.5 size-4" />
+              <Button type="button" onClick={() => setCreateOpen(true)}>
+                <Plus className="owner-icon-inline" />
                 New message
               </Button>
             ) : null
@@ -204,7 +204,7 @@ export function ContactsAppPage({ contacts }: ContactsAppPageProps) {
             <li key={contact.id}>
               <article
                 className={cn(
-                  'rounded-xl border bg-card p-4 shadow-sm transition-colors active:bg-muted/40',
+                  'owner-list-card',
                   isStaff && !contact.is_read && 'border-primary/40 bg-primary/5',
                 )}
                 role="button"
@@ -226,10 +226,10 @@ export function ContactsAppPage({ contacts }: ContactsAppPageProps) {
                           aria-label="Unread"
                         />
                       ) : null}
-                      <h2 className="truncate font-semibold">{contact.name}</h2>
+                      <h2 className="owner-h2 truncate">{contact.name}</h2>
                     </div>
                     {contact.email ? (
-                      <p className="truncate text-sm text-muted-foreground">{contact.email}</p>
+                      <p className="owner-body truncate text-muted-foreground">{contact.email}</p>
                     ) : null}
                   </div>
                   {isStaff ? (
@@ -246,12 +246,12 @@ export function ContactsAppPage({ contacts }: ContactsAppPageProps) {
                 ) : null}
 
                 {contact.message ? (
-                  <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
+                  <p className="owner-body mt-3 line-clamp-3 text-muted-foreground">
                     {contact.message}
                   </p>
                 ) : null}
 
-                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <div className="owner-caption mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
                   {contact.phone ? (
                     <span className="flex items-center gap-1">
                       <Phone className="size-3.5" aria-hidden />
@@ -274,7 +274,7 @@ export function ContactsAppPage({ contacts }: ContactsAppPageProps) {
             <SheetTitle>{selected?.name}</SheetTitle>
           </SheetHeader>
           {selected ? (
-            <div className="mt-4 space-y-3 text-sm">
+            <div className="owner-body mt-4 space-y-3">
               <p>
                 <span className="font-medium text-foreground">Email:</span>{' '}
                 {selected.email ?? '—'}
@@ -312,11 +312,10 @@ export function ContactsAppPage({ contacts }: ContactsAppPageProps) {
                 <Button
                   type="button"
                   variant="destructive"
-                  size="sm"
                   className="w-full"
                   onClick={() => openDelete(selected)}
                 >
-                  <Trash2 className="mr-1.5 size-4" />
+                  <Trash2 className="owner-icon-inline" />
                   Delete message
                 </Button>
               ) : null}

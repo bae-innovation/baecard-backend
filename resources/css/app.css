@@ -2,8 +2,11 @@
 
 @import 'tailwindcss';
 
+@import './owner-app.css';
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
+@source '../css/owner-app.css';
 @source '../**/*.blade.php';
 @source '../**/*.tsx';
 @source '../**/*.ts';
@@ -299,34 +302,6 @@
 
     .dark .sos-alert-audio {
         color-scheme: dark;
-    }
-
-    /* Owner PWA app shell — readable typography and touch targets */
-    [data-owner-app] {
-        font-size: 16px;
-        -webkit-text-size-adjust: 100%;
-    }
-
-    [data-owner-app] input:not([type='checkbox']):not([type='radio']):not([type='file']),
-    [data-owner-app] textarea,
-    [data-owner-app] select {
-        min-height: 2.75rem;
-        font-size: 1rem;
-    }
-
-    [data-owner-app] button:not([data-slot='checkbox']):not([role='checkbox']) {
-        min-height: 2.75rem;
-    }
-
-    [data-owner-app] button[size='icon'],
-    [data-owner-app] .size-icon {
-        min-height: 2.75rem;
-        min-width: 2.75rem;
-    }
-
-    [data-owner-app] label,
-    [data-owner-app] [data-slot='form-label'] {
-        font-size: 0.9375rem;
     }
 
     .sos-alert-audio::-webkit-media-controls-enclosure,

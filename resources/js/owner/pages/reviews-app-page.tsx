@@ -150,7 +150,7 @@ export function ReviewsAppPage({ reviews }: ReviewsAppPageProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="owner-page">
       <OwnerAppPageHeader
         title={isStaff ? 'Reviews' : 'My reviews'}
         description={
@@ -159,8 +159,8 @@ export function ReviewsAppPage({ reviews }: ReviewsAppPageProps) {
         icon={Star}
         action={
           canCreate ? (
-            <Button type="button" size="sm" onClick={openCreate}>
-              <Plus className="mr-1.5 size-4" />
+            <Button type="button" onClick={openCreate}>
+              <Plus className="owner-icon-inline" />
               Add
             </Button>
           ) : null
@@ -188,8 +188,8 @@ export function ReviewsAppPage({ reviews }: ReviewsAppPageProps) {
           }
           action={
             canCreate && !search ? (
-              <Button type="button" size="sm" onClick={openCreate}>
-                <Plus className="mr-1.5 size-4" />
+              <Button type="button" onClick={openCreate}>
+                <Plus className="owner-icon-inline" />
                 Add review
               </Button>
             ) : null
@@ -200,7 +200,7 @@ export function ReviewsAppPage({ reviews }: ReviewsAppPageProps) {
           {filtered.map((review) => (
             <li key={review.id}>
               <article
-                className="rounded-xl border bg-card p-4 shadow-sm transition-colors active:bg-muted/40"
+                className="owner-list-card"
                 role="button"
                 tabIndex={0}
                 onClick={() => openDetail(review)}
@@ -223,16 +223,16 @@ export function ReviewsAppPage({ reviews }: ReviewsAppPageProps) {
                       className="flex size-12 shrink-0 items-center justify-center rounded-lg border bg-muted/40"
                       aria-hidden
                     >
-                      <Star className="size-5 text-muted-foreground" />
+                      <Star className="owner-icon-list text-muted-foreground" />
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-semibold leading-snug">
+                        <p className="owner-h2 leading-snug">
                           {review.title ?? 'Review'}
                         </p>
-                        <p className="text-sm text-muted-foreground">{review.name}</p>
+                        <p className="owner-body text-muted-foreground">{review.name}</p>
                       </div>
                       {isStaff ? (
                         <Badge
@@ -246,10 +246,10 @@ export function ReviewsAppPage({ reviews }: ReviewsAppPageProps) {
                     <div className="mt-2">
                       <RatingStars rating={review.rating} size="sm" />
                     </div>
-                    <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
+                    <p className="owner-body mt-2 line-clamp-3 text-muted-foreground">
                       {review.body}
                     </p>
-                    <p className="mt-2 text-xs text-muted-foreground">
+                    <p className="owner-caption mt-2">
                       {formatDate(review.created_at)}
                     </p>
                   </div>
@@ -264,11 +264,10 @@ export function ReviewsAppPage({ reviews }: ReviewsAppPageProps) {
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
                         className="flex-1"
                         onClick={() => openEdit(review)}
                       >
-                        <Pencil className="mr-1.5 size-4" />
+                        <Pencil className="owner-icon-inline" />
                         Edit
                       </Button>
                     ) : null}
@@ -276,14 +275,13 @@ export function ReviewsAppPage({ reviews }: ReviewsAppPageProps) {
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
                         className={cn(
                           'text-destructive hover:text-destructive',
                           canUpdateReview(review) ? 'flex-1' : 'w-full',
                         )}
                         onClick={() => openDelete(review)}
                       >
-                        <Trash2 className="mr-1.5 size-4" />
+                        <Trash2 className="owner-icon-inline" />
                         Delete
                       </Button>
                     ) : null}
@@ -303,7 +301,7 @@ export function ReviewsAppPage({ reviews }: ReviewsAppPageProps) {
             <SheetTitle>{selected?.title ?? 'Review'}</SheetTitle>
           </SheetHeader>
           {selected ? (
-            <div className="mt-4 space-y-3 text-sm">
+            <div className="owner-body mt-4 space-y-3">
               {selected.image_url ? (
                 <img
                   src={selected.image_url}

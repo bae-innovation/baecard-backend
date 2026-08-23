@@ -18,10 +18,10 @@ export function OwnerFormPageShell({
 }: OwnerFormPageShellProps) {
   return (
     <div className="flex flex-col">
-      <div className="shrink-0 border-b bg-background px-4 py-4">
+      <div className="owner-page-header shrink-0 border-b bg-background">
         <OwnerAppPageHeader title={title} description={description} icon={icon} />
       </div>
-      <div className="px-4 py-4">{children}</div>
+      <div className="owner-page-content">{children}</div>
     </div>
   );
 }

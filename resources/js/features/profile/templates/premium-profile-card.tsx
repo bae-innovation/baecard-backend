@@ -74,7 +74,10 @@ export function PremiumProfileCard({
 
           <h1
             className={cn(
-              'mt-3.5 max-w-full text-[1.65rem] font-bold leading-tight tracking-tight sm:text-3xl',
+              'mt-3.5 max-w-full font-bold leading-tight tracking-tight',
+              density === 'comfortable'
+                ? 'owner-profile-name'
+                : 'text-[1.65rem] sm:text-3xl',
               isCentered ? 'px-2' : 'pr-2',
               theme.title,
             )}
@@ -86,7 +89,7 @@ export function PremiumProfileCard({
             <p
               className={cn(
                 'mt-3 w-full max-w-sm leading-relaxed',
-                density === 'comfortable' ? 'text-sm' : 'text-[13px] sm:text-sm',
+                density === 'comfortable' ? 'owner-profile-bio' : 'text-[13px] sm:text-sm',
                 isCentered ? 'text-left' : '',
                 theme.bio,
               )}

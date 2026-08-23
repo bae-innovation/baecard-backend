@@ -13,7 +13,7 @@ export function OwnerBottomNav() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       aria-label="App navigation"
     >
-      <div className="flex w-full items-stretch justify-around px-1 pt-1.5">
+      <div className="flex w-full items-stretch justify-around px-2 pt-2">
         {OWNER_NAV_ITEMS.map((item) => {
           const active = item.match(pathname);
           const Icon = item.icon;
@@ -22,14 +22,10 @@ export function OwnerBottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                'flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-2.5 text-xs font-medium transition-colors',
-                active
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
+              data-active={active ? 'true' : 'false'}
+              className="owner-bottom-nav-link"
             >
-              <Icon className={cn('size-6', active && 'text-primary')} />
+              <Icon className={cn('owner-bottom-nav-icon', active && 'text-primary')} />
               <span className="truncate">{item.label}</span>
             </Link>
           );

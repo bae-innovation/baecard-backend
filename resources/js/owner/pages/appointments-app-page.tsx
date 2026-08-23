@@ -148,7 +148,7 @@ export function AppointmentsAppPage({ appointments }: AppointmentsAppPageProps) 
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="owner-page">
       <OwnerAppPageHeader
         title="Appointments"
         description="Your scheduled meetings and bookings"
@@ -157,10 +157,9 @@ export function AppointmentsAppPage({ appointments }: AppointmentsAppPageProps) 
           canCreate ? (
             <Button
               type="button"
-              size="sm"
               onClick={() => router.visit('/appointments/create')}
             >
-              <Plus className="mr-1.5 size-4" />
+              <Plus className="owner-icon-inline" />
               New
             </Button>
           ) : null
@@ -190,10 +189,9 @@ export function AppointmentsAppPage({ appointments }: AppointmentsAppPageProps) 
             canCreate && !search ? (
               <Button
                 type="button"
-                size="sm"
                 onClick={() => router.visit('/appointments/create')}
               >
-                <Plus className="mr-1.5 size-4" />
+                <Plus className="owner-icon-inline" />
                 New appointment
               </Button>
             ) : null
@@ -204,7 +202,7 @@ export function AppointmentsAppPage({ appointments }: AppointmentsAppPageProps) 
           {filtered.map((appointment) => (
             <li key={appointment.id}>
               <article
-                className="rounded-xl border bg-card p-4 shadow-sm transition-colors active:bg-muted/40"
+                className="owner-list-card"
                 role="button"
                 tabIndex={0}
                 onClick={() => openDetail(appointment)}
@@ -216,35 +214,35 @@ export function AppointmentsAppPage({ appointments }: AppointmentsAppPageProps) 
                 }}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h2 className="min-w-0 font-semibold leading-snug">{appointment.title}</h2>
+                  <h2 className="owner-h2 min-w-0 leading-snug">{appointment.title}</h2>
                   <Badge variant={statusVariant(appointment.status)} className="shrink-0 capitalize">
                     {appointment.status}
                   </Badge>
                 </div>
 
-                <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                  <p className="flex items-center gap-2">
-                    <Calendar className="size-4 shrink-0 text-primary" aria-hidden />
+                <div className="owner-body mt-3 space-y-2.5 text-muted-foreground">
+                  <p className="flex items-center gap-2.5">
+                    <Calendar className="owner-icon-list-primary" aria-hidden />
                     <span>{formatDateTime(appointment.appointment_date)}</span>
                   </p>
-                  <p className="flex items-center gap-2">
-                    <Clock className="size-4 shrink-0" aria-hidden />
+                  <p className="flex items-center gap-2.5">
+                    <Clock className="owner-icon-list" aria-hidden />
                     <span>{appointment.duration_minutes} minutes</span>
                   </p>
-                  <p className="flex items-center gap-2">
-                    <UserRound className="size-4 shrink-0" aria-hidden />
+                  <p className="flex items-center gap-2.5">
+                    <UserRound className="owner-icon-list" aria-hidden />
                     <span className="truncate">{customerLabel(appointment)}</span>
                   </p>
                   {appointment.location ? (
-                    <p className="flex items-center gap-2">
-                      <MapPin className="size-4 shrink-0" aria-hidden />
+                    <p className="flex items-center gap-2.5">
+                      <MapPin className="owner-icon-list" aria-hidden />
                       <span className="truncate">{appointment.location}</span>
                     </p>
                   ) : null}
                 </div>
 
                 {appointment.description ? (
-                  <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
+                  <p className="owner-body mt-3 line-clamp-2 text-muted-foreground">
                     {appointment.description}
                   </p>
                 ) : null}
@@ -258,11 +256,10 @@ export function AppointmentsAppPage({ appointments }: AppointmentsAppPageProps) 
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
                         className="flex-1"
                         onClick={() => router.visit(`/appointments/${appointment.id}/edit`)}
                       >
-                        <Pencil className="mr-1.5 size-4" />
+                        <Pencil className="owner-icon-inline" />
                         Edit
                       </Button>
                     ) : null}
@@ -270,14 +267,13 @@ export function AppointmentsAppPage({ appointments }: AppointmentsAppPageProps) 
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
                         className={cn(
                           'text-destructive hover:text-destructive',
                           canUpdateAppointment(appointment) ? 'flex-1' : 'w-full',
                         )}
                         onClick={() => openDelete(appointment)}
                       >
-                        <Trash2 className="mr-1.5 size-4" />
+                        <Trash2 className="owner-icon-inline" />
                         Delete
                       </Button>
                     ) : null}
@@ -297,7 +293,7 @@ export function AppointmentsAppPage({ appointments }: AppointmentsAppPageProps) 
             <SheetTitle>{selected?.title}</SheetTitle>
           </SheetHeader>
           {selected ? (
-            <div className="mt-4 space-y-3 text-sm">
+            <div className="owner-body mt-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Badge variant={statusVariant(selected.status)} className="capitalize">
                   {selected.status}

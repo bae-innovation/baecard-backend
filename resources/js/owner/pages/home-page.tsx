@@ -28,22 +28,22 @@ export function OwnerHomePage({ card, user, social_links }: OwnerHomePageProps) 
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col gap-4 px-4 pt-5">
-        <div className="space-y-1.5">
-          <h1 className="text-xl font-semibold tracking-tight">My card</h1>
-          <p className="text-base leading-relaxed text-muted-foreground">
+      <div className="owner-page-header owner-stack pt-5">
+        <div className="owner-stack">
+          <h1 className="owner-h1">My card</h1>
+          <p className="owner-lead">
             This is what people see when they tap your NFC card or open your link.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={() => copy(publicUrl)}>
-            <Copy className="mr-2 size-4" />
+        <div className="owner-actions-col sm:flex-row sm:flex-wrap">
+          <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => copy(publicUrl)}>
+            <Copy className="owner-icon-inline" />
             {isCopied ? 'Copied' : 'Copy link'}
           </Button>
-          <Button type="button" variant="outline" asChild>
+          <Button type="button" variant="outline" className="w-full sm:w-auto" asChild>
             <a href={publicUrl} target="_blank" rel="noreferrer">
-              <ExternalLink className="mr-2 size-4" />
+              <ExternalLink className="owner-icon-inline" />
               Open live card
             </a>
           </Button>
@@ -52,7 +52,7 @@ export function OwnerHomePage({ card, user, social_links }: OwnerHomePageProps) 
 
       <div
         className={cn(
-          'w-full overflow-hidden',
+          'owner-card-preview w-full overflow-hidden',
           theme.mode === 'dark' ? 'bg-[#0a0a0a]' : 'bg-stone-200',
         )}
       >
@@ -65,15 +65,15 @@ export function OwnerHomePage({ card, user, social_links }: OwnerHomePageProps) 
         />
       </div>
 
-      <div className="mx-4 mb-5 mt-4 rounded-2xl border bg-card p-5 shadow-sm">
-        <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Share with QR
-        </p>
+      <div className="owner-card mx-4 mb-5 mt-4">
+        <p className="owner-label">Share with QR</p>
         <div className="mt-4 flex flex-col items-center gap-4">
-          <div className="rounded-xl bg-white p-4">
-            <QRCode value={card.scan_url} size={180} />
+          <div className="owner-qr-wrap rounded-xl bg-white">
+            <div className="owner-qr-code">
+              <QRCode value={card.scan_url} size={200} style={{ width: '100%', height: '100%' }} />
+            </div>
           </div>
-          <p className="font-mono text-base font-semibold">{card.code}</p>
+          <p className="owner-mono-code">{card.code}</p>
         </div>
       </div>
     </div>

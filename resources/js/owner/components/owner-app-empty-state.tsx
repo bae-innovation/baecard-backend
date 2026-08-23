@@ -15,15 +15,13 @@ export function OwnerAppEmptyState({
   action,
 }: OwnerAppEmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/20 px-6 py-10 text-center">
-      <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-        <Icon className="size-6 text-muted-foreground" aria-hidden />
+    <div className="owner-card flex flex-col items-center justify-center gap-4 border-dashed bg-muted/20 py-12 text-center">
+      <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+        <Icon className="owner-icon-empty" aria-hidden />
       </div>
-      <div className="space-y-1">
-        <p className="font-medium">{title}</p>
-        {description ? (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        ) : null}
+      <div className="space-y-1.5">
+        <p className="owner-h2">{title}</p>
+        {description ? <p className="owner-body text-muted-foreground">{description}</p> : null}
       </div>
       {action ? <div className="mt-1">{action}</div> : null}
     </div>

@@ -1,0 +1,371 @@
+/**
+ * Owner PWA design system — single source of truth for the installed app UI.
+ * Edit token values below; all owner screens inherit from [data-owner-app].
+ */
+@layer components {
+    [data-owner-app] {
+        /* Typography scale */
+        --owner-font-xs: 0.875rem;
+        --owner-font-sm: 1rem;
+        --owner-font-base: 1.125rem;
+        --owner-font-lg: 1.25rem;
+        --owner-font-xl: 1.375rem;
+        --owner-font-2xl: 1.5rem;
+
+        /* Spacing */
+        --owner-space-page: 1.25rem;
+        --owner-space-section: 1.25rem;
+        --owner-space-stack: 1.25rem;
+        --owner-card-padding: 1.25rem;
+        --owner-section-padding: 1.25rem;
+
+        /* Touch targets & icons */
+        --owner-touch: 3rem;
+        --owner-icon-inline: 1.25rem;
+        --owner-icon-md: 1.5rem;
+        --owner-icon-lg: 1.75rem;
+        --owner-nav-icon: 1.75rem;
+
+        /* Card preview (My Card) */
+        --owner-card-name-size: 1.5rem;
+        --owner-card-bio-size: 1.125rem;
+        --owner-card-label-size: 0.875rem;
+        --owner-card-value-size: 1rem;
+        --owner-card-row-padding-x: 1rem;
+        --owner-card-row-padding-y: 1rem;
+        --owner-card-icon-wrap: 2.5rem;
+        --owner-card-icon: 1rem;
+        --owner-qr-size: 200px;
+
+        font-size: var(--owner-font-base);
+        line-height: 1.5;
+        -webkit-text-size-adjust: 100%;
+    }
+
+  /* Form controls */
+    [data-owner-app] input:not([type='checkbox']):not([type='radio']):not([type='file']),
+    [data-owner-app] textarea,
+    [data-owner-app] select {
+        min-height: var(--owner-touch);
+        font-size: var(--owner-font-base);
+        padding-top: 0.625rem;
+        padding-bottom: 0.625rem;
+    }
+
+    [data-owner-app] button:not([data-slot='checkbox']):not([role='checkbox']) {
+        min-height: var(--owner-touch);
+        font-size: var(--owner-font-sm);
+    }
+
+    [data-owner-app] button[size='icon'],
+    [data-owner-app] .size-icon {
+        min-height: var(--owner-touch);
+        min-width: var(--owner-touch);
+    }
+
+    [data-owner-app] label,
+    [data-owner-app] [data-slot='form-label'] {
+        font-size: var(--owner-font-sm);
+        font-weight: 500;
+    }
+
+    /* Page layout */
+    .owner-page {
+        display: flex;
+        flex-direction: column;
+        gap: var(--owner-space-stack);
+        padding: var(--owner-space-page);
+    }
+
+    .owner-page-header {
+        padding: var(--owner-space-page);
+    }
+
+    .owner-page-content {
+        padding: var(--owner-space-page);
+    }
+
+  /* Typography */
+    .owner-h1 {
+        font-size: var(--owner-font-2xl);
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        line-height: 1.25;
+    }
+
+    .owner-h2 {
+        font-size: var(--owner-font-lg);
+        font-weight: 600;
+        line-height: 1.35;
+    }
+
+    .owner-h3 {
+        font-size: var(--owner-font-lg);
+        font-weight: 600;
+        letter-spacing: -0.025em;
+    }
+
+    .owner-lead {
+        font-size: var(--owner-font-lg);
+        line-height: 1.625;
+        color: hsl(var(--muted-foreground));
+    }
+
+    .owner-body {
+        font-size: var(--owner-font-base);
+        line-height: 1.5;
+    }
+
+    .owner-muted {
+        font-size: var(--owner-font-sm);
+        color: hsl(var(--muted-foreground));
+    }
+
+    .owner-caption {
+        font-size: var(--owner-font-xs);
+        color: hsl(var(--muted-foreground));
+    }
+
+    .owner-label {
+        font-size: var(--owner-font-sm);
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: hsl(var(--muted-foreground));
+    }
+
+    .owner-section-desc {
+        margin-top: 0.375rem;
+        font-size: var(--owner-font-base);
+        line-height: 1.625;
+        color: hsl(var(--muted-foreground));
+    }
+
+  /* Cards & sections */
+    .owner-card {
+        border-radius: 1rem;
+        border: 1px solid hsl(var(--border));
+        background-color: hsl(var(--card));
+        padding: var(--owner-card-padding);
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    }
+
+    .owner-list-card {
+        border-radius: 1rem;
+        border: 1px solid hsl(var(--border));
+        background-color: hsl(var(--card));
+        padding: var(--owner-card-padding);
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        transition: background-color 0.15s ease;
+    }
+
+    .owner-list-card:active {
+        background-color: hsl(var(--muted) / 0.4);
+    }
+
+    .owner-section {
+        border-radius: 1rem;
+        border: 1px solid hsl(var(--border));
+        background-color: hsl(var(--card));
+        padding: var(--owner-section-padding);
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    }
+
+    .owner-section-header {
+        margin-bottom: var(--owner-space-section);
+    }
+
+    .owner-section-body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--owner-space-section);
+    }
+
+    .owner-stack {
+        display: flex;
+        flex-direction: column;
+        gap: var(--owner-space-stack);
+    }
+
+    .owner-actions-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .owner-actions-col {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+  /* Icons */
+    .owner-icon-header {
+        width: var(--owner-icon-md);
+        height: var(--owner-icon-md);
+        flex-shrink: 0;
+        color: hsl(var(--primary));
+    }
+
+    .owner-icon-inline {
+        width: var(--owner-icon-inline);
+        height: var(--owner-icon-inline);
+        margin-right: 0.5rem;
+    }
+
+    .owner-icon-list {
+        width: var(--owner-icon-inline);
+        height: var(--owner-icon-inline);
+        flex-shrink: 0;
+    }
+
+    .owner-icon-list-primary {
+        width: var(--owner-icon-inline);
+        height: var(--owner-icon-inline);
+        flex-shrink: 0;
+        color: hsl(var(--primary));
+    }
+
+    .owner-icon-empty {
+        width: var(--owner-icon-lg);
+        height: var(--owner-icon-lg);
+        color: hsl(var(--muted-foreground));
+    }
+
+  /* Bottom navigation */
+    .owner-bottom-nav-link {
+        display: flex;
+        min-width: 0;
+        flex: 1 1 0%;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.375rem;
+        border-radius: 0.5rem;
+        padding: 0.75rem 0.5rem;
+        font-size: var(--owner-font-sm);
+        font-weight: 600;
+        transition: color 0.15s ease;
+    }
+
+    .owner-bottom-nav-link[data-active='true'] {
+        color: hsl(var(--primary));
+    }
+
+    .owner-bottom-nav-link[data-active='false'] {
+        color: hsl(var(--muted-foreground));
+    }
+
+    .owner-bottom-nav-icon {
+        width: var(--owner-nav-icon);
+        height: var(--owner-nav-icon);
+    }
+
+  /* Menu drawer */
+    .owner-menu-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border-radius: 0.5rem;
+        padding: 0.875rem 0.75rem;
+        font-size: var(--owner-font-lg);
+        font-weight: 500;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .owner-menu-link-icon {
+        width: var(--owner-icon-md);
+        height: var(--owner-icon-md);
+        flex-shrink: 0;
+    }
+
+    .owner-menu-group-label {
+        padding: 0 0.5rem 0.5rem;
+        font-size: var(--owner-font-sm);
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: hsl(var(--muted-foreground));
+    }
+
+  /* Search */
+    .owner-search-input {
+        height: var(--owner-touch);
+        padding-left: 2.5rem;
+        font-size: var(--owner-font-base);
+    }
+
+    .owner-search-icon {
+        width: var(--owner-icon-inline);
+        height: var(--owner-icon-inline);
+    }
+
+    .owner-search-refresh {
+        width: var(--owner-touch);
+        height: var(--owner-touch);
+        flex-shrink: 0;
+    }
+
+    .owner-menu-trigger {
+        width: var(--owner-touch);
+        height: var(--owner-touch);
+    }
+
+  /* Profile card preview (inside My Card) */
+    .owner-card-preview {
+        font-size: var(--owner-font-base);
+    }
+
+    .owner-card-preview .owner-profile-name {
+        font-size: var(--owner-card-name-size);
+    }
+
+    .owner-card-preview .owner-profile-bio {
+        font-size: var(--owner-card-bio-size);
+    }
+
+    .owner-profile-label {
+        font-size: var(--owner-card-label-size);
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .owner-profile-value {
+        font-size: var(--owner-card-value-size);
+        font-weight: 500;
+    }
+
+    .owner-profile-row {
+        padding: var(--owner-card-row-padding-y) var(--owner-card-row-padding-x);
+    }
+
+    .owner-profile-icon-wrap {
+        width: var(--owner-card-icon-wrap);
+        height: var(--owner-card-icon-wrap);
+    }
+
+    .owner-profile-icon {
+        width: var(--owner-card-icon);
+        height: var(--owner-card-icon);
+    }
+
+    .owner-qr-wrap {
+        padding: var(--owner-card-padding);
+    }
+
+    .owner-qr-code {
+        width: var(--owner-qr-size);
+        height: var(--owner-qr-size);
+    }
+
+    .owner-qr-code svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .owner-mono-code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: var(--owner-font-lg);
+        font-weight: 600;
+    }
+}

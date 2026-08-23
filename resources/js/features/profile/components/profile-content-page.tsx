@@ -384,7 +384,7 @@ export function ProfileContentForm({ profile, variant }: ProfileContentFormProps
         <p
           className={cn(
             'font-medium uppercase tracking-[0.14em] text-muted-foreground',
-            isOwnerApp ? 'text-sm' : 'text-xs tracking-[0.18em]',
+            isOwnerApp ? 'owner-label !normal-case !tracking-[0.14em]' : 'text-xs tracking-[0.18em]',
           )}
         >
           Profile setup

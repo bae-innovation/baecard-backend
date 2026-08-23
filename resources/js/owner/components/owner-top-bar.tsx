@@ -37,7 +37,7 @@ export function OwnerTopBar() {
 
   return (
     <header
-      className="sticky top-0 z-40 flex h-[3.25rem] shrink-0 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80"
       style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
     >
       <OwnerMenuSheet />
@@ -56,8 +56,8 @@ export function OwnerTopBar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="font-normal">
-              <p className="truncate text-sm font-semibold">{user.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+              <p className="owner-body truncate font-semibold">{user.name}</p>
+              <p className="owner-muted truncate">{user.email}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
@@ -65,7 +65,7 @@ export function OwnerTopBar() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.post('/logout')}>
-              <LogOut className="mr-2 size-4" />
+              <LogOut className="owner-icon-inline" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -30,8 +30,8 @@ function contactLabelClass(
   extra?: string,
 ) {
   return cn(
-    density === 'comfortable' ? 'text-xs' : 'text-[11px]',
-    'font-medium uppercase tracking-wide',
+    density === 'comfortable' ? 'owner-profile-label' : 'text-[11px]',
+    density !== 'comfortable' && 'font-semibold uppercase tracking-wide',
     extra,
   );
 }
@@ -41,10 +41,23 @@ function contactValueClass(
   extra?: string,
 ) {
   return cn(
-    density === 'comfortable' ? 'text-sm' : 'text-[13px] sm:text-sm',
-    'truncate font-medium',
+    density === 'comfortable' ? 'owner-profile-value truncate' : 'text-[13px] sm:text-sm truncate font-medium',
     extra,
   );
+}
+
+function contactRowPadding(density: ProfileDensity = 'default') {
+  return density === 'comfortable' ? 'owner-profile-row' : 'px-3.5 py-3.5 sm:px-4';
+}
+
+function contactIconSize(density: ProfileDensity = 'default') {
+  return density === 'comfortable'
+    ? 'owner-profile-icon-wrap inline-flex shrink-0 items-center justify-center rounded-full'
+    : 'size-8 inline-flex shrink-0 items-center justify-center rounded-full';
+}
+
+function contactIconInnerSize(density: ProfileDensity = 'default') {
+  return density === 'comfortable' ? 'owner-profile-icon' : 'size-3.5';
 }
 
 export type ProfileManagementControls = {
@@ -395,18 +408,20 @@ function ContactRow({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 px-3.5 py-3.5 sm:px-4',
+        'flex items-center gap-3',
+        contactRowPadding(density),
         !isLast && `border-b ${theme.contactDivider}`,
       )}
     >
       <span
         className={cn(
-          'inline-flex size-8 shrink-0 items-center justify-center rounded-full',
+          'inline-flex shrink-0 items-center justify-center rounded-full',
+          contactIconSize(density),
           theme.mode === 'dark' ? 'bg-white/10' : 'bg-black/5',
           theme.contactMuted,
         )}
       >
-        <Icon className="size-3.5" />
+        <Icon className={contactIconInnerSize(density)} />
       </span>
       <div className="min-w-0 flex-1">
         <p className={contactLabelClass(density, theme.contactMuted)}>
@@ -422,24 +437,26 @@ function ContactRow({
           type="button"
           onClick={() => void copyText(entry.value)}
           className={cn(
-            'inline-flex size-8 items-center justify-center rounded-full transition',
+            'inline-flex items-center justify-center rounded-full transition',
+            contactIconSize(density),
             theme.contactIcon,
           )}
           aria-label={`Copy ${entry.kind}`}
         >
-          <Copy className="size-3.5" />
+          <Copy className={contactIconInnerSize(density)} />
         </button>
         <a
           href={actionHref}
           target={entry.kind === 'address' ? '_blank' : undefined}
           rel={entry.kind === 'address' ? 'noreferrer' : undefined}
           className={cn(
-            'inline-flex size-8 items-center justify-center rounded-full transition',
+            'inline-flex items-center justify-center rounded-full transition',
+            contactIconSize(density),
             theme.contactIcon,
           )}
           aria-label={actionLabel}
         >
-          <ActionIcon className="size-3.5" />
+          <ActionIcon className={contactIconInnerSize(density)} />
         </a>
       </div>
     </div>
@@ -475,21 +492,23 @@ export function ProfileProfessionalCard({
         <div
           key={row.label}
           className={cn(
-            'flex items-center gap-3 px-3.5 py-3.5 sm:px-4',
+            'flex items-center gap-3',
+            contactRowPadding(density),
             index < rows.length - 1 && `border-b ${theme.contactDivider}`,
           )}
         >
           <span
             className={cn(
-              'inline-flex size-8 shrink-0 items-center justify-center rounded-full',
+              'inline-flex shrink-0 items-center justify-center rounded-full',
+              contactIconSize(density),
               theme.mode === 'dark' ? 'bg-white/10' : 'bg-black/5',
               theme.contactMuted,
             )}
           >
             {row.label === 'Work address' ? (
-              <MapPin className="size-3.5" />
+              <MapPin className={contactIconInnerSize(density)} />
             ) : (
-              <Building2 className="size-3.5" />
+              <Building2 className={contactIconInnerSize(density)} />
             )}
           </span>
           <div className="min-w-0 flex-1">
