@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\OfferTickerController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\ProfileOwnerController;
 use App\Http\Controllers\Api\ProfileContentController;
 use App\Http\Controllers\Api\ProfileTemplateController;
 use App\Http\Controllers\Api\ReviewController;
@@ -478,6 +479,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('admin.cms.upload');
 
     Route::middleware('permission:profile.content.manage,profile.template.manage')->group(function () {
+        Route::get('profile', [ProfileOwnerController::class, 'index'])
+            ->middleware('permission:profile.template.manage')
+            ->name('profile.home');
+
         Route::get('profile/content', [ProfileContentController::class, 'index'])
             ->middleware('permission:profile.content.manage')
             ->name('profile.content.index');

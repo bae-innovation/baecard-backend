@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import { LayoutTemplate } from 'lucide-react';
 import * as React from 'react';
 
 import type { ProfileSocialLink } from '@/features/profile/schemas/profile-social.schema';
@@ -11,6 +12,8 @@ import type {
   PublicProfileCard,
   PublicProfileUser,
 } from '@/features/cards/schemas/card-code.schema';
+import { OwnerAppPageHeader } from '@/owner/components/owner-app-page-header';
+import { useOwnerAppShell } from '@/owner/hooks/use-owner-app-shell';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +30,7 @@ export function TemplateManagementPage({
   user,
   social_links,
 }: TemplateManagementPageProps) {
+  const isOwnerApp = useOwnerAppShell();
   const [activatingId, setActivatingId] = React.useState<number | null>(null);
 
   const handleActivate = (templateId: number) => {
@@ -48,18 +52,34 @@ export function TemplateManagementPage({
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 py-4">
-      <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-          Profile themes
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight">Choose your public card theme</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Preview all available templates and activate the one you want visitors to see on your Bae Card.
-        </p>
-      </div>
+    <div
+      className={cn(
+        'mx-auto w-full',
+        isOwnerApp
+          ? 'flex flex-col gap-4 px-4 pb-4'
+          : 'max-w-6xl space-y-8 py-4',
+      )}
+    >
+      {isOwnerApp ? (
+        <OwnerAppPageHeader
+          title="Browse themes"
+          description="Preview templates and pick the one visitors see on your card."
+          icon={LayoutTemplate}
+        />
+      ) : (
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+            Profile themes
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">Choose your public card theme</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            Preview all available templates and activate the one you want visitors to see on your Bae
+            Card.
+          </p>
+        </div>
+      )}
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className={cn('grid', isOwnerApp ? 'gap-4' : 'gap-6 xl:grid-cols-2')}>
         {TEMPLATE_OPTIONS.map((option) => {
           const TemplateComponent = PROFILE_TEMPLATES[option.id];
           const theme = getProfileTheme(option.id);
@@ -70,12 +90,18 @@ export function TemplateManagementPage({
             <section
               key={option.id}
               className={cn(
-                'overflow-hidden rounded-[1.75rem] border bg-card/70 shadow-sm backdrop-blur',
+                'overflow-hidden rounded-2xl border bg-card shadow-sm',
+                isOwnerApp ? 'bg-card' : 'rounded-[1.75rem] bg-card/70 shadow-sm backdrop-blur',
                 isActive ? 'border-sky-500/70 ring-1 ring-sky-500/30' : 'border-border',
               )}
             >
-              <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
-                <div>
+              <div
+                className={cn(
+                  'flex items-center justify-between gap-3 border-b',
+                  isOwnerApp ? 'px-3 py-2.5' : 'px-4 py-3',
+                )}
+              >
+                <div className="min-w-0">
                   <p className="text-sm font-semibold">{option.title}</p>
                   <p className="text-xs text-muted-foreground">{option.description}</p>
                 </div>
@@ -84,7 +110,7 @@ export function TemplateManagementPage({
                   disabled={isActive || activatingId === option.id}
                   onClick={() => handleActivate(option.id)}
                   className={cn(
-                    'rounded-full px-4 py-2 text-xs font-semibold transition',
+                    'shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition',
                     isActive
                       ? 'bg-sky-500/15 text-sky-600'
                       : 'bg-muted text-foreground hover:bg-sky-500/10 hover:text-sky-600',
@@ -94,10 +120,10 @@ export function TemplateManagementPage({
                 </button>
               </div>
 
-              <div className="p-3">
+              <div className={cn(isOwnerApp ? 'p-2' : 'p-3')}>
                 <div
                   className={cn(
-                    'mb-3 h-2 rounded-full',
+                    'mb-2 h-2 rounded-full',
                     optionTheme.mode === 'dark'
                       ? 'bg-gradient-to-r from-zinc-700 to-sky-700'
                       : 'bg-gradient-to-r from-amber-200 to-sky-300',
@@ -105,7 +131,7 @@ export function TemplateManagementPage({
                 />
                 <div
                   className={cn(
-                    'overflow-hidden rounded-[1.5rem] border',
+                    'overflow-hidden rounded-2xl border',
                     theme.mode === 'dark' && 'border-white/10',
                   )}
                 >
@@ -114,6 +140,7 @@ export function TemplateManagementPage({
                     user={{ ...user, active_template: option.id }}
                     social_links={social_links}
                     isPreview
+                    compactPreview={isOwnerApp}
                     management={{
                       isActive,
                       activating: activatingId === option.id,

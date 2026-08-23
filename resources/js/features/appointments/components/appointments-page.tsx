@@ -32,6 +32,8 @@ import { DeleteAppointmentDialog } from '@/features/appointments/components/dele
 import type { Appointment } from '@/features/appointments/schemas/appointment.schema';
 import { useAuth } from '@/hooks/useAuth';
 import { useInertiaPagination } from '@/hooks/useInertiaPagination';
+import { useOwnerAppShell } from '@/owner/hooks/use-owner-app-shell';
+import { AppointmentsAppPage } from '@/owner/pages/appointments-app-page';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 import type { LaravelPaginator } from '@/types/inertia';
 
@@ -62,6 +64,16 @@ type AppointmentsPageProps = {
 };
 
 export function AppointmentsPage({ appointments }: AppointmentsPageProps) {
+  const isOwnerApp = useOwnerAppShell();
+
+  if (isOwnerApp) {
+    return <AppointmentsAppPage appointments={appointments} />;
+  }
+
+  return <AppointmentsTablePage appointments={appointments} />;
+}
+
+function AppointmentsTablePage({ appointments }: AppointmentsPageProps) {
   const {
     user,
     canViewAppointments,

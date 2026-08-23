@@ -151,8 +151,20 @@ it('blocks staff from profile management routes', function () {
     $admin = User::factory()->create(['email_verified_at' => now()]);
     $admin->assignRole('Admin');
 
+    $this->actingAs($admin)->get('/profile')->assertForbidden();
     $this->actingAs($admin)->get('/profile/content')->assertForbidden();
     $this->actingAs($admin)->get('/profile/templates')->assertForbidden();
+});
+
+it('allows customers to view their profile home', function () {
+    $this->actingAs($this->customer)
+        ->get('/profile')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Owner/Home')
+            ->has('card')
+            ->has('user')
+            ->has('social_links'));
 });
 
 it('renders public profile preview without services', function () {

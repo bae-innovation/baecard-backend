@@ -35,6 +35,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useInertiaPagination } from '@/hooks/useInertiaPagination';
 import { messageFromLaravelResponseBody } from '@/lib/laravel-validation-message';
 import { objectToFormData } from '@/lib/object-to-form-data';
+import { useOwnerAppShell } from '@/owner/hooks/use-owner-app-shell';
+import { ReviewsAppPage } from '@/owner/pages/reviews-app-page';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
 import type { LaravelPaginator } from '@/types/inertia';
 
@@ -58,6 +60,16 @@ type ReviewsPageProps = {
 };
 
 export function ReviewsPage({ reviews }: ReviewsPageProps) {
+  const isOwnerApp = useOwnerAppShell();
+
+  if (isOwnerApp) {
+    return <ReviewsAppPage reviews={reviews} />;
+  }
+
+  return <ReviewsTablePage reviews={reviews} />;
+}
+
+function ReviewsTablePage({ reviews }: ReviewsPageProps) {
   const {
     user,
     canViewReviews,

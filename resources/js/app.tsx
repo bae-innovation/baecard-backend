@@ -11,6 +11,11 @@ import { OfflineIndicator } from '@/components/shared/offline-indicator';
 import { AccentPaletteProvider } from '@/components/providers/accent-palette-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { ApiErrorModalProvider } from '@/lib/api-error-modal';
+import { registerServiceWorker } from '@/pwa/register-sw';
+import { markStandaloneDocument } from '@/pwa/is-standalone';
+
+markStandaloneDocument();
+registerServiceWorker();
 
 createInertiaApp({
     resolve: (name) => {

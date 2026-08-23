@@ -17,6 +17,7 @@ export function PremiumProfileCard({
   user,
   social_links,
   isPreview,
+  compactPreview,
   themeId,
   management,
 }: ProfileTemplateProps & {
@@ -47,7 +48,8 @@ export function PremiumProfileCard({
 
       <div
         className={cn(
-          'relative mx-auto w-full max-w-md px-4 pb-8 sm:px-5',
+          'relative mx-auto w-full max-w-md',
+          isPreview && compactPreview ? 'px-0 pb-4' : 'px-4 pb-8 sm:px-5',
           theme.waveBody && cn(theme.bodySurface, '-mt-10 rounded-t-[2.75rem] pt-2'),
         )}
       >

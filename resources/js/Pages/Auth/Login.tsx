@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AuthLayout } from '@/Layouts/AuthLayout';
@@ -25,6 +26,7 @@ export default function Login({ redirect, cardCode }: LoginPageProps) {
     email: lockedEmail,
     password: '',
     redirect: redirect ?? '',
+    remember: false,
   });
 
   function handleSubmit(event: React.FormEvent) {
@@ -130,6 +132,18 @@ export default function Login({ redirect, cardCode }: LoginPageProps) {
           {errors.password ? (
             <p className="text-sm text-destructive">{errors.password}</p>
           ) : null}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="remember"
+            checked={data.remember}
+            onCheckedChange={(checked) => setData('remember', checked === true)}
+            disabled={processing}
+          />
+          <Label htmlFor="remember" className="text-sm font-normal text-muted-foreground">
+            Remember me on this device
+          </Label>
         </div>
 
         <Button type="submit" className="w-full" disabled={processing}>

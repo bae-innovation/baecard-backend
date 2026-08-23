@@ -354,9 +354,7 @@ export function isCustomerRole(roleNames: readonly string[] | undefined): boolea
 }
 
 export function resolveCustomerHomeHref(activeTemplate?: number | null): string {
-  const template = Math.min(4, Math.max(1, activeTemplate ?? 1));
-
-  return `/profile/templates/${template}`;
+  return '/profile';
 }
 
 export function resolveHomeHref(

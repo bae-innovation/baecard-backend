@@ -1,0 +1,39 @@
+import type { ReactNode } from 'react';
+
+import { AppHead } from '@/components/shared/app-head';
+import { AppSettingsSync } from '@/components/shared/app-settings-sync';
+import { FlashToaster } from '@/components/shared/flash-toaster';
+import { OwnerBottomNav } from '@/owner/components/owner-bottom-nav';
+import { OwnerTopBar } from '@/owner/components/owner-top-bar';
+import { cn } from '@/lib/utils';
+
+type OwnerLayoutProps = {
+  children: ReactNode;
+  className?: string;
+};
+
+export default function OwnerLayout({ children, className }: OwnerLayoutProps) {
+  return (
+    <>
+      <AppHead />
+      <AppSettingsSync />
+      <FlashToaster />
+      <div className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-muted/30">
+        <div
+          className="mx-auto flex h-full min-h-0 w-full max-w-md flex-col overflow-hidden border-x bg-background shadow-sm sm:max-w-[430px]"
+        >
+          <OwnerTopBar />
+          <main
+            className={cn(
+              'flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain touch-pan-y',
+              className,
+            )}
+          >
+            {children}
+          </main>
+          <OwnerBottomNav />
+        </div>
+      </div>
+    </>
+  );
+}

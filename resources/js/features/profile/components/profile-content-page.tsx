@@ -50,6 +50,7 @@ import {
 } from '@/features/profile/schemas/profile-social.schema';
 import { objectToFormData } from '@/lib/object-to-form-data';
 import { showMutationError, showMutationSuccess } from '@/lib/mutation-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 const PHONE_CODES = ['+880', '+1', '+44', '+91', '+61', '+971'];
 const IMAGE_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp';
@@ -158,6 +159,7 @@ function PhoneField({
 }
 
 export function ProfileContentPage({ profile }: ProfileContentPageProps) {
+  const { homeHref } = useAuth();
   const [profileImageFile, setProfileImageFile] = React.useState<File | null>(null);
   const [coverImageFile, setCoverImageFile] = React.useState<File | null>(null);
   const [removeProfileImage, setRemoveProfileImage] = React.useState(false);
@@ -347,7 +349,7 @@ export function ProfileContentPage({ profile }: ProfileContentPageProps) {
 
   return (
     <FormPageShell
-      backTo="/dashboard"
+      backTo={homeHref}
       backLabel="Back"
       title={`Welcome ${displayName(profile)}!`}
       description="Update your personal, professional, and social details for your public Bae Card profile."
