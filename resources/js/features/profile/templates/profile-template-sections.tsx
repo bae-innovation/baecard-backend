@@ -214,12 +214,12 @@ function ProfileSocialLinkItem({ link }: { link: ProfileSocialLink }) {
           rel="noreferrer"
           title={link.url}
           aria-label={label}
-          className="inline-flex size-11 shrink-0 snap-start items-center justify-center rounded-full sm:size-12"
+          className="inline-flex size-11 shrink-0 snap-start items-center justify-center bg-transparent sm:size-12"
         >
           <PlatformIcon
             platform={link.platform}
             size="lg"
-            className="block size-11 rounded-full shadow-md ring-2 ring-white/60 sm:size-12"
+            className="block size-11 rounded-none bg-transparent object-contain drop-shadow-md transition duration-200 hover:-translate-y-0.5 hover:drop-shadow-lg sm:size-12"
           />
         </a>
       </TooltipTrigger>
@@ -336,7 +336,7 @@ export function ProfileSocialSlider({
   return (
     <div className={cn('-mx-4 sm:-mx-5', theme.socialBar)}>
       <TooltipProvider delayDuration={150}>
-        <div className="flex items-center gap-1 px-1 py-1.5 sm:px-1.5 sm:py-2">
+        <div className="flex items-center gap-0.5 px-1 py-2 sm:px-1.5 sm:py-2.5">
           {hasOverflow ? (
             <button
               type="button"
@@ -344,11 +344,14 @@ export function ProfileSocialSlider({
               disabled={!canScrollPrev}
               aria-label="Previous social links"
               className={cn(
-                'inline-flex size-9 shrink-0 items-center justify-center self-center rounded-full transition disabled:pointer-events-none disabled:opacity-30',
-                theme.contactIcon,
+                'inline-flex size-8 shrink-0 items-center justify-center bg-transparent p-0 shadow-none',
+                'transition hover:scale-110 disabled:pointer-events-none disabled:opacity-25',
+                theme.mode === 'dark'
+                  ? 'text-sky-400 hover:text-sky-300'
+                  : 'text-sky-500 hover:text-sky-600',
               )}
             >
-              <ChevronLeft className="size-5" strokeWidth={2.25} />
+              <ChevronLeft className="size-6" strokeWidth={2.5} />
             </button>
           ) : null}
 
@@ -357,7 +360,7 @@ export function ProfileSocialSlider({
               ref={scrollRef}
               style={trackWidth ? { width: trackWidth } : undefined}
               className={cn(
-                'flex items-center gap-3 px-2 py-2.5 sm:px-2.5 sm:py-3',
+                'flex items-center gap-3.5 px-1.5 py-2 sm:gap-4 sm:px-2 sm:py-2.5',
                 '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
                 'overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-mandatory',
                 !trackWidth && 'w-full',
@@ -376,11 +379,14 @@ export function ProfileSocialSlider({
               disabled={!canScrollNext}
               aria-label="Next social links"
               className={cn(
-                'inline-flex size-9 shrink-0 items-center justify-center self-center rounded-full transition disabled:pointer-events-none disabled:opacity-30',
-                theme.contactIcon,
+                'inline-flex size-8 shrink-0 items-center justify-center bg-transparent p-0 shadow-none',
+                'transition hover:scale-110 disabled:pointer-events-none disabled:opacity-25',
+                theme.mode === 'dark'
+                  ? 'text-sky-400 hover:text-sky-300'
+                  : 'text-sky-500 hover:text-sky-600',
               )}
             >
-              <ChevronRight className="size-5" strokeWidth={2.25} />
+              <ChevronRight className="size-6" strokeWidth={2.5} />
             </button>
           ) : null}
         </div>
