@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Building2,
   ChevronLeft,
@@ -20,12 +20,6 @@ import {
   type ProfileThemeTokens,
 } from '@/features/profile/templates/theme-tokens';
 import { Switch } from '@/components/ui/switch';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { showMutationSuccess } from '@/lib/mutation-toast';
 
@@ -202,50 +196,75 @@ export function ProfileAvatar({
   );
 }
 
+const MOBILE_VISIBLE_ICONS = 5;
+const DESKTOP_VISIBLE_ICONS = 6;
+
+function useVisibleSocialCount() {
+  const [count, setCount] = useState(MOBILE_VISIBLE_ICONS);
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 640px)');
+    const sync = () => {
+      setCount(media.matches ? DESKTOP_VISIBLE_ICONS : MOBILE_VISIBLE_ICONS);
+    };
+
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
+
+  return count;
+}
+
 function ProfileSocialLinkItem({ link }: { link: ProfileSocialLink }) {
   const label = PLATFORM_LABELS[link.platform] ?? link.platform;
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <a
-          href={link.url}
-          target="_blank"
-          rel="noreferrer"
-          title={link.url}
-          aria-label={label}
-          className="inline-flex size-11 shrink-0 snap-start items-center justify-center bg-transparent sm:size-12"
-        >
-          <PlatformIcon
-            platform={link.platform}
-            size="lg"
-            className="block size-11 rounded-none bg-transparent object-contain drop-shadow-md transition duration-200 hover:-translate-y-0.5 hover:drop-shadow-lg sm:size-12"
-          />
-        </a>
-      </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-[240px] break-all">
-        {link.url}
-      </TooltipContent>
-    </Tooltip>
+    <a
+      href={link.url}
+      target="_blank"
+      rel="noreferrer"
+      title={link.url}
+      aria-label={label}
+      className="inline-flex size-11 shrink-0 items-center justify-center bg-transparent sm:size-12"
+    >
+      <PlatformIcon
+        platform={link.platform}
+        size="lg"
+        className="block size-11 rounded-none bg-transparent object-contain drop-shadow-md sm:size-12"
+      />
+    </a>
   );
 }
 
-function getSocialSliderMetrics(track: HTMLDivElement) {
-  const first = track.firstElementChild as HTMLElement | null;
-  const styles = getComputedStyle(track);
-  const gap = Number.parseFloat(styles.columnGap || styles.gap) || 0;
-  const padX =
-    Number.parseFloat(styles.paddingLeft) + Number.parseFloat(styles.paddingRight);
+function SocialArrowButton({
+  direction,
+  disabled,
+  theme,
+  onClick,
+}: {
+  direction: 'prev' | 'next';
+  disabled: boolean;
+  theme: ProfileThemeTokens;
+  onClick: () => void;
+}) {
+  const Icon = direction === 'prev' ? ChevronLeft : ChevronRight;
 
-  if (!first) {
-    return { gap, padX, step: 0 };
-  }
-
-  return {
-    gap,
-    padX,
-    step: first.getBoundingClientRect().width + gap,
-  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={direction === 'prev' ? 'Previous social links' : 'Next social links'}
+      className={cn(
+        'inline-flex size-8 shrink-0 items-center justify-center bg-transparent p-0 shadow-none',
+        'transition hover:scale-110 disabled:pointer-events-none disabled:opacity-20',
+        theme.mode === 'dark' ? 'text-sky-400 hover:text-sky-300' : 'text-sky-500 hover:text-sky-600',
+      )}
+    >
+      <Icon className="size-6" strokeWidth={2.5} />
+    </button>
+  );
 }
 
 export function ProfileSocialSlider({
@@ -257,140 +276,55 @@ export function ProfileSocialSlider({
   show?: boolean;
   theme: ProfileThemeTokens;
 }) {
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollPrev, setCanScrollPrev] = useState(false);
-  const [canScrollNext, setCanScrollNext] = useState(false);
-  const [hasOverflow, setHasOverflow] = useState(false);
-  const [trackWidth, setTrackWidth] = useState<number>();
+  const visibleCount = useVisibleSocialCount();
+  const [startIndex, setStartIndex] = useState(0);
 
   const socialLinks = links.filter(
     (link) => isSocialPlatform(link.platform) && link.url.trim() !== '',
   );
 
-  const updateScrollState = useCallback(() => {
-    const viewport = viewportRef.current;
-    const track = scrollRef.current;
-    if (!viewport || !track) {
-      return;
-    }
-
-    const { gap, padX, step } = getSocialSliderMetrics(track);
-    const available = viewport.clientWidth;
-    const contentWidth = step > 0 ? track.childElementCount * step - gap : Math.max(0, track.scrollWidth - padX);
-    const overflow = contentWidth + padX > available + 1;
-    const visibleWidth =
-      overflow && step > 0
-        ? Math.max(1, Math.floor((available - padX + gap) / step)) * step - gap + padX
-        : undefined;
-
-    setTrackWidth(visibleWidth);
-    setHasOverflow(overflow);
-    setCanScrollPrev(track.scrollLeft > 1);
-    setCanScrollNext(track.scrollLeft + (visibleWidth ?? track.clientWidth) < contentWidth + padX - 1);
-  }, []);
+  const maxStart = Math.max(0, socialLinks.length - visibleCount);
 
   useEffect(() => {
-    const viewport = viewportRef.current;
-    const track = scrollRef.current;
-    if (!viewport || !track) {
-      return;
-    }
+    setStartIndex((current) => Math.min(current, maxStart));
+  }, [maxStart]);
 
-    updateScrollState();
-
-    track.addEventListener('scroll', updateScrollState, { passive: true });
-    const resizeObserver = new ResizeObserver(updateScrollState);
-    resizeObserver.observe(viewport);
-
-    return () => {
-      track.removeEventListener('scroll', updateScrollState);
-      resizeObserver.disconnect();
-    };
-  }, [socialLinks.length, updateScrollState]);
-
-  const scrollByPage = (direction: 'prev' | 'next') => {
-    const track = scrollRef.current;
-    if (!track) {
-      return;
-    }
-
-    const { padX, step } = getSocialSliderMetrics(track);
-    const inner = Math.max(track.clientWidth - padX, 0);
-    const page = step > 0 ? Math.max(step, Math.floor(inner / step) * step) : inner;
-
-    track.scrollBy({
-      left: direction === 'prev' ? -page : page,
-      behavior: 'smooth',
-    });
-  };
-
-  if (!show) {
+  if (!show || socialLinks.length === 0) {
     return null;
   }
 
-  if (socialLinks.length === 0) {
-    return null;
-  }
+  const canShift = socialLinks.length > visibleCount;
+  const visibleLinks = canShift
+    ? socialLinks.slice(startIndex, startIndex + visibleCount)
+    : socialLinks;
 
   return (
     <div className={cn('-mx-4 sm:-mx-5', theme.socialBar)}>
-      <TooltipProvider delayDuration={150}>
-        <div className="flex items-center gap-0.5 px-1 py-2 sm:px-1.5 sm:py-2.5">
-          {hasOverflow ? (
-            <button
-              type="button"
-              onClick={() => scrollByPage('prev')}
-              disabled={!canScrollPrev}
-              aria-label="Previous social links"
-              className={cn(
-                'inline-flex size-8 shrink-0 items-center justify-center bg-transparent p-0 shadow-none',
-                'transition hover:scale-110 disabled:pointer-events-none disabled:opacity-25',
-                theme.mode === 'dark'
-                  ? 'text-sky-400 hover:text-sky-300'
-                  : 'text-sky-500 hover:text-sky-600',
-              )}
-            >
-              <ChevronLeft className="size-6" strokeWidth={2.5} />
-            </button>
-          ) : null}
+      <div className="flex items-center justify-center gap-1 px-2 py-3 sm:px-3 sm:py-3.5">
+        {canShift ? (
+          <SocialArrowButton
+            direction="prev"
+            disabled={startIndex <= 0}
+            theme={theme}
+            onClick={() => setStartIndex((current) => Math.max(0, current - 1))}
+          />
+        ) : null}
 
-          <div ref={viewportRef} className="min-w-0 flex-1">
-            <div
-              ref={scrollRef}
-              style={trackWidth ? { width: trackWidth } : undefined}
-              className={cn(
-                'flex items-center gap-3.5 px-1.5 py-2 sm:gap-4 sm:px-2 sm:py-2.5',
-                '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-                'overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-mandatory',
-                !trackWidth && 'w-full',
-              )}
-            >
-              {socialLinks.map((link, index) => (
-                <ProfileSocialLinkItem key={`${link.platform}-${index}`} link={link} />
-              ))}
-            </div>
-          </div>
-
-          {hasOverflow ? (
-            <button
-              type="button"
-              onClick={() => scrollByPage('next')}
-              disabled={!canScrollNext}
-              aria-label="Next social links"
-              className={cn(
-                'inline-flex size-8 shrink-0 items-center justify-center bg-transparent p-0 shadow-none',
-                'transition hover:scale-110 disabled:pointer-events-none disabled:opacity-25',
-                theme.mode === 'dark'
-                  ? 'text-sky-400 hover:text-sky-300'
-                  : 'text-sky-500 hover:text-sky-600',
-              )}
-            >
-              <ChevronRight className="size-6" strokeWidth={2.5} />
-            </button>
-          ) : null}
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-4 sm:gap-5">
+          {visibleLinks.map((link, index) => (
+            <ProfileSocialLinkItem key={`${link.platform}-${startIndex + index}`} link={link} />
+          ))}
         </div>
-      </TooltipProvider>
+
+        {canShift ? (
+          <SocialArrowButton
+            direction="next"
+            disabled={startIndex >= maxStart}
+            theme={theme}
+            onClick={() => setStartIndex((current) => Math.min(maxStart, current + 1))}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }
