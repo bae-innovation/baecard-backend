@@ -20,12 +20,12 @@ export default function OwnerLayout({ children, className }: OwnerLayoutProps) {
       <FlashToaster />
       <div
         data-owner-app
-        className="flex h-dvh w-full max-h-dvh min-h-0 flex-col overflow-hidden bg-background"
+        className="flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden bg-background"
       >
         <OwnerTopBar />
         <main
           className={cn(
-            'flex min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-contain touch-pan-y',
+            'min-h-0 w-full flex-1 overflow-y-auto overscroll-y-contain',
             className,
           )}
         >
