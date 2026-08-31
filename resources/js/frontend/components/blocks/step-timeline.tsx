@@ -21,7 +21,6 @@ type StepTheme = {
   icon: LucideIcon;
   accentStrength: number;
   tintStrength: number;
-  number: string;
   nextLabel: { en: string; bn: string };
 };
 
@@ -30,21 +29,18 @@ const STEP_THEMES: Record<string, StepTheme> = {
     icon: ShoppingBag,
     accentStrength: 100,
     tintStrength: 22,
-    number: '01',
     nextLabel: { en: 'Continue to Design', bn: 'ডিজাইনে যান' },
   },
   design: {
     icon: Palette,
     accentStrength: 72,
     tintStrength: 16,
-    number: '02',
     nextLabel: { en: 'Continue to Setup', bn: 'সেটআপে যান' },
   },
   setup: {
     icon: Smartphone,
     accentStrength: 48,
     tintStrength: 12,
-    number: '03',
     nextLabel: { en: 'You are ready!', bn: 'আপনি প্রস্তুত!' },
   },
 };
@@ -180,15 +176,6 @@ function StepCard({
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_0%,var(--step-tint),transparent_58%)]"
         aria-hidden
       />
-
-      <motion.div
-        className="pointer-events-none absolute -right-1 top-2 select-none text-[5.5rem] font-black leading-none text-fe-accent/[0.07] sm:text-[6.5rem]"
-        aria-hidden
-        animate={reducedMotion ? undefined : { opacity: [0.05, 0.12, 0.05] }}
-        transition={reducedMotion ? undefined : { duration: 4.5, repeat: Infinity, delay: index * 0.55 }}
-      >
-        {theme.number}
-      </motion.div>
 
       <div className="relative flex flex-1 flex-col px-7 py-8 sm:px-8 sm:py-9 lg:px-9 lg:py-10">
         <div className="mb-7 flex items-start justify-between gap-4 sm:mb-8">

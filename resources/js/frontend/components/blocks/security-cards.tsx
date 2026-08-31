@@ -13,14 +13,13 @@ import { SectionShell } from './section-shell';
 type CardTheme = {
   accentStrength: number;
   tintStrength: number;
-  number: string;
 };
 
 const CARD_THEMES: CardTheme[] = [
-  { accentStrength: 100, tintStrength: 22, number: '01' },
-  { accentStrength: 78, tintStrength: 18, number: '02' },
-  { accentStrength: 58, tintStrength: 14, number: '03' },
-  { accentStrength: 42, tintStrength: 10, number: '04' },
+  { accentStrength: 100, tintStrength: 22 },
+  { accentStrength: 78, tintStrength: 18 },
+  { accentStrength: 58, tintStrength: 14 },
+  { accentStrength: 42, tintStrength: 10 },
 ];
 
 function cardThemeVars(theme: CardTheme): React.CSSProperties {
@@ -67,14 +66,6 @@ function SecurityCard({
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_0%,var(--sec-tint),transparent_58%)]"
         aria-hidden
       />
-      <motion.div
-        className="pointer-events-none absolute -right-1 top-2 select-none text-[4.5rem] font-black leading-none text-fe-accent/[0.07]"
-        aria-hidden
-        animate={reducedMotion ? undefined : { opacity: [0.05, 0.12, 0.05] }}
-        transition={reducedMotion ? undefined : { duration: 4.5, repeat: Infinity, delay: index * 0.5 }}
-      >
-        {theme.number}
-      </motion.div>
 
       <div className="relative flex flex-1 flex-col p-6 sm:p-7">
         <motion.span

@@ -18,7 +18,7 @@ export function TrustLogosBlock() {
             key={logo}
             src={`/frontend/${logo}`}
             alt=""
-            className="h-10 w-auto"
+            className="h-10 w-auto brightness-0 dark:brightness-100"
             aria-hidden
           />
         ))}

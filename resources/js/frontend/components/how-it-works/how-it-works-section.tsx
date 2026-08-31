@@ -146,6 +146,8 @@ function StepSelector({
           <motion.button
             key={step.id}
             type="button"
+            onMouseEnter={() => onSelect(step.id)}
+            onFocus={() => onSelect(step.id)}
             onClick={() => onSelect(step.id)}
             initial={reducedMotion ? false : { opacity: 0, y: 16 }}
             whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
